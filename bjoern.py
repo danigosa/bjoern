@@ -2,17 +2,18 @@ import os
 import socket
 import _bjoern
 
-
+__version__ = ".".join(f"{i}" for i in _bjoern.version)
 _default_instance = None
 DEFAULT_LISTEN_BACKLOG = 1024
 
 
-def bind_and_listen(host, port=None, reuse_port=False,
-                    listen_backlog=DEFAULT_LISTEN_BACKLOG):
+def bind_and_listen(
+    host, port=None, reuse_port=False, listen_backlog=DEFAULT_LISTEN_BACKLOG
+):
     if host.startswith("unix:@"):
         # Abstract UNIX socket: "unix:@foobar"
         sock = socket.socket(socket.AF_UNIX)
-        sock.bind('\0' + host[6:])
+        sock.bind("\0" + host[6:])
     elif host.startswith("unix:"):
         # UNIX socket: "unix:/tmp/foobar.sock"
         sock = socket.socket(socket.AF_UNIX)
@@ -40,8 +41,9 @@ def server_run(sock, wsgi_app):
 
 
 # Backwards compatibility API
-def listen(wsgi_app, host, port=None, reuse_port=False,
-           listen_backlog=DEFAULT_LISTEN_BACKLOG):
+def listen(
+    wsgi_app, host, port=None, reuse_port=False, listen_backlog=DEFAULT_LISTEN_BACKLOG
+):
     """
     Makes bjoern listen to 'host:port' and use 'wsgi_app' as WSGI application.
     (This does not run the server mainloop.)
@@ -52,8 +54,7 @@ def listen(wsgi_app, host, port=None, reuse_port=False,
     global _default_instance
     if _default_instance:
         raise RuntimeError("Only one global server instance possible")
-    sock = bind_and_listen(host, port, reuse_port,
-                           listen_backlog=listen_backlog)
+    sock = bind_and_listen(host, port, reuse_port, listen_backlog=listen_backlog)
     _default_instance = (sock, wsgi_app)
 
 
@@ -74,9 +75,11 @@ def run(*args, **kwargs):
     else:
         # Called as `bjoern.run()`
         if not _default_instance:
-            raise RuntimeError("Must call bjoern.listen(wsgi_app, host, ...) "
-                               "before calling bjoern.run() without "
-                               "arguments.")
+            raise RuntimeError(
+                "Must call bjoern.listen(wsgi_app, host, ...) "
+                "before calling bjoern.run() without "
+                "arguments."
+            )
 
     sock, wsgi_app = _default_instance
     try:
@@ -84,7 +87,7 @@ def run(*args, **kwargs):
     finally:
         if sock.family == socket.AF_UNIX:
             filename = sock.getsockname()
-            if filename[0] != '\0':
+            if filename[0] != "\0":
                 os.unlink(sock.getsockname())
         sock.close()
         _default_instance = None

@@ -1,7 +1,9 @@
+#!/usr/bin/env python3
 alist = []
 
+
 def app(env, start_response):
-    '''
+    """
     print 'foo!'
     print type(start_response)
     print dir(start_response)
@@ -14,15 +16,18 @@ def app(env, start_response):
         class x(c): pass
     except:
         import traceback; traceback.print_exc()
-    '''
-    start_response('200 alright', [])
+    """
+    start_response("200 alright", [])
     try:
         a
     except:
         import sys
+
         x = sys.exc_info()
-        start_response('500 error', alist, x)
-    return [b'hello']
+        start_response("500 error", alist, x)
+    return [b"hello"]
+
 
 import bjoern
-bjoern.run(app, '0.0.0.0', 8080)
+
+bjoern.run(app, "0.0.0.0", 8080)

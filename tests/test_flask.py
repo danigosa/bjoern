@@ -2,22 +2,24 @@
 import time
 from http import client as httplib
 from multiprocessing import Process
-from wsgiref.validate import validator
+
+from flask import Flask
 
 import bjoern
 
+app = Flask(__name__)
 
-@validator
-def _app(environ, start_response):
-    start_response("200 OK", [("Content-Type", "text/plain")])
-    return [b"Hello World"]
+
+@app.route("/")
+def hello_world():
+    return "Hello, World!"
 
 
 def _start_server():
-    bjoern.run(_app, "localhost", 8080)
+    bjoern.run(app, "localhost", 8080, reuse_port=True)
 
 
-def test_compliance():
+def test_hello():
     p = Process(target=_start_server)
     p.start()
 
@@ -34,8 +36,11 @@ def test_compliance():
 
 if __name__ == "__main__":
     try:
-        test_compliance()
+        bjoern.run(app, "localhost", 8080, reuse_port=True)
     except AssertionError:
         print("Test failed")
     else:
         print("Test successful")
+
+
+bjoern.run(app, "localhost", 8080)

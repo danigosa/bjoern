@@ -71,7 +71,7 @@ static void close_connection(struct ev_loop*, Request*);
 
 void server_run(ServerInfo* server_info)
 {
-  struct ev_loop* mainloop = ev_loop_new(EVFLAG_AUTO);
+  struct ev_loop* mainloop = ev_loop_new(0);
 
   ThreadInfo thread_info;
   thread_info.server_info = server_info;
@@ -222,7 +222,7 @@ ev_io_on_read(struct ev_loop* mainloop, ev_io* watcher, const int events)
         assert(!request->state.chunked_response);
         Py_XCLEAR(request->iterator);
         request->current_chunk = _PEP3333_Bytes_FromString(
-          http_error_messages[HTTP_STATUS_INTERNAL_SERVER_ERROR]);
+          http_error_messages[HTTP_SERVER_ERROR]);
       }
     } else {
       /* Wait for more data */

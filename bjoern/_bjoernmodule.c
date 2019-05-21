@@ -43,7 +43,6 @@ static PyMethodDef Bjoern_FunctionTable[] = {
   {NULL, NULL, 0, NULL}
 };
 
-#if PY_MAJOR_VERSION >= 3
 static struct PyModuleDef module = {
   PyModuleDef_HEAD_INIT,
   "bjoern",
@@ -53,13 +52,9 @@ static struct PyModuleDef module = {
   Bjoern_FunctionTable,
   NULL, NULL, NULL, NULL,
 };
-#endif
 
-#if PY_MAJOR_VERSION >= 3
-  #define INIT_BJOERN PyInit__bjoern
-#else
-  #define INIT_BJOERN init_bjoern
-#endif
+#define INIT_BJOERN PyInit__bjoern
+
 
 PyMODINIT_FUNC INIT_BJOERN(void)
 {
@@ -73,17 +68,11 @@ PyMODINIT_FUNC INIT_BJOERN(void)
   Py_INCREF(&FileWrapper_Type);
   Py_INCREF(&StartResponse_Type);
 
-#if PY_MAJOR_VERSION >= 3
   PyObject* bjoern_module = PyModule_Create(&module);
   if (bjoern_module == NULL) {
     return NULL;
   }
 
-  PyModule_AddObject(bjoern_module, "version", Py_BuildValue("(iii)", 3, 0, 0));
+  PyModule_AddObject(bjoern_module, "version", Py_BuildValue("(iii)", 4, 0, 0));
   return bjoern_module;
-#else
-  PyObject* bjoern_module = Py_InitModule("_bjoern", Bjoern_FunctionTable);
-  PyModule_AddObject(bjoern_module, "version", Py_BuildValue("(iii)", 3, 0, 0));
-#endif
-
 }

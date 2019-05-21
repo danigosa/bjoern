@@ -20,7 +20,9 @@ Request* Request_new(ServerInfo* server_info, int client_fd, const char* client_
   request->server_info = server_info;
   request->client_fd = client_fd;
   request->client_addr = _PEP3333_String_FromUTF8String(client_addr);
-  http_parser_init((http_parser*)&request->parser, HTTP_REQUEST);
+  http_parser *parser = malloc(sizeof(http_parser));
+  http_parser_init(parser, HTTP_REQUEST);
+  request->parser.parser = *parser;
   request->parser.parser.data = request;
   Request_reset(request);
   return request;
@@ -76,7 +78,7 @@ void Request_parse(Request* request, const char* data, const size_t data_len)
   size_t nparsed = http_parser_execute((http_parser*)&request->parser,
                                        &parser_settings, data, data_len);
   if(nparsed != data_len)
-    request->state.error_code = HTTP_STATUS_BAD_REQUEST;
+    request->state.error_code = HTTP_BAD_REQUEST;
 }
 
 #define REQUEST ((Request*)parser->data)
@@ -146,7 +148,6 @@ on_header_field(http_parser* parser, const char* field, size_t len)
   if(PARSER->invalid_header) {
     return 0;
   }
-
   char field_processed[len];
   for(size_t i=0; i<len; i++) {
     char c = field[i];
@@ -192,7 +193,7 @@ on_body(http_parser* parser, const char* data, const size_t len)
   body = PyDict_GetItem(REQUEST->headers, _wsgi_input);
   if (body == NULL) {
     if(!parser->content_length) {
-      REQUEST->state.error_code = HTTP_STATUS_LENGTH_REQUIRED;
+      REQUEST->state.error_code = HTTP_LENGTH_REQUIRED;
       return 1;
     }
     body = PyObject_CallMethodObjArgs(IO_module, _BytesIO, NULL);

@@ -14,6 +14,8 @@
 
 typedef struct { char* data; size_t len; } string;
 
+enum bjoern_http_status { HTTP_BAD_REQUEST = 1, HTTP_LENGTH_REQUIRED, HTTP_SERVER_ERROR };
+
 size_t unquote_url_inplace(char* url, size_t len);
 void _init_common(void);
 

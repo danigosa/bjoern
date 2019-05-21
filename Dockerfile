@@ -1,16 +1,19 @@
 FROM ubuntu:bionic
 
-ENV LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu:/lib:/usr/lib:/usr/local/lib"
-
 RUN \
-  apt-get -qq update && \
-  apt-get -qq install --no-install-recommends \
+  apt-get -qy update && \
+  apt-get -qy install --no-install-recommends \
 	build-essential \
 	git \
 	vim \
 	wget \
+	curl \
 	make \
+	gdb \
+	valgrind \
+	apache2-utils \
  	python3-dev \
+ 	python3-dbg \
 	python3-venv \
 	python3-pip \
 	python3-setuptools \
@@ -18,6 +21,8 @@ RUN \
 	libev-dev && \
   rm -rf /var/lib/apt/lists/*
 
-RUN ldconfig -p
+RUN ldconfig
+
+RUN pip3 install isort black twine flask
 
 CMD ["python3", "--version"] 

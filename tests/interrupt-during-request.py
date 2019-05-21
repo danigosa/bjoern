@@ -1,16 +1,18 @@
-import time
-import threading
-import bjoern
+import httplib
 import os
 import signal
-import httplib
+import threading
+import time
 
-HOST = ('127.0.0.1', 9000)
+import bjoern
+
+HOST = ("127.0.0.1", 9000)
 
 request_completed = False
 
+
 def application(environ, start_response):
-    start_response('200 ok', [])
+    start_response("200 ok", [])
     yield b"chunk1"
     os.kill(os.getpid(), signal.SIGINT)
     yield b"chunk2"
