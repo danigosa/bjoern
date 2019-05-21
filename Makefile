@@ -1,6 +1,6 @@
 SOURCE_DIR	= bjoern
 BUILD_DIR	= build
-PYTHON	?= python2
+PYTHON	= python3
 
 PYTHON_INCLUDE	= $(shell ${PYTHON}-config --includes)
 PYTHON_LDFLAGS	= $(shell ${PYTHON}-config --ldflags)
@@ -14,8 +14,8 @@ objects		= $(HTTP_PARSER_OBJ) \
 		             $(wildcard $(SOURCE_DIR)/*.c))
 
 CPPFLAGS	+= $(PYTHON_INCLUDE) -I . -I $(SOURCE_DIR) -I $(HTTP_PARSER_DIR)
-CFLAGS		+= $(FEATURES) -std=c99 -fno-strict-aliasing -fcommon -fPIC -Wall
-LDFLAGS		+= $(PYTHON_LDFLAGS) -l ev -shared -fcommon
+CFLAGS		+= $(FEATURES) -std=c99 -fno-strict-aliasing -fcommon -fPIC -Wall -Os -s -pthread -march='core-avx2' -mtune='core-avx2'
+LDFLAGS		+= $(PYTHON_LDFLAGS) -lev -shared -fcommon -Os -s -pthread -march='core-avx2' -mtune='core-avx2'
 
 ifneq ($(WANT_SENDFILE), no)
 FEATURES	+= -D WANT_SENDFILE

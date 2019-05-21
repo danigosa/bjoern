@@ -1,3 +1,6 @@
+#ifndef __filewrapper_h__
+#define __filewrapper_h__
+
 #include "common.h"
 
 #define FileWrapper_CheckExact(x) ((x)->ob_type == &FileWrapper_Type)
@@ -14,3 +17,5 @@ typedef struct {
 void _init_filewrapper(void);
 int FileWrapper_GetFd(PyObject *self);
 void FileWrapper_Done(PyObject *self);
+
+#endif

@@ -1,5 +1,5 @@
 #include "filewrapper.h"
-#include "py2py3.h"
+#include "py3.h"
 
 #define FW_self ((FileWrapper*)self)
 

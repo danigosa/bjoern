@@ -2,7 +2,7 @@
 #include "request.h"
 #include "filewrapper.h"
 
-#include "py2py3.h"
+#include "py3.h"
 
 static inline void PyDict_ReplaceKey(PyObject* dict, PyObject* k1, PyObject* k2);
 static http_parser_settings parser_settings;
@@ -76,7 +76,7 @@ void Request_parse(Request* request, const char* data, const size_t data_len)
   size_t nparsed = http_parser_execute((http_parser*)&request->parser,
                                        &parser_settings, data, data_len);
   if(nparsed != data_len)
-    request->state.error_code = HTTP_BAD_REQUEST;
+    request->state.error_code = HTTP_STATUS_BAD_REQUEST;
 }
 
 #define REQUEST ((Request*)parser->data)
@@ -192,7 +192,7 @@ on_body(http_parser* parser, const char* data, const size_t len)
   body = PyDict_GetItem(REQUEST->headers, _wsgi_input);
   if (body == NULL) {
     if(!parser->content_length) {
-      REQUEST->state.error_code = HTTP_LENGTH_REQUIRED;
+      REQUEST->state.error_code = HTTP_STATUS_LENGTH_REQUIRED;
       return 1;
     }
     body = PyObject_CallMethodObjArgs(IO_module, _BytesIO, NULL);

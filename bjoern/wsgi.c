@@ -1,7 +1,7 @@
 #include "common.h"
 #include "filewrapper.h"
 #include "wsgi.h"
-#include "py2py3.h"
+#include "py3.h"
 
 static void wsgi_getheaders(Request*, PyObject** buf, Py_ssize_t* length);
 

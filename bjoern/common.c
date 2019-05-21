@@ -1,5 +1,5 @@
 #include "common.h"
-#include "py2py3.h"
+#include "py3.h"
 
 #define UNHEX(c) ((c >= '0' && c <= '9') ? (c - '0') : \
                   (c >= 'a' && c <= 'f') ? (c - 'a' + 10) : \

@@ -18,7 +18,7 @@
 #include "wsgi.h"
 #include "server.h"
 
-#include "py2py3.h"
+#include "py3.h"
 
 #define READ_BUFFER_SIZE 64*1024
 #define Py_XCLEAR(obj) do { if(obj) { Py_DECREF(obj); obj = NULL; } } while(0)
@@ -222,7 +222,7 @@ ev_io_on_read(struct ev_loop* mainloop, ev_io* watcher, const int events)
         assert(!request->state.chunked_response);
         Py_XCLEAR(request->iterator);
         request->current_chunk = _PEP3333_Bytes_FromString(
-          http_error_messages[HTTP_SERVER_ERROR]);
+          http_error_messages[HTTP_STATUS_INTERNAL_SERVER_ERROR]);
       }
     } else {
       /* Wait for more data */
