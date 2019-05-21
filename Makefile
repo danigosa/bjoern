@@ -14,8 +14,8 @@ objects		= $(HTTP_PARSER_OBJ) \
 		             $(wildcard $(SOURCE_DIR)/*.c))
 
 CPPFLAGS	+= $(PYTHON_INCLUDE) -I . -I $(SOURCE_DIR) -I $(HTTP_PARSER_DIR)
-CFLAGS		+= $(FEATURES) -std=c99 -fno-strict-aliasing -fcommon -fPIC -Wall -Os -s -pthread -march='core-avx2' -mtune='core-avx2'
-LDFLAGS		+= $(PYTHON_LDFLAGS) -lev -shared -fcommon -Os -s -pthread -march='core-avx2' -mtune='core-avx2'
+CFLAGS		+= $(FEATURES) -std=c99 -fno-strict-aliasing -fcommon -fPIC -Wall
+LDFLAGS		+= $(PYTHON_LDFLAGS) -L/usr/lib/x86_64-linux-gnu -lev -shared -fcommon
 
 ifneq ($(WANT_SENDFILE), no)
 FEATURES	+= -D WANT_SENDFILE
@@ -40,12 +40,16 @@ print-env:
 	@echo CPPFLAGS=$(CPPFLAGS)
 	@echo LDFLAGS=$(LDFLAGS)
 	@echo args=$(HTTP_PARSER_SRC) $(wildcard $(SOURCE_DIR)/*.c)
+	@echo LD_LIBRARY_PATH=$(LD_LIBRARY_PATH)
 
 opt: clean
 	CFLAGS='-O3' make
 
 small: clean
-	CFLAGS='-Os' make
+	CFLAGS='-Os -s' make
+
+core_2: clean
+	CFLAGS='-march=core-avx2 -mtune=core-avx2' make
 
 _bjoernmodule:
 	@$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $(objects) -o $(BUILD_DIR)/_bjoern.so
