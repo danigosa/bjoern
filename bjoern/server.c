@@ -71,7 +71,7 @@ static void close_connection(struct ev_loop*, Request*);
 
 void server_run(ServerInfo* server_info)
 {
-  struct ev_loop *mainloop = ev_loop_new(EVFLAG_AUTO);
+  struct ev_loop* mainloop = ev_loop_new(EVFLAG_AUTO);
 
   ThreadInfo thread_info;
   thread_info.server_info = server_info;
@@ -126,7 +126,7 @@ ev_signal_on_sigint(struct ev_loop* mainloop, ev_signal* watcher, const int even
 
 #if WANT_SIGNAL_HANDLING
 static void
-ev_timer_ontick(struct ev_loop *mainloop, ev_timer* watcher, const int events)
+ev_timer_ontick(struct ev_loop* mainloop, ev_timer* watcher, const int events)
 {
   GIL_LOCK(0);
   PyErr_CheckSignals();
@@ -135,7 +135,7 @@ ev_timer_ontick(struct ev_loop *mainloop, ev_timer* watcher, const int events)
 #endif
 
 static void
-ev_io_on_request(struct ev_loop *mainloop, ev_io* watcher, const int events)
+ev_io_on_request(struct ev_loop* mainloop, ev_io* watcher, const int events)
 {
   int client_fd;
   struct sockaddr_in sockaddr;
@@ -173,7 +173,7 @@ ev_io_on_request(struct ev_loop *mainloop, ev_io* watcher, const int events)
 }
 
 static void
-ev_io_on_read(struct ev_loop *mainloop, ev_io* watcher, const int events)
+ev_io_on_read(struct ev_loop* mainloop, ev_io* watcher, const int events)
 {
   static char read_buf[READ_BUFFER_SIZE];
 

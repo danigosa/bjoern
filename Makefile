@@ -9,13 +9,16 @@ HTTP_PARSER_DIR	= http-parser
 HTTP_PARSER_OBJ = $(HTTP_PARSER_DIR)/http_parser.o
 HTTP_PARSER_SRC = $(HTTP_PARSER_DIR)/http_parser.c
 
+LIBEV_DIR = "libev-4.25"
+
 objects		= $(HTTP_PARSER_OBJ) \
 		  $(patsubst $(SOURCE_DIR)/%.c, $(BUILD_DIR)/%.o, \
 		             $(wildcard $(SOURCE_DIR)/*.c))
 
-CPPFLAGS	+= $(PYTHON_INCLUDE) -I . -I $(SOURCE_DIR) -I $(HTTP_PARSER_DIR)
+CC 			= gcc
+CPPFLAGS	+= $(PYTHON_INCLUDE) -I . -I $(SOURCE_DIR) -I $(HTTP_PARSER_DIR) -I $(LIBEV_DIR)
 CFLAGS		+= $(FEATURES) -std=c99 -fno-strict-aliasing -fcommon -fPIC -Wall
-LDFLAGS		+= $(PYTHON_LDFLAGS) -L/usr/lib/x86_64-linux-gnu -lev -shared -fcommon
+LDFLAGS		+= $(PYTHON_LDFLAGS) -lev -shared -fcommon
 
 ifneq ($(WANT_SENDFILE), no)
 FEATURES	+= -D WANT_SENDFILE
@@ -48,8 +51,8 @@ opt: clean
 small: clean
 	CFLAGS='-Os -s' make
 
-core_2: clean
-	CFLAGS='-march=core-avx2 -mtune=core-avx2' make
+fast: clean
+	CFLAGS='-Os -s -O3 -march=core-avx2 -mtune=core-avx2' make
 
 _bjoernmodule:
 	@$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $(objects) -o $(BUILD_DIR)/_bjoern.so
