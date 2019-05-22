@@ -1,3 +1,4 @@
+import logging
 import os
 import socket
 import _bjoern
@@ -5,6 +6,8 @@ import _bjoern
 __version__ = ".".join(f"{i}" for i in _bjoern.version)
 _default_instance = None
 DEFAULT_LISTEN_BACKLOG = 1024
+
+log = logging.getLogger(__name__)
 
 
 def bind_and_listen(
@@ -36,8 +39,8 @@ def bind_and_listen(
     return sock
 
 
-def server_run(sock, wsgi_app):
-    _bjoern.server_run(sock, wsgi_app)
+def server_run(sock, wsgi_app, log_level):
+    _bjoern.server_run(sock, wsgi_app, log_level)
 
 
 # Backwards compatibility API
@@ -80,10 +83,14 @@ def run(*args, **kwargs):
                 "before calling bjoern.run() without "
                 "arguments."
             )
-
+    log_level = kwargs.get("log_level", logging.INFO)
+    log.setLevel(log_level)
+    log.info(
+        f"Starting Bjoern:\n- args: {args}\n- kwargs: {kwargs}\n- Logging: {log_level}"
+    )
     sock, wsgi_app = _default_instance
     try:
-        server_run(sock, wsgi_app)
+        server_run(sock, wsgi_app, log_level)
     finally:
         if sock.family == socket.AF_UNIX:
             filename = sock.getsockname()

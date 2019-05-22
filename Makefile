@@ -94,7 +94,7 @@ flask_bench:
 	@sleep 5
 
 flask_ab: fast flask_bench ab1
-	kill ${LAST_BENCH}
+	@kill ${LAST_BENCH}
 
 ab1:
 	$(AB) $(TEST_URL)

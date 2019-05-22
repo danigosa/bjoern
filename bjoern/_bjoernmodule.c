@@ -2,6 +2,8 @@
 #include "server.h"
 #include "wsgi.h"
 #include "filewrapper.h"
+#include "log.h"
+#include "py3.h"
 
 static PyObject*
 run(PyObject* self, PyObject* args)
@@ -10,7 +12,9 @@ run(PyObject* self, PyObject* args)
 
   PyObject* socket;
 
-  if(!PyArg_ParseTuple(args, "OO:server_run", &socket, &info.wsgi_app)) {
+  PyObject* log_level;
+
+  if(!PyArg_ParseTuple(args, "OOO:server_run", &socket, &info.wsgi_app, &log_level)) {
     return NULL;
   }
 
@@ -32,6 +36,32 @@ run(PyObject* self, PyObject* args)
     }
   }
 
+  #pragma GCC diagnostic ignored "-Wint-conversion"
+  int i_log_level = _FromLong((PyObject *)((ServerInfo *)info.wsgi_app)->log_level);
+  switch (i_log_level) {
+      case 0:
+          log_set_level(LOG_TRACE);
+          break;
+      case 10:
+          log_set_level(LOG_DEBUG);
+          break;
+      case 20:
+          log_set_level(LOG_INFO);
+          break;
+      case 30:
+          log_set_level(LOG_WARN);
+          break;
+      case 40:
+          log_set_level(LOG_ERROR);
+          break;
+      case 50:
+          log_set_level(LOG_FATAL);
+          break;
+      default:
+          log_set_level(LOG_INFO);
+          break;
+  }
+
   _initialize_request_module(&info);
   server_run(&info);
 
@@ -50,7 +80,7 @@ static struct PyModuleDef module = {
   -1, /* size of per-interpreter state of the module,
          or -1 if the module keeps state in global variables. */
   Bjoern_FunctionTable,
-  NULL, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL
 };
 
 #define INIT_BJOERN PyInit__bjoern

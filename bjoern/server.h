@@ -8,6 +8,7 @@ typedef struct {
   PyObject* wsgi_app;
   PyObject* host;
   PyObject* port;
+  PyObject* log_level;
 } ServerInfo;
 
 void server_run(ServerInfo*);
