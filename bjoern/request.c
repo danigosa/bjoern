@@ -111,7 +111,7 @@ on_message_begin(http_parser *parser) {
 }
 
 static int
-on_path(http_parser *parser, const char *path, size_t len) {
+on_url(http_parser *parser, const char *path, size_t len) {
     if (*http_method_str(parser->method) != HTTP_CONNECT && http_parser_parse_url(path, len, 0, &URL_PARSER))
         return 1;
     char part[512];
@@ -132,6 +132,7 @@ on_path(http_parser *parser, const char *path, size_t len) {
 
 static int
 on_header_field(http_parser *parser, const char *field, size_t len) {
+    log_debug("Header Field(%x): %s", len, field);
     if (PARSER->last_call_was_header_value) {
         /* We are starting a new header */
         Py_XDECREF(PARSER->field);
@@ -173,6 +174,7 @@ on_header_field(http_parser *parser, const char *field, size_t len) {
 
 static int
 on_header_value(http_parser *parser, const char *value, size_t len) {
+    log_debug("Header(%x): %s", len, value);
     PARSER->last_call_was_header_value = true;
     if (!PARSER->invalid_header) {
         /* Set header, or append data to header if this is not the first call */
@@ -183,16 +185,25 @@ on_header_value(http_parser *parser, const char *value, size_t len) {
 
 static int
 on_body(http_parser *parser, const char *data, const size_t len) {
+    log_debug("Body(%x): %s", len, data);
     PyObject *body;
 
     body = PyDict_GetItem(REQUEST->headers, _wsgi_input);
     if (body == NULL) {
-        if (!parser->content_length) {
+        if (!parser->content_length && !len) {
+            log_error("Bad Body Length:\n%s", data);
             REQUEST->state.error_code = HTTP_LENGTH_REQUIRED;
             return 1;
         }
+        if (!parser->content_length && len) {
+            char len_s[256];
+            snprintf(len_s, sizeof len, "%zu", len);
+            parser->content_length = len;
+            _set_or_append_header(REQUEST->headers, _CONTENT_LENGTH, len_s, strlen(len_s));
+        }
         body = PyObject_CallMethodObjArgs(IO_module, _BytesIO, NULL);
         if (body == NULL) {
+            log_error("Bad Body from IO_module(%x):\n%s", len, data);
             return 1;
         }
         _set_header_free_value(_wsgi_input, body);
@@ -257,7 +268,7 @@ PyDict_ReplaceKey(PyObject *dict, PyObject *old_key, PyObject *new_key) {
 
 static http_parser_settings
         parser_settings = {
-        on_message_begin, on_path, NULL, on_header_field,
+        on_message_begin, on_url, NULL, on_header_field,
         on_header_value, NULL, on_body, on_message_complete, NULL, NULL
 };
 

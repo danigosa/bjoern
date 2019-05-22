@@ -6,27 +6,6 @@
                   (c >= 'A' && c <= 'F') ? (c - 'A' + 10) : NOHEX)
 #define NOHEX ((char) -1)
 
-size_t unquote_url_inplace(char* url, size_t len)
-{
-  for(char *p=url, *end=url+len; url != end; ++url, ++p) {
-    if(*url == '%') {
-      if(url >= end-2) {
-        /* Less than two characters left after the '%' */
-        return 0;
-      }
-      char a = UNHEX(url[1]);
-      char b = UNHEX(url[2]);
-      if(a == NOHEX || b == NOHEX) return 0;
-      *p = a*16 + b;
-      url += 2;
-      len -= 2;
-    } else {
-      *p = *url;
-    }
-  }
-  return len;
-}
-
 void _init_common()
 {
 

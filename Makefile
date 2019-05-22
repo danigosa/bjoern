@@ -1,6 +1,7 @@
 SOURCE_DIR	= bjoern
 BUILD_DIR	= build
 PYTHON	= python3
+PY36	= py36
 DEBUG = DEBUG=True
 
 PYTHON_INCLUDE	= $(shell ${PYTHON}-config --includes | sed s/-I/-isystem\ /g)
@@ -72,11 +73,11 @@ $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.c
 %.o: $(BUILD_DIR)/%.o
 
 reqs: requirements.txt
-	pip3 install -r requirements.txt
+	pip3 install -r requirements.txt --quiet
 
 fmt:
 	@isort --settings-path=/.isort.cfg **/*.py
-	@black -t py36 .
+	@black -t $(PY36) .
 
 prepare-build: reqs fmt
 	@mkdir -p $(BUILD_DIR)

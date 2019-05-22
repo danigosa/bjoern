@@ -48,7 +48,7 @@ def flask_hello():
 
     @app.route("/a/b/c", methods=("GET", "POST"))
     def hello_world():
-        return f"Hello, World! Args: {request.args}"
+        return f"Hello, World! Args: {request.args.get('k'), request.args.get('k2'), dict(request.form)}"
 
     return app
 
