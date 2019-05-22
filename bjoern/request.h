@@ -8,6 +8,8 @@
 
 void _initialize_request_module(ServerInfo* server_info);
 
+typedef struct http_parser_url http_parser_url;
+
 typedef struct {
   unsigned error_code : 2;
   unsigned parse_finished : 1;
@@ -20,6 +22,7 @@ typedef struct {
 
 typedef struct {
   http_parser parser;
+  http_parser_url url_parser;
   PyObject* field;
   int last_call_was_header_value;
   int invalid_header;

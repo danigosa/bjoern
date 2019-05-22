@@ -6,7 +6,8 @@ from wsgiref.validate import validator
 
 import pytest
 import requests
-from flask import Flask
+from bottle import Bottle
+from flask import Flask, request
 
 import bjoern
 
@@ -45,8 +46,18 @@ class TestClient:
 def flask_hello():
     app = Flask(__name__)
 
-    @app.route("/")
+    @app.route("/a/b/c", methods=("GET", "POST"))
     def hello_world():
+        return f"Hello, World! Args: {request.args}"
+
+    return app
+
+
+def bottle_hello():
+    app = Bottle()
+
+    @app.route("/hello")
+    def hello():
         return "Hello, World!"
 
     return app
@@ -124,6 +135,25 @@ def client():
 @pytest.fixture()
 def flask_app_hello_app():
     _app = flask_hello()
+
+    def _start_server(_app_):
+        bjoern.run(_app_, "localhost", 8080)
+
+    p = Process(target=_start_server, args=(_app,))
+    p.start()
+
+    time.sleep(5)  # Should be enough for the server to start
+
+    try:
+        yield p
+    finally:
+        os.kill(p.pid, signal.SIGKILL)
+        time.sleep(1)  # Should be enough for the server to stop
+
+
+@pytest.fixture()
+def bottle_app_hello_app():
+    _app = bottle_hello()
 
     def _start_server(_app_):
         bjoern.run(_app_, "localhost", 8080)

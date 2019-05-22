@@ -15,6 +15,7 @@ if _DEBUG:
     print(f"Debugging build")
     extra_compile_args = [
         "-std=c99",
+        "-pthread",
         "-fno-strict-aliasing",
         "-fcommon",
         "-fPIC",
@@ -27,6 +28,7 @@ if _DEBUG:
 else:
     extra_compile_args = [
         "-std=c99",
+        "-pthread",
         "-fno-strict-aliasing",
         "-fcommon",
         "-fPIC",

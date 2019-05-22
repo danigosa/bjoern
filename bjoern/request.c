@@ -21,6 +21,7 @@ Request *Request_new(ServerInfo *server_info, int client_fd, const char *client_
     request->client_fd = client_fd;
     request->client_addr = _PEP3333_String_FromUTF8String(client_addr);
     http_parser_init((http_parser *) &request->parser, HTTP_REQUEST);
+    http_parser_url_init(&request->parser.url_parser);
     request->parser.parser.data = request;
     Request_reset(request);
     return request;
@@ -66,7 +67,6 @@ void Request_clean(Request *request) {
 }
 
 /* Parse stuff */
-
 void Request_parse(Request *request, const char *data, const size_t data_len) {
     assert(data_len);
     size_t nparsed = http_parser_execute((http_parser *) &request->parser,
@@ -77,6 +77,7 @@ void Request_parse(Request *request, const char *data, const size_t data_len) {
 
 #define REQUEST ((Request*)parser->data)
 #define PARSER  ((bj_parser*)parser)
+#define URL_PARSER  (((bj_parser*)parser)->url_parser)
 
 #define _set_header(k, v) PyDict_SetItem(REQUEST->headers, k, v);
 /* PyDict_SetItem() increases the ref-count for value */
@@ -111,15 +112,21 @@ on_message_begin(http_parser *parser) {
 
 static int
 on_path(http_parser *parser, const char *path, size_t len) {
-    if (!(len = unquote_url_inplace((char *) path, len)))
+    if (*http_method_str(parser->method) != HTTP_CONNECT && http_parser_parse_url(path, len, 0, &URL_PARSER))
         return 1;
-    _set_or_append_header(REQUEST->headers, _PATH_INFO, path, len);
-    return 0;
-}
+    char part[512];
 
-static int
-on_query_string(http_parser *parser, const char *query, size_t len) {
-    _set_or_append_header(REQUEST->headers, _QUERY_STRING, query, len);
+    if (URL_PARSER.field_set & (1 << UF_PATH)) {
+        memcpy(part, path + URL_PARSER.field_data[UF_PATH].off, URL_PARSER.field_data[UF_PATH].len);
+        part[URL_PARSER.field_data[UF_PATH].len] = '\0';
+        _set_or_append_header(REQUEST->headers, _PATH_INFO, part, URL_PARSER.field_data[UF_PATH].len);
+    }
+
+    if (URL_PARSER.field_set & (1 << UF_QUERY)) {
+        memcpy(part, path + URL_PARSER.field_data[UF_QUERY].off, URL_PARSER.field_data[UF_QUERY].len);
+        part[URL_PARSER.field_data[UF_QUERY].len] = '\0';
+        _set_or_append_header(REQUEST->headers, _QUERY_STRING, part, URL_PARSER.field_data[UF_QUERY].len);
+    }
     return 0;
 }
 
@@ -250,7 +257,7 @@ PyDict_ReplaceKey(PyObject *dict, PyObject *old_key, PyObject *new_key) {
 
 static http_parser_settings
         parser_settings = {
-        on_message_begin, on_path, on_query_string, on_header_field,
+        on_message_begin, on_path, NULL, on_header_field,
         on_header_value, NULL, on_body, on_message_complete, NULL, NULL
 };
 

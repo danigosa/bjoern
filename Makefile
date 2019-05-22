@@ -10,7 +10,10 @@ HTTP_PARSER_DIR	= http-parser
 HTTP_PARSER_OBJ = $(HTTP_PARSER_DIR)/http_parser.o
 HTTP_PARSER_SRC = $(HTTP_PARSER_DIR)/http_parser.c
 
-objects		= 	$(HTTP_PARSER_OBJ) \
+HTTP_PARSER_URL_DIR	= http-parser/contrib
+HTTP_PARSER_URL_OBJ = $(HTTP_PARSER_URL_DIR)/url_parser
+
+objects		= 	$(HTTP_PARSER_OBJ) $(HTTP_PARSER_URL_OBJ) \
 		  		$(patsubst $(SOURCE_DIR)/%.c, $(BUILD_DIR)/%.o, \
 		             $(wildcard $(SOURCE_DIR)/*.c))
 ifneq ($(WANT_SENDFILE), no)
@@ -31,7 +34,7 @@ endif
 CC 			= gcc
 CPPFLAGS	+= $(PYTHON_INCLUDE) -I . -I $(SOURCE_DIR) -I $(HTTP_PARSER_DIR)
 CFLAGS		+= $(FEATURES) -std=c99 -fno-strict-aliasing -fcommon -fPIC -Wall -g
-LDFLAGS		+= $(PYTHON_LDFLAGS) -shared -fcommon
+LDFLAGS		+= $(PYTHON_LDFLAGS) -pthread -shared -fcommon
 
 
 all: prepare-build $(objects) _bjoernmodule
@@ -84,7 +87,13 @@ clean:
 AB		= ab -c 100 -n 10000
 TEST_URL	= "http://127.0.0.1:8080/a/b/c?k=v&k2=v2"
 
-ab: ab1 ab2 ab3 ab4
+flask_bench:
+	@$(PYTHON) flask_bench.py &
+	@export LAST_BENCH="$!"
+	@sleep 5
+
+flask_ab: fast flask_bench ab1
+	kill ${LAST_BENCH}
 
 ab1:
 	$(AB) $(TEST_URL)
@@ -141,4 +150,4 @@ libev:
 	@cd $(HTTP_PARSER_DIR) && git checkout 5c17dad400e45c5a442a63f250fff2638d144682
 
 $(HTTP_PARSER_OBJ): libev
-	$(MAKE) -C $(HTTP_PARSER_DIR) http_parser.o CFLAGS_DEBUG_EXTRA=-fPIC CFLAGS_FAST_EXTRA="-fPIC -march='core-avx2' -mtune='core-avx2'"
+	$(MAKE) -C $(HTTP_PARSER_DIR) http_parser.o url_parser CFLAGS_DEBUG_EXTRA=-fPIC CFLAGS_FAST_EXTRA="-pthread -fPIC -march='core-avx2' -mtune='core-avx2'"
