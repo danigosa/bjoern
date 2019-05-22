@@ -1,0 +1,6 @@
+isort
+black
+twine
+flask
+pytest
+requests

@@ -1,21 +1,14 @@
+import os
 import signal
 
-import bjoern
 
-n = 0
-
-
-def app(e, s):
-    s("200 ok", [])
-    return b"%d times" % n
-
-
-def inc_counter(*args):
-    global n
-    n += 1
-    print("Increased counter to", n)
-
-
-signal.signal(signal.SIGTERM, inc_counter)
-
-bjoern.run(app, "0.0.0.0", 8080)
+def test_wsgi_signal(wsgi_signal_app, client):
+    response = client.get("/")
+    assert response.status_code == 200
+    assert response.reason == "ok"
+    assert response.content == b"0 times"
+    os.kill(wsgi_signal_app.pid, signal.SIGTERM)
+    response = client.get("/")
+    assert response.status_code == 200
+    assert response.reason == "ok"
+    assert response.content == b"1 times"

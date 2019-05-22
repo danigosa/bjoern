@@ -1,8 +1,8 @@
 FROM ubuntu:bionic
 
 RUN \
-  apt-get -qy update && \
-  apt-get -qy install --no-install-recommends \
+  apt-get -qq update && \
+  apt-get -qq install --no-install-recommends \
 	build-essential \
 	git \
 	vim \
@@ -22,7 +22,5 @@ RUN \
   rm -rf /var/lib/apt/lists/*
 
 RUN ldconfig
-
-RUN pip3 install isort black twine flask
 
 CMD ["python3", "--version"] 

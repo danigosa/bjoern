@@ -3,7 +3,7 @@ BUILD_DIR	= build
 PYTHON	= python3
 DEBUG = DEBUG=True
 
-PYTHON_INCLUDE	= $(shell ${PYTHON}-config --includes)
+PYTHON_INCLUDE	= $(shell ${PYTHON}-config --includes | sed s/-I/-isystem\ /g)
 PYTHON_LDFLAGS	= $(shell ${PYTHON}-config --ldflags)
 
 HTTP_PARSER_DIR	= http-parser
@@ -68,11 +68,14 @@ $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.c
 # foo.o: shortcut to $(BUILD_DIR)/foo.o
 %.o: $(BUILD_DIR)/%.o
 
+reqs: requirements.txt
+	pip3 install -r requirements.txt
+
 fmt:
 	@isort --settings-path=/.isort.cfg **/*.py
 	@black -t py36 .
 
-prepare-build: fmt
+prepare-build: reqs fmt
 	@mkdir -p $(BUILD_DIR)
 
 clean:
@@ -109,12 +112,19 @@ memwatch:
 	   echo; echo; \
 	   tail -n +25 /proc/$$(pgrep -n ${PYTHON})/smaps'
 
-install:
+uninstall:
+	@pip3 uninstall -y bjoern || { echo "Not installed."; }
+
+install: uninstall
 	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) $(DEBUG) ${PYTHON} setup.py build_ext
 	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) $(DEBUG) ${PYTHON} setup.py install
 
-uninstall:
-	@pip3 uninstall -y bjoern
+install_real: uninstall
+	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) ${PYTHON} setup.py build_ext
+	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) ${PYTHON} setup.py install
+
+test: reqs fmt install_real
+	pytest
 
 upload:
 	${PYTHON} setup.py sdist upload
