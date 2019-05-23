@@ -1,5 +1,6 @@
-from flask import Flask, request, jsonify
+from flask import Flask, jsonify, request
 from werkzeug.exceptions import abort
+
 import bjoern
 
 app = Flask(__name__)
@@ -15,9 +16,10 @@ def bench():
     elif request.method == "POST":
         k = request.args.get("k")
         k2 = request.args.get("k2")
-        asdfghjkl = request.form["asdfghjkl"]
+        asdfghjkl = request.form.get("asdfghjkl")
+        qwerty = request.form.get("qwerty")
 
-        return jsonify({"k": k, "k2": k2, "asdfghjkl": asdfghjkl})
+        return jsonify({"k": k, "k2": k2, "asdfghjkl": asdfghjkl, "qwerty": qwerty})
 
     abort(400)
 

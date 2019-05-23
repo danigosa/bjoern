@@ -72,8 +72,8 @@ $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.c
 # foo.o: shortcut to $(BUILD_DIR)/foo.o
 %.o: $(BUILD_DIR)/%.o
 
-reqs: requirements.txt
-	pip3 install -r requirements.txt --quiet
+reqs: install-requirements requirements.txt
+	@bash install-requirements
 
 fmt: reqs
 	@isort --settings-path=/.isort.cfg **/*.py
@@ -89,12 +89,20 @@ AB		= ab -c 100 -n 10000
 TEST_URL	= "http://127.0.0.1:8080/a/b/c?k=v&k2=v2"
 
 _flask_bench: fmt install_real
-	@$(PYTHON) flask_bench.py & jobs -p >/var/run/flask_bench.pid
+	@$(PYTHON) bench/flask_bench.py & jobs -p >/var/run/flask_bench.pid
 	@sleep 5
 
 flask_ab: _flask_bench ab1 ab2 ab3 ab4
 	@cat /var/run/flask_bench.pid | xargs -n1 kill -9
 	@rm -f /var/run/flask_bench.pid
+
+_bottle_bench: fmt install_real
+	@$(PYTHON) bench/bottle_bench.py & jobs -p >/var/run/bottle_bench.pid
+	@sleep 5
+
+bottle_ab: _bottle_bench ab1 ab2 ab3 ab4
+	@cat /var/run/bottle_bench.pid | xargs -n1 kill -9
+	@rm -f /var/run/bottle_bench.pid
 
 ab1:
 	$(AB) $(TEST_URL)
@@ -136,10 +144,10 @@ install_real: clean uninstall fast
 test: reqs fmt install_real
 	pytest
 
-upload:
+upload: test
 	${PYTHON} setup.py sdist upload
 
-wheel:
+wheel: test
 	${PYTHON} setup.py bdist_wheel
 
 upload-wheel: wheel

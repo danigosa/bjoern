@@ -31,7 +31,7 @@ def bind_and_listen(
             # ideally also set their CPU affinity), resulting in more efficient
             # load distribution.  https://lwn.net/Articles/542629/
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
-        sock.bind((host, port))
+        sock.bind((host, int(port)))
 
     sock.listen(listen_backlog)
 
@@ -96,7 +96,9 @@ def run(*args, **kwargs):
                 "before calling bjoern.run() without "
                 "arguments."
             )
-    log_level = kwargs.get("log_level", os.environ.get("BJ_LOG_LEVEL", logging.INFO))
+    log_level = kwargs.get(
+        "log_level", int(os.environ.get("BJ_LOG_LEVEL", logging.INFO))
+    )
     log = setup_loggin(log_level)
     pid = os.getpid()
     uid = os.getuid()

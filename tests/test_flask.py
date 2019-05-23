@@ -1,4 +1,4 @@
-def test_flask_app_hello(flask_app_hello_app, client):
+def test_flask_app(flask_app, client):
     response = client.get("/a/b/c?k=v&k2=v2")
     assert response.status_code == 200
     assert response.reason == "OK"

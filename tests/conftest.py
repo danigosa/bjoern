@@ -7,7 +7,9 @@ from wsgiref.validate import validator
 import pytest
 import requests
 from bottle import Bottle
-from flask import Flask, request
+from bottle import request as bottle_request
+from flask import Flask
+from flask import request as flask_request
 
 import bjoern
 
@@ -43,77 +45,70 @@ class TestClient:
         return requests.post(f"{self.base_url}{path}", data=data, headers=headers_)
 
 
-def flask_hello():
+@pytest.fixture
+def client():
+    return TestClient()
+
+
+def _run_app(app):
+    def _start_server(_app_):
+        bjoern.run(_app_, "localhost", 8080)
+
+    p = Process(target=_start_server, args=(app,))
+    p.start()
+
+    time.sleep(2)  # Should be enough for the server to start
+
+    return p
+
+
+@pytest.fixture()
+def flask_app():
     app = Flask(__name__)
 
     @app.route("/a/b/c", methods=("GET", "POST"))
     def hello_world():
-        return f"Hello, World! Args: {request.args.get('k'), request.args.get('k2'), dict(request.form)}"
+        return (
+            f"Hello, World! Args:"
+            f" {flask_request.args.get('k'), flask_request.args.get('k2'), dict(flask_request.form)}"
+        )
 
-    return app
+    p = _run_app(app)
+    try:
+        yield p
+    finally:
+        os.kill(p.pid, signal.SIGKILL)
+        time.sleep(1)  # Should be enough for the server to stop
 
 
-def bottle_hello():
+@pytest.fixture()
+def bottle_app():
     app = Bottle()
 
-    @app.route("/hello")
+    @app.get("/a/b/c")
     def hello():
-        return "Hello, World!"
+        return f"Hello, World! {dict(bottle_request.params)}"
 
-    return app
+    @app.post("/a/b/c")
+    def hello():
+        return (
+            f"Hello, World! {dict(bottle_request.params)} {dict(bottle_request.forms)}"
+        )
 
-
-def wsgi_hello():
-    @validator
-    def _app(environ, start_response):
-        start_response("200 OK", [("Content-Type", "text/plain")])
-        return [b"Hello, World!"]
-
-    return _app
-
-
-def wsgi_204():
-    @validator
-    def _app(e, s):
-        s("204 no content", [])
-        return []
-
-    return _app
+    p = _run_app(app)
+    try:
+        yield p
+    finally:
+        os.kill(p.pid, signal.SIGKILL)
+        time.sleep(1)  # Should be enough for the server to stop
 
 
-def wsgi_empty():
-    @validator
-    def _app(e, s):
-        s("200 ok", [("Content-Type", "text/plain")])
-        return [b""]
-
-    return _app
-
-
-def wsgi_signal():
-    _n = 0
-
-    def inc_counter(signum, frame):
-        nonlocal _n
-        _n += 1
-        print("Increased counter to", _n)
-
-    signal.signal(signal.SIGTERM, inc_counter)
-
-    @validator
-    def _app(e, s):
-        nonlocal _n
-        s("200 ok", [("Content-Type", "text/plain")])
-        return [b"%d times" % _n]
-
-    return _app
-
-
-def wsgi_exec_info():
+@pytest.fixture()
+def exec_info_reference_app():
     _alist = []
 
     @validator
-    def _app(env, start_response):
+    def app(env, start_response):
         start_response("200 alright", [("Content-Type", "text/plain")])
         try:
             a
@@ -124,26 +119,7 @@ def wsgi_exec_info():
             start_response("500 error", _alist, x)
         return [b"hello"]
 
-    return _app
-
-
-@pytest.fixture
-def client():
-    return TestClient()
-
-
-@pytest.fixture()
-def flask_app_hello_app():
-    _app = flask_hello()
-
-    def _start_server(_app_):
-        bjoern.run(_app_, "localhost", 8080)
-
-    p = Process(target=_start_server, args=(_app,))
-    p.start()
-
-    time.sleep(5)  # Should be enough for the server to start
-
+    p = _run_app(app)
     try:
         yield p
     finally:
@@ -152,36 +128,13 @@ def flask_app_hello_app():
 
 
 @pytest.fixture()
-def bottle_app_hello_app():
-    _app = bottle_hello()
+def wsgi_compliance_app():
+    @validator
+    def app(environ, start_response):
+        start_response("200 OK", [("Content-Type", "text/plain")])
+        return [b"Hello, World!"]
 
-    def _start_server(_app_):
-        bjoern.run(_app_, "localhost", 8080)
-
-    p = Process(target=_start_server, args=(_app,))
-    p.start()
-
-    time.sleep(5)  # Should be enough for the server to start
-
-    try:
-        yield p
-    finally:
-        os.kill(p.pid, signal.SIGKILL)
-        time.sleep(1)  # Should be enough for the server to stop
-
-
-@pytest.fixture()
-def wsgi_hello_app():
-    _app = wsgi_hello()
-
-    def _start_server(_app_):
-        bjoern.run(_app_, "localhost", 8080)
-
-    p = Process(target=_start_server, args=(_app,))
-    p.start()
-
-    time.sleep(5)  # Should be enough for the server to start
-
+    p = _run_app(app)
     try:
         yield p
     finally:
@@ -191,16 +144,12 @@ def wsgi_hello_app():
 
 @pytest.fixture()
 def wsgi_204_app():
-    _app = wsgi_204()
+    @validator
+    def app(e, s):
+        s("204 no content", [])
+        return []
 
-    def _start_server(_app_):
-        bjoern.run(_app_, "localhost", 8080)
-
-    p = Process(target=_start_server, args=(_app,))
-    p.start()
-
-    time.sleep(5)  # Should be enough for the server to start
-
+    p = _run_app(app)
     try:
         yield p
     finally:
@@ -210,16 +159,12 @@ def wsgi_204_app():
 
 @pytest.fixture()
 def wsgi_empty_app():
-    _app = wsgi_empty()
+    @validator
+    def app(e, s):
+        s("200 ok", [("Content-Type", "text/plain")])
+        return [b""]
 
-    def _start_server(_app_):
-        bjoern.run(_app_, "localhost", 8080)
-
-    p = Process(target=_start_server, args=(_app,))
-    p.start()
-
-    time.sleep(5)  # Should be enough for the server to start
-
+    p = _run_app(app)
     try:
         yield p
     finally:
@@ -229,35 +174,22 @@ def wsgi_empty_app():
 
 @pytest.fixture()
 def wsgi_signal_app():
-    _app = wsgi_signal()
+    _n = 0
 
-    def _start_server(_app_):
-        bjoern.run(_app_, "localhost", 8080)
+    def inc_counter(signum, frame):
+        nonlocal _n
+        _n += 1
+        print("Increased counter to", _n)
 
-    p = Process(target=_start_server, args=(_app,))
-    p.start()
+    signal.signal(signal.SIGTERM, inc_counter)
 
-    time.sleep(5)  # Should be enough for the server to start
+    @validator
+    def app(e, s):
+        nonlocal _n
+        s("200 ok", [("Content-Type", "text/plain")])
+        return [b"%d times" % _n]
 
-    try:
-        yield p
-    finally:
-        os.kill(p.pid, signal.SIGKILL)
-        time.sleep(1)  # Should be enough for the server to stop
-
-
-@pytest.fixture()
-def wsgi_exec_info_app():
-    _app = wsgi_exec_info()
-
-    def _start_server(_app_):
-        bjoern.run(_app_, "localhost", 8080)
-
-    p = Process(target=_start_server, args=(_app,))
-    p.start()
-
-    time.sleep(5)  # Should be enough for the server to start
-
+    p = _run_app(app)
     try:
         yield p
     finally:

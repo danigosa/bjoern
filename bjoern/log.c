@@ -28,14 +28,6 @@
 
 #include "log.h"
 
-static struct {
-    void *udata;
-    log_LockFn lock;
-    FILE *fp;
-    int level;
-    int quiet;
-} L;
-
 
 static const char *level_names[] = {
         "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL"
@@ -46,6 +38,14 @@ static const char *level_colors[] = {
   "\x1b[94m", "\x1b[36m", "\x1b[32m", "\x1b[33m", "\x1b[31m", "\x1b[35m"
 };
 #endif
+
+static struct {
+    void *udata;
+    log_LockFn lock;
+    FILE *fp;
+    int level;
+    int quiet;
+} L;
 
 
 static void lock(void)   {
@@ -79,6 +79,10 @@ void log_set_fp(FILE *fp) {
 
 void log_set_level(int level) {
     L.level = level;
+}
+
+int log_get_level(void) {
+    return L.level;
 }
 
 

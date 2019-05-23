@@ -3,6 +3,7 @@
 #include "filewrapper.h"
 
 #include "py3.h"
+#include "log.h"
 
 static inline void PyDict_ReplaceKey(PyObject *dict, PyObject *k1, PyObject *k2);
 
@@ -79,7 +80,33 @@ void Request_parse(Request *request, const char *data, const size_t data_len) {
 #define PARSER  ((bj_parser*)parser)
 #define URL_PARSER  (((bj_parser*)parser)->url_parser)
 
-#define _set_header(k, v) PyDict_SetItem(REQUEST->headers, k, v);
+#define _set_header(k, v) \
+    do { \
+        PyDict_SetItem(REQUEST->headers, k, v); \
+        if (log_get_level() < LOG_INFO) { \
+            PyObject *krepr = PyObject_Repr(k); \
+            PyObject *kstr = PyUnicode_AsEncodedString(krepr, "utf-8", "~E~"); \
+            char *ks = PyBytes_AS_STRING(kstr); \
+            PyObject *vrepr; \
+            PyObject *vstr; \
+            if (strcmp(ks, "'wsgi.input'") == 0) { \
+                PyObject *buf0 = (PyObject*)PyObject_CallMethodObjArgs(v, _seek, _FromLong(0), NULL); \
+                PyObject *vbts = (PyObject*)PyObject_CallMethodObjArgs(v, _read, NULL); \
+                vrepr = PyObject_Repr(vbts); \
+                Py_DECREF(vbts); \
+                Py_DECREF(buf0); \
+            } else { \
+                vrepr = PyObject_Repr(v); \
+            } \
+            vstr = PyUnicode_AsEncodedString(vrepr, "utf-8", "~E~"); \
+            char *vs = PyBytes_AS_STRING(vstr); \
+            log_debug("Setting Header %s:%s", ks, vs); \
+            Py_DECREF(krepr); \
+            Py_DECREF(vrepr); \
+            Py_DECREF(kstr); \
+            Py_DECREF(vstr); \
+        } \
+    } while(0)
 /* PyDict_SetItem() increases the ref-count for value */
 #define _set_header_free_value(k, v) \
   do { \
@@ -193,13 +220,11 @@ static int
 on_body(http_parser *parser, const char *data, const size_t len) {
     log_debug("Body(%zu): %s", len, data);
     PyObject *body;
-
     body = PyDict_GetItem(REQUEST->headers, _wsgi_input);
     if (body == NULL) {
         if (!parser->content_length && !len) {
-            log_error("Bad Body Length:\n%s", data);
             REQUEST->state.error_code = HTTP_LENGTH_REQUIRED;
-            log_error("Invalid http length: %zu", len);
+            log_error("Bad Body Length(%zu):\n%s", len, data);
             return 1;
         }
         if (!parser->content_length && len) {
@@ -213,10 +238,10 @@ on_body(http_parser *parser, const char *data, const size_t len) {
             log_error("Bad Body from IO_module(%zu):\n%s", len, data);
             return 1;
         }
-        _set_header_free_value(_wsgi_input, body);
     }
     PyObject *temp_data = _PEP3333_Bytes_FromStringAndSize(data, len);
     PyObject *tmp = PyObject_CallMethodObjArgs(body, _write, temp_data, NULL);
+    _set_header_free_value(_wsgi_input, body);
     Py_DECREF(tmp); /* Never throw away return objects from py-api */
     Py_DECREF(temp_data);
     return 0;
@@ -247,10 +272,12 @@ on_message_complete(http_parser *parser) {
     PyObject *body = PyDict_GetItem(REQUEST->headers, _wsgi_input);
     if (body) {
         /* first do a seek(0) and then read() returns all data */
+        log_debug("on_message_complete: request has body and we seek to 0");
         PyObject *buf = PyObject_CallMethodObjArgs(body, _seek, _FromLong(0), NULL);
         Py_DECREF(buf); /* Discard the return value */
     } else {
         /* Request has no body */
+        log_debug("on_message_complete: request has no body");
         body = PyObject_CallMethodObjArgs(IO_module, _BytesIO, NULL);
         _set_header_free_value(_wsgi_input, body);
     }

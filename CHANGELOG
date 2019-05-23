@@ -1,15 +1,17 @@
-4.0.0-a1 (May 23, 2019)
-    - For from master
+4.0.0-a1 (May 2019)
+    - Fork from master@9884381ffdbc279fbf1ef640003fcce0a6f0996a
     - Drop support for Python2, supporting only Python3.6+
     - Updated to `http-parser` latest stable version 2.9.2
     - Tested on Ubuntu18.04 with `libev` version 4.22
-    - Added unit testing
+    - Added unit testing support with Pytest
+    - Added tests for Flask and Bottle
     - Replace in hand url parser by `http-parser.http_parser_url`
-    - Added logging support
+    - Added logging support (stdout/stderr)
     - Added a Dockerfile and `run-dev` script to run development easily
     - Added modern `core-avx2` compilation options
     - Added wheel support (only bjoern-4.0.0-cp36-cp36m-manylinux1_x86_64.whl for now)
     - Added a Flask bench to make use of ab benchmarks
+    - Added Black & iSort formatting for python files
 
 3.0.0 (May 7, 2019)
     - Fix #91: Support for SIGTERM/SIGINT handling
