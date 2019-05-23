@@ -2,12 +2,11 @@ import logging
 import os
 import socket
 import _bjoern
+import sys
 
 __version__ = ".".join(f"{i}" for i in _bjoern.version)
 _default_instance = None
 DEFAULT_LISTEN_BACKLOG = 1024
-
-log = logging.getLogger(__name__)
 
 
 def bind_and_listen(
@@ -41,6 +40,20 @@ def bind_and_listen(
 
 def server_run(sock, wsgi_app, log_level):
     _bjoern.server_run(sock, wsgi_app, log_level)
+
+
+def setup_loggin(log_level):
+    root = logging.getLogger(f"bjoern({__version__})")
+    root.setLevel(logging.DEBUG)
+
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setLevel(logging.DEBUG)
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
+    handler.setFormatter(formatter)
+    root.addHandler(handler)
+    return root
 
 
 # Backwards compatibility API
@@ -83,10 +96,29 @@ def run(*args, **kwargs):
                 "before calling bjoern.run() without "
                 "arguments."
             )
-    log_level = kwargs.get("log_level", logging.INFO)
-    log.setLevel(log_level)
+    log_level = kwargs.get("log_level", os.environ.get("BJ_LOG_LEVEL", logging.INFO))
+    log = setup_loggin(log_level)
+    pid = os.getpid()
+    uid = os.getuid()
+    gid = os.getgid()
+    PID = kwargs.get("pid_file", "/var/run/bjoerns.pid")
+    with open(PID, "w+") as fpid:
+        fpid.write(str(pid))
+    os.chmod(PID, 0o664)
+    with open("LICENSE", "rb") as flic:
+        lic = flic.read()
     log.info(
-        f"Starting Bjoern:\n- args: {args}\n- kwargs: {kwargs}\n- Logging: {log_level}"
+        f"{lic.decode()}\n"
+        f"Booting Bjoern with:\n"
+        f"- host: {args[1]} \n"
+        f"- port: {args[2]} \n"
+        f"- LogLevel: {log_level} \n"
+        f"- reuse_port: {kwargs.get('reusePort', False)} \n"
+        f"- listen_backlog: {kwargs.get('listen_backlog', DEFAULT_LISTEN_BACKLOG)} \n"
+        f"- pid: {pid} \n"
+        f"- PID: {PID} \n"
+        f"- uid: {uid} \n"
+        f"- gid: {gid} \n"
     )
     sock, wsgi_app = _default_instance
     try:

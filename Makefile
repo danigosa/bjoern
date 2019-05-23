@@ -75,11 +75,11 @@ $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.c
 reqs: requirements.txt
 	pip3 install -r requirements.txt --quiet
 
-fmt:
+fmt: reqs
 	@isort --settings-path=/.isort.cfg **/*.py
 	@black -t $(PY36) .
 
-prepare-build: reqs fmt
+prepare-build: fmt
 	@mkdir -p $(BUILD_DIR)
 
 clean:
@@ -88,13 +88,13 @@ clean:
 AB		= ab -c 100 -n 10000
 TEST_URL	= "http://127.0.0.1:8080/a/b/c?k=v&k2=v2"
 
-flask_bench:
-	@$(PYTHON) flask_bench.py &
-	@export LAST_BENCH="$!"
+_flask_bench: fmt install_real
+	@$(PYTHON) flask_bench.py & jobs -p >/var/run/flask_bench.pid
 	@sleep 5
 
-flask_ab: fast flask_bench ab1
-	@kill ${LAST_BENCH}
+flask_ab: _flask_bench ab1 ab2 ab3 ab4
+	@cat /var/run/flask_bench.pid | xargs -n1 kill -9
+	@rm -f /var/run/flask_bench.pid
 
 ab1:
 	$(AB) $(TEST_URL)
@@ -125,11 +125,11 @@ memwatch:
 uninstall:
 	@pip3 uninstall -y bjoern || { echo "Not installed."; }
 
-install: uninstall
+install: clean uninstall all
 	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) $(DEBUG) ${PYTHON} setup.py build_ext
 	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) $(DEBUG) ${PYTHON} setup.py install
 
-install_real: uninstall
+install_real: clean uninstall fast
 	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) ${PYTHON} setup.py build_ext
 	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) ${PYTHON} setup.py install
 

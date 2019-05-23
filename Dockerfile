@@ -10,6 +10,7 @@ RUN \
 	curl \
 	make \
 	gdb \
+	psmisc \
 	valgrind \
 	apache2-utils \
  	python3-dev \

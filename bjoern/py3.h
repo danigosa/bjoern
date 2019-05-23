@@ -17,4 +17,5 @@
 #define _PEP3333_String_GET_SIZE(u) PyUnicode_GET_LENGTH(u)
 #define _PEP3333_String_Concat(u1, u2) PyUnicode_Concat(u1, u2)
 
+
 #endif /* _PY3_H */
