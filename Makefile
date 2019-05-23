@@ -143,7 +143,7 @@ wheel:
 	${PYTHON} setup.py bdist_wheel
 
 upload-wheel: wheel
-	twine upload
+	twine upload --repository=robbie-pypi --skip-existing dist/*.whl
 
 libev:
 	# http-parser 2.9.2
