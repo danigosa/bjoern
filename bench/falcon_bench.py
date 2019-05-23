@@ -18,10 +18,13 @@ class AppResource:
         k = request.get_param("k")
         k2 = request.get_param("k2")
         asdfghjkl = request.get_param("asdfghjkl")
+        qwerty = request.get_param("qwerty")
 
         response.status_code = 200
         response.content_type = "application/json"
-        response.body = json.dumps({"k": k, "k2": k2, "asdfghjkl": asdfghjkl})
+        response.body = json.dumps(
+            {"k": k, "k2": k2, "asdfghjkl": asdfghjkl, "qwerty": qwerty}
+        )
 
 
 app = falcon.API()
