@@ -1,9 +1,8 @@
 import os
 import glob
 from setuptools import setup, Extension
-import bjoern
 
-VERSION = bjoern.__version__
+VERSION = "4.0.0a1"
 
 SOURCE_FILES = [os.path.join("http-parser", "http_parser.c")] + sorted(
     glob.glob(os.path.join("bjoern", "*.c"))

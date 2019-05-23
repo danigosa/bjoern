@@ -1,13 +1,15 @@
-bjoern: Fast And Ultra-Lightweight HTTP/1.1 WSGI Server
-=======================================================
+bjoern: Fast And Ultra-Lightweight HTTP/1.1 WSGI Server for Python3.6+
+=======================================================================
 
 .. image:: https://badges.gitter.im/Join%20Chat.svg
    :alt: Join the chat at https://gitter.im/jonashaag/bjoern
    :target: https://gitter.im/jonashaag/bjoern?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
 
-A screamingly fast, ultra-lightweight WSGI_ server for CPython 2 and CPython 3,
+A screamingly fast, ultra-lightweight WSGI_ server for CPython3.6+,
 written in C using Marc Lehmann's high performance libev_ event loop and
 Ryan Dahl's http-parser_.
+
+For those looking for CPython2 or CPython3.4 or CPython3.5, please use Bjoern 3.x.
 
 Why It's Cool
 ~~~~~~~~~~~~~
