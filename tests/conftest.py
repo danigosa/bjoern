@@ -10,11 +10,8 @@ import bjoern
 class TestClient:
     base_url: str = "http://127.0.0.1:8080"
 
-    def get(self, path="/", params=None, token=None, headers=None, **kwargs):
+    def get(self, path="/", params=None, headers=None, **kwargs):
         _headers = {}
-
-        if token:
-            _headers["Authorization"] = f"Bearer {token}"
 
         if headers is not None:
             _headers.update(headers)
@@ -26,7 +23,7 @@ class TestClient:
         return requests.get(f"{self.base_url}{path}", headers=_headers, **kwargs)
 
     def post(self, path="/", json=None, data=None, headers=None):
-        headers_ = {}
+        headers_ = {"Content-Type": "application/x-www-form-urlencoded"}
 
         if json is not None:
             data = json.dumps(json)

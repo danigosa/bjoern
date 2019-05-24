@@ -117,7 +117,6 @@ on_message_begin(http_parser *parser) {
 
 static int
 on_url(http_parser *parser, const char *path, size_t len) {
-    log_debug("URL(%zu)", len);
     if (*http_method_str(parser->method) != HTTP_CONNECT && http_parser_parse_url(path, len, 0, &URL_PARSER)) {
         log_error("Failed to parse URL: (%zu) %s", len, path);
         return 1;
@@ -147,7 +146,6 @@ on_url(http_parser *parser, const char *path, size_t len) {
 
 static int
 on_header_field(http_parser *parser, const char *field, size_t len) {
-    log_debug("Header Field(%zu)", len);
     if (PARSER->last_call_was_header_value) {
         /* We are starting a new header */
         Py_XDECREF(PARSER->field);
@@ -189,7 +187,6 @@ on_header_field(http_parser *parser, const char *field, size_t len) {
 
 static int
 on_header_value(http_parser *parser, const char *value, size_t len) {
-    log_debug("Header Value(%zu)", len);
     PARSER->last_call_was_header_value = true;
     if (!PARSER->invalid_header) {
         /* Set header, or append data to header if this is not the first call */
@@ -207,9 +204,9 @@ on_body(http_parser *parser, const char *data, const size_t len) {
     PyObject *body;
     body = PyDict_GetItem(REQUEST->headers, _wsgi_input);
     if (body == NULL) {
-        if (!parser->content_length) {
+        if (!parser->content_length && !parser->http_minor) {
             REQUEST->state.error_code = HTTP_LENGTH_REQUIRED;
-            log_error("Bad Body Length(%zu):\n%s", len, data);
+            log_error("Bad Body Length(%zu:%zu):\n%s", parser->content_length, len, data);
             return 1;
         }
         body = PyObject_CallMethodObjArgs(IO_module, _BytesIO, NULL);
