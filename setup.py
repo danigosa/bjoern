@@ -2,7 +2,7 @@ import os
 import glob
 from setuptools import setup, Extension
 
-VERSION = "4.0.0"
+VERSION = "4.0.1"
 
 SOURCE_FILES = [os.path.join("http-parser", "http_parser.c")] + sorted(
     glob.glob(os.path.join("bjoern", "*.c"))
