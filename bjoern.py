@@ -103,13 +103,6 @@ def run(*args, **kwargs):
     pid = os.getpid()
     uid = os.getuid()
     gid = os.getgid()
-    try:
-        PID = kwargs.get("pid_file", "/var/run/bjoerns.pid")
-        with open(PID, "w+") as fpid:
-            fpid.write(str(pid))
-        os.chmod(PID, 0o664)
-    except PermissionError:
-        PID = None
     log.info(
         f"Booting Bjoern:\n"
         f"- host: {args[1]} \n"
@@ -118,7 +111,6 @@ def run(*args, **kwargs):
         f"- reuse_port: {kwargs.get('reusePort', False)} \n"
         f"- listen_backlog: {kwargs.get('listen_backlog', DEFAULT_LISTEN_BACKLOG)} \n"
         f"- pid: {pid} \n"
-        f"- PID: {PID} \n"
         f"- uid: {uid} \n"
         f"- gid: {gid} \n"
     )
