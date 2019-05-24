@@ -2,7 +2,6 @@
 #include <string.h>
 #include "request.h"
 #include "filewrapper.h"
-
 #include "py3.h"
 #include "log.h"
 
@@ -22,6 +21,7 @@ Request *Request_new(ServerInfo *server_info, int client_fd, const char *client_
     request->server_info = server_info;
     request->client_fd = client_fd;
     request->client_addr = _PEP3333_String_FromUTF8String(client_addr);
+    request->is_final = 0;
     http_parser_init((http_parser *) &request->parser, HTTP_REQUEST);
     http_parser_url_init(&request->parser.url_parser);
     request->parser.parser.data = request;
@@ -195,6 +195,9 @@ on_header_value(http_parser *parser, const char *value, size_t len) {
 
 static int
 on_body(http_parser *parser, const char *data, const size_t len) {
+    if (REQUEST->is_final)
+        return 0;
+
     log_debug("Body(%zu)", len);
     PyObject *body;
     body = PyDict_GetItem(REQUEST->headers, _wsgi_input);
@@ -221,6 +224,9 @@ on_body(http_parser *parser, const char *data, const size_t len) {
     _set_header_free_value(_wsgi_input, body);
     Py_DECREF(tmp); /* Never throw away return objects from py-api */
     Py_DECREF(temp_data);
+
+    REQUEST->is_final = http_body_is_final(parser);
+
     return 0;
 }
 

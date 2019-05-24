@@ -47,6 +47,7 @@ typedef struct {
   Py_ssize_t current_chunk_p;
   PyObject* iterable;
   PyObject* iterator;
+  int is_final;
 } Request;
 
 #define REQUEST_FROM_WATCHER(watcher) \
