@@ -85,18 +85,7 @@ def run(*args, **kwargs):
     """
     global _default_instance
 
-    if args or kwargs:
-        # Called as `bjoern.run(wsgi_app, host, ...)`
-        listen(*args, **kwargs)
-    else:
-        # Called as `bjoern.run()`
-        if not _default_instance:
-            raise RuntimeError(
-                "Must call bjoern.listen(wsgi_app, host, ...) "
-                "before calling bjoern.run() without "
-                "arguments."
-            )
-    log_level = kwargs.get(
+    log_level = kwargs.pop(
         "log_level", int(os.environ.get("BJ_LOG_LEVEL", logging.INFO))
     )
     log = setup_loggin(log_level)
@@ -114,6 +103,17 @@ def run(*args, **kwargs):
         f"- uid: {uid} \n"
         f"- gid: {gid} \n"
     )
+    if args or kwargs:
+        # Called as `bjoern.run(wsgi_app, host, ...)`
+        listen(*args, **kwargs)
+    else:
+        # Called as `bjoern.run()`
+        if not _default_instance:
+            raise RuntimeError(
+                "Must call bjoern.listen(wsgi_app, host, ...) "
+                "before calling bjoern.run() without "
+                "arguments."
+            )
     sock, wsgi_app = _default_instance
     try:
         server_run(sock, wsgi_app, log_level)

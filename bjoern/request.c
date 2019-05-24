@@ -1,4 +1,5 @@
 #include <Python.h>
+#include <string.h>
 #include "request.h"
 #include "filewrapper.h"
 
@@ -80,33 +81,8 @@ void Request_parse(Request *request, const char *data, const size_t data_len) {
 #define PARSER  ((bj_parser*)parser)
 #define URL_PARSER  (((bj_parser*)parser)->url_parser)
 
-#define _set_header(k, v) \
-    do { \
-        PyDict_SetItem(REQUEST->headers, k, v); \
-        if (log_get_level() < LOG_INFO) { \
-            PyObject *krepr = PyObject_Repr(k); \
-            PyObject *kstr = PyUnicode_AsEncodedString(krepr, "utf-8", "~E~"); \
-            char *ks = PyBytes_AS_STRING(kstr); \
-            PyObject *vrepr; \
-            PyObject *vstr; \
-            if (strcmp(ks, "'wsgi.input'") == 0) { \
-                PyObject *buf0 = (PyObject*)PyObject_CallMethodObjArgs(v, _seek, _FromLong(0), NULL); \
-                PyObject *vbts = (PyObject*)PyObject_CallMethodObjArgs(v, _read, NULL); \
-                vrepr = PyObject_Repr(vbts); \
-                Py_DECREF(vbts); \
-                Py_DECREF(buf0); \
-            } else { \
-                vrepr = PyObject_Repr(v); \
-            } \
-            vstr = PyUnicode_AsEncodedString(vrepr, "utf-8", "~E~"); \
-            char *vs = PyBytes_AS_STRING(vstr); \
-            log_debug("Setting Header %s:%s", ks, vs); \
-            Py_DECREF(krepr); \
-            Py_DECREF(vrepr); \
-            Py_DECREF(kstr); \
-            Py_DECREF(vstr); \
-        } \
-    } while(0)
+#define _set_header(k, v) PyDict_SetItem(REQUEST->headers, k, v)
+
 /* PyDict_SetItem() increases the ref-count for value */
 #define _set_header_free_value(k, v) \
   do { \
@@ -143,29 +119,31 @@ on_url(http_parser *parser, const char *path, size_t len) {
         log_error("Failed to parse URL: (%zu) %s", len, path);
         return 1;
     }
-    if (len > 256) {
+    if (len > 512) {
         log_error("URL is to long: %zu", len);
         return 1;
     }
-    char part[512];
+    char path_part[512];
 
     if (URL_PARSER.field_set & (1 << UF_PATH)) {
-        memcpy(part, path + URL_PARSER.field_data[UF_PATH].off, URL_PARSER.field_data[UF_PATH].len);
-        part[URL_PARSER.field_data[UF_PATH].len] = '\0';
-        _set_or_append_header(REQUEST->headers, _PATH_INFO, part, URL_PARSER.field_data[UF_PATH].len);
+        memcpy(path_part, path + URL_PARSER.field_data[UF_PATH].off, URL_PARSER.field_data[UF_PATH].len);
+        path_part[URL_PARSER.field_data[UF_PATH].len] = '\0';
+        _set_or_append_header(REQUEST->headers, _PATH_INFO, path_part, URL_PARSER.field_data[UF_PATH].len);
     }
 
+    char query_part[512];
+
     if (URL_PARSER.field_set & (1 << UF_QUERY)) {
-        memcpy(part, path + URL_PARSER.field_data[UF_QUERY].off, URL_PARSER.field_data[UF_QUERY].len);
-        part[URL_PARSER.field_data[UF_QUERY].len] = '\0';
-        _set_or_append_header(REQUEST->headers, _QUERY_STRING, part, URL_PARSER.field_data[UF_QUERY].len);
+        memcpy(query_part, path + URL_PARSER.field_data[UF_QUERY].off, URL_PARSER.field_data[UF_QUERY].len);
+        query_part[URL_PARSER.field_data[UF_QUERY].len] = '\0';
+        _set_or_append_header(REQUEST->headers, _QUERY_STRING, query_part, URL_PARSER.field_data[UF_QUERY].len);
     }
+
     return 0;
 }
 
 static int
 on_header_field(http_parser *parser, const char *field, size_t len) {
-    log_debug("Header Field(%zu): %s", len, field);
     if (PARSER->last_call_was_header_value) {
         /* We are starting a new header */
         Py_XDECREF(PARSER->field);
@@ -207,7 +185,6 @@ on_header_field(http_parser *parser, const char *field, size_t len) {
 
 static int
 on_header_value(http_parser *parser, const char *value, size_t len) {
-    log_debug("Header(%zu): %s", len, value);
     PARSER->last_call_was_header_value = true;
     if (!PARSER->invalid_header) {
         /* Set header, or append data to header if this is not the first call */
@@ -218,7 +195,7 @@ on_header_value(http_parser *parser, const char *value, size_t len) {
 
 static int
 on_body(http_parser *parser, const char *data, const size_t len) {
-    log_debug("Body(%zu): %s", len, data);
+    log_debug("Body(%zu)", len);
     PyObject *body;
     body = PyDict_GetItem(REQUEST->headers, _wsgi_input);
     if (body == NULL) {
