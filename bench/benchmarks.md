@@ -1,6 +1,6 @@
 # May 23 2019 (bjoern4.0.0a1)
 
-## Bottle
+## Bottle (0.12.16)
 ```
 ab -c 100 -n 10000 "http://127.0.0.1:8080/a/b/c?k=v&k2=v2"
 This is ApacheBench, Version 2.3 <$Revision: 1807734 $>
@@ -228,7 +228,7 @@ Percentage of the requests served within a certain time (ms)
  100%     15 (longest request)
 ```
 
-## Flask
+## Flask (1.0.3)
 
 ```
 ab -c 100 -n 10000 "http://127.0.0.1:8080/a/b/c?k=v&k2=v2"
@@ -459,3 +459,231 @@ Percentage of the requests served within a certain time (ms)
  100%     40 (longest request)
 ```
 
+## Falcon (2.0.0, Cython compiled)
+
+```
+ab -c 100 -n 10000 "http://127.0.0.1:8080/a/b/c?k=v&k2=v2"
+This is ApacheBench, Version 2.3 <$Revision: 1807734 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking 127.0.0.1 (be patient)
+Completed 1000 requests
+Completed 2000 requests
+Completed 3000 requests
+Completed 4000 requests
+Completed 5000 requests
+Completed 6000 requests
+Completed 7000 requests
+Completed 8000 requests
+Completed 9000 requests
+Completed 10000 requests
+Finished 10000 requests
+
+
+Server Software:
+Server Hostname:        127.0.0.1
+Server Port:            8080
+
+Document Path:          /a/b/c?k=v&k2=v2
+Document Length:        22 bytes
+
+Concurrency Level:      100
+Time taken for tests:   0.879 seconds
+Complete requests:      10000
+Failed requests:        0
+Total transferred:      1120000 bytes
+HTML transferred:       220000 bytes
+Requests per second:    11373.56 [#/sec] (mean)
+Time per request:       8.792 [ms] (mean)
+Time per request:       0.088 [ms] (mean, across all concurrent requests)
+Transfer rate:          1243.98 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.3      0       5
+Processing:     1    9   1.1      9      14
+Waiting:        1    9   1.1      9      14
+Total:          4    9   0.9      9      14
+
+Percentage of the requests served within a certain time (ms)
+  50%      9
+  66%      9
+  75%      9
+  80%      9
+  90%     10
+  95%     10
+  98%     10
+  99%     12
+ 100%     14 (longest request)
+ab -c 100 -n 10000 -p /tmp/bjoern-post.tmp "http://127.0.0.1:8080/a/b/c?k=v&k2=v2"
+This is ApacheBench, Version 2.3 <$Revision: 1807734 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking 127.0.0.1 (be patient)
+Completed 1000 requests
+Completed 2000 requests
+Completed 3000 requests
+Completed 4000 requests
+Completed 5000 requests
+Completed 6000 requests
+Completed 7000 requests
+Completed 8000 requests
+Completed 9000 requests
+Completed 10000 requests
+Finished 10000 requests
+
+
+Server Software:
+Server Hostname:        127.0.0.1
+Server Port:            8080
+
+Document Path:          /a/b/c?k=v&k2=v2
+Document Length:        57 bytes
+
+Concurrency Level:      100
+Time taken for tests:   0.883 seconds
+Complete requests:      10000
+Failed requests:        0
+Total transferred:      1470000 bytes
+Total body sent:        1820000
+HTML transferred:       570000 bytes
+Requests per second:    11324.82 [#/sec] (mean)
+Time per request:       8.830 [ms] (mean)
+Time per request:       0.088 [ms] (mean, across all concurrent requests)
+Transfer rate:          1625.73 [Kbytes/sec] received
+                        2012.81 kb/s sent
+                        3638.54 kb/s total
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   1.0      0      11
+Processing:     1    8   1.4      9      17
+Waiting:        1    8   1.5      8      17
+Total:          3    9   1.4      9      19
+
+Percentage of the requests served within a certain time (ms)
+  50%      9
+  66%      9
+  75%      9
+  80%      9
+  90%     10
+  95%     10
+  98%     15
+  99%     16
+ 100%     19 (longest request)
+ab -c 100 -n 10000 -k "http://127.0.0.1:8080/a/b/c?k=v&k2=v2"
+This is ApacheBench, Version 2.3 <$Revision: 1807734 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking 127.0.0.1 (be patient)
+Completed 1000 requests
+Completed 2000 requests
+Completed 3000 requests
+Completed 4000 requests
+Completed 5000 requests
+Completed 6000 requests
+Completed 7000 requests
+Completed 8000 requests
+Completed 9000 requests
+Completed 10000 requests
+Finished 10000 requests
+
+
+Server Software:
+Server Hostname:        127.0.0.1
+Server Port:            8080
+
+Document Path:          /a/b/c?k=v&k2=v2
+Document Length:        22 bytes
+
+Concurrency Level:      100
+Time taken for tests:   0.449 seconds
+Complete requests:      10000
+Failed requests:        0
+Keep-Alive requests:    10000
+Total transferred:      1170000 bytes
+HTML transferred:       220000 bytes
+Requests per second:    22249.27 [#/sec] (mean)
+Time per request:       4.495 [ms] (mean)
+Time per request:       0.045 [ms] (mean, across all concurrent requests)
+Transfer rate:          2542.15 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.9      0      10
+Processing:     1    4   0.8      4      10
+Waiting:        1    4   0.8      4      10
+Total:          1    4   1.3      4      17
+
+Percentage of the requests served within a certain time (ms)
+  50%      4
+  66%      4
+  75%      4
+  80%      5
+  90%      6
+  95%      6
+  98%      7
+  99%     12
+ 100%     17 (longest request)
+ab -c 100 -n 10000 -k -p /tmp/bjoern-post.tmp "http://127.0.0.1:8080/a/b/c?k=v&k2=v2"
+This is ApacheBench, Version 2.3 <$Revision: 1807734 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking 127.0.0.1 (be patient)
+Completed 1000 requests
+Completed 2000 requests
+Completed 3000 requests
+Completed 4000 requests
+Completed 5000 requests
+Completed 6000 requests
+Completed 7000 requests
+Completed 8000 requests
+Completed 9000 requests
+Completed 10000 requests
+Finished 10000 requests
+
+
+Server Software:
+Server Hostname:        127.0.0.1
+Server Port:            8080
+
+Document Path:          /a/b/c?k=v&k2=v2
+Document Length:        57 bytes
+
+Concurrency Level:      100
+Time taken for tests:   0.444 seconds
+Complete requests:      10000
+Failed requests:        0
+Keep-Alive requests:    10000
+Total transferred:      1520000 bytes
+Total body sent:        2060000
+HTML transferred:       570000 bytes
+Requests per second:    22509.29 [#/sec] (mean)
+Time per request:       4.443 [ms] (mean)
+Time per request:       0.044 [ms] (mean, across all concurrent requests)
+Transfer rate:          3341.22 [Kbytes/sec] received
+                        4528.24 kb/s sent
+                        7869.46 kb/s total
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.3      0       5
+Processing:     1    4   0.3      4       5
+Waiting:        1    4   0.3      4       5
+Total:          3    4   0.4      4       9
+
+Percentage of the requests served within a certain time (ms)
+  50%      4
+  66%      4
+  75%      5
+  80%      5
+  90%      5
+  95%      5
+  98%      5
+  99%      5
+ 100%      9 (longest request)
+```

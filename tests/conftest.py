@@ -1,6 +1,7 @@
 import json
 import os
 import signal
+import sys
 import time
 from multiprocessing import Process
 from wsgiref.validate import validator
@@ -181,6 +182,22 @@ def wsgi_compliance_app():
 
 
 @pytest.fixture()
+def wsgi_headers_app():
+    def app(env, start_response):
+        start_response(
+            "200 yo", [("Content-Type", "text/plain"), ("a" * 1000, "b" * 1000)]
+        )
+        return [b"foo", b"bar"]
+
+    p = _run_app(app)
+    try:
+        yield p
+    finally:
+        os.kill(p.pid, signal.SIGKILL)
+        time.sleep(1)  # Should be enough for the server to stop
+
+
+@pytest.fixture()
 def wsgi_204_app():
     @validator
     def app(e, s):
@@ -201,6 +218,37 @@ def wsgi_empty_app():
     def app(e, s):
         s("200 ok", [("Content-Type", "text/plain")])
         return [b""]
+
+    p = _run_app(app)
+    try:
+        yield p
+    finally:
+        os.kill(p.pid, signal.SIGKILL)
+        time.sleep(1)  # Should be enough for the server to stop
+
+
+@pytest.fixture()
+def wsgi_filewrapper_app():
+    W = {
+        "callable-iterator": lambda f, _: iter(lambda: f.read(64 * 1024), b""),
+        "xreadlines": lambda f, _: f,
+        "filewrapper": lambda f, env: env["wsgi.file_wrapper"](f),
+        "filewrapper2": lambda f, env: env["wsgi.file_wrapper"](f, 1),
+        "pseudo-file": lambda f, env: env["wsgi.file_wrapper"](PseudoFile()),
+    }
+
+    F = len(sys.argv) > 1 and sys.argv[1] or "README.rst"
+    W = len(sys.argv) > 2 and W[sys.argv[2]] or W["filewrapper"]
+
+    class PseudoFile:
+        def read(self, *ignored):
+            return b"ab"
+
+    def app(env, start_response):
+        f = open(F, "rb")
+        wrapped = W(f, env)
+        start_response("200 ok", [("Content-Length", str(os.path.getsize(F)))])
+        return wrapped
 
     p = _run_app(app)
     try:

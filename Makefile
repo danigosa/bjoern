@@ -104,6 +104,14 @@ bottle_ab: _bottle_bench ab1 ab2 ab3 ab4
 	@cat /var/run/bottle_bench.pid | xargs -n1 kill -9
 	@rm -f /var/run/bottle_bench.pid
 
+_falcon_bench: fmt install_real
+	@$(PYTHON) bench/falcon_bench.py & jobs -p >/var/run/falcon_bench.pid
+	@sleep 5
+
+falcon_ab: _falcon_bench ab1 ab2 ab3 ab4
+	@cat /var/run/falcon_bench.pid | xargs -n1 kill -9
+	@rm -f /var/run/falcon_bench.pid
+
 ab1:
 	$(AB) $(TEST_URL)
 ab2:
@@ -145,13 +153,13 @@ test: reqs fmt install_real
 	pytest
 
 upload: test
-	${PYTHON} setup.py sdist upload
+	${PYTHON} setup.py sdist upload --repository=robbie-pypi
 
 wheel: test
 	${PYTHON} setup.py bdist_wheel
 
 upload-wheel: wheel
-	twine upload --repository=robbie-pypi --skip-existing dist/*.whl
+	twine upload --skip-existing dist/*.whl
 
 libev:
 	# http-parser 2.9.2

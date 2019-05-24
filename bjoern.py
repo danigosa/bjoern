@@ -107,10 +107,7 @@ def run(*args, **kwargs):
     with open(PID, "w+") as fpid:
         fpid.write(str(pid))
     os.chmod(PID, 0o664)
-    with open("LICENSE", "rb") as flic:
-        lic = flic.read()
     log.info(
-        f"{lic.decode()}\n"
         f"Booting Bjoern with:\n"
         f"- host: {args[1]} \n"
         f"- port: {args[2]} \n"

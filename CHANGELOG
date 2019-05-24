@@ -9,7 +9,7 @@
     - Added logging support (stdout/stderr)
     - Added a Dockerfile and `run-dev` script to run development easily
     - Added modern `core-avx2` compilation options
-    - Added wheel support (only bjoern-4.0.0-cp36-cp36m-manylinux1_x86_64.whl for now)
+    - Added wheel building support
     - Added Flask, Bottle and Falcon ab benchmarks
     - Added Black & iSort formatting for python files
 
