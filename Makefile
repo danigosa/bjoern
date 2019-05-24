@@ -153,7 +153,7 @@ test: reqs fmt install_real
 	pytest
 
 upload: test
-	${PYTHON} setup.py sdist upload
+	${PYTHON} setup.py sdist upload --repository=robbie-pypi
 
 wheel: test
 	${PYTHON} setup.py bdist_wheel

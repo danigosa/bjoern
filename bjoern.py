@@ -103,12 +103,15 @@ def run(*args, **kwargs):
     pid = os.getpid()
     uid = os.getuid()
     gid = os.getgid()
-    PID = kwargs.get("pid_file", "/var/run/bjoerns.pid")
-    with open(PID, "w+") as fpid:
-        fpid.write(str(pid))
-    os.chmod(PID, 0o664)
+    try:
+        PID = kwargs.get("pid_file", "/var/run/bjoerns.pid")
+        with open(PID, "w+") as fpid:
+            fpid.write(str(pid))
+        os.chmod(PID, 0o664)
+    except PermissionError:
+        PID = None
     log.info(
-        f"Booting Bjoern with:\n"
+        f"Booting Bjoern:\n"
         f"- host: {args[1]} \n"
         f"- port: {args[2]} \n"
         f"- LogLevel: {log_level} \n"
