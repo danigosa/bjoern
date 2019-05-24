@@ -37,8 +37,12 @@ CPPFLAGS	+= $(PYTHON_INCLUDE) -I . -I $(SOURCE_DIR) -I $(HTTP_PARSER_DIR)
 CFLAGS		+= $(FEATURES) -std=c99 -fno-strict-aliasing -fcommon -fPIC -Wall -g
 LDFLAGS		+= $(PYTHON_LDFLAGS) -pthread -shared -fcommon
 
+setup: clean prepare-build
 
-all: prepare-build $(objects) _bjoernmodule
+test: reqs fmt install_real
+	pytest
+
+all: setup prepare-build $(objects) _bjoernmodule test
 
 print-env:
 	@echo CFLAGS=$(CFLAGS)
@@ -148,9 +152,6 @@ install: clean uninstall all
 install_real: clean uninstall fast
 	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) ${PYTHON} setup.py build_ext
 	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) ${PYTHON} setup.py install
-
-test: reqs fmt install_real
-	pytest
 
 upload: test
 	${PYTHON} setup.py sdist upload --repository=robbie-pypi

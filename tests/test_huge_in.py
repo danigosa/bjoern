@@ -1,14 +1,13 @@
 import os
 import signal
 import time
-from sys import getsizeof
 
 import pytest
 
 from tests.conftest import _run_app
 
 data = b"a" * 1024 * 1024
-DATA_LEN = getsizeof(data)
+DATA_LEN = len(data)
 
 
 @pytest.fixture()

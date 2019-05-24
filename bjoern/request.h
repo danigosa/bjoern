@@ -18,6 +18,7 @@ typedef struct {
   unsigned keep_alive : 1;
   unsigned response_length_unknown : 1;
   unsigned chunked_response : 1;
+  unsigned upgrade : 1;
 } request_state;
 
 typedef struct {

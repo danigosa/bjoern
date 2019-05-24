@@ -1,3 +1,4 @@
+import json as _json
 import time
 from multiprocessing import Process
 
@@ -26,7 +27,7 @@ class TestClient:
         headers_ = {"Content-Type": "application/x-www-form-urlencoded"}
 
         if json is not None:
-            data = json.dumps(json)
+            data = _json.dumps(json)
             headers_["Content-Type"] = "application/json"
 
         if headers is not None:

@@ -2,7 +2,6 @@
 #include "filewrapper.h"
 #include "wsgi.h"
 #include "py3.h"
-#include "log.h"
 
 static void wsgi_getheaders(Request*, PyObject** buf, Py_ssize_t* length);
 
@@ -33,8 +32,10 @@ wsgi_call_application(Request* request)
   Py_DECREF(request_headers);
   Py_DECREF(start_response);
 
-  if(retval == NULL)
-    return false;
+  if(retval == NULL) {
+      log_warn("wsgi: Problem calling request->server_info->wsgi_app");
+      return false;
+  }
 
   /* The following code is somewhat magic, so worth an explanation.
    *
@@ -95,11 +96,15 @@ wsgi_call_application(Request* request)
     /* Generic iterable (list of length != 1, generator, ...) */
     request->iterable = retval;
     request->iterator = PyObject_GetIter(retval);
-    if(request->iterator == NULL)
-      return false;
+    if(request->iterator == NULL) {
+        log_warn("wsgi: request->iterator == NULL");
+        return false;
+    }
     first_chunk = wsgi_iterable_get_next_chunk(request);
-    if(first_chunk == NULL && PyErr_Occurred())
-      return false;
+    if(first_chunk == NULL && PyErr_Occurred()){
+        log_warn("wsgi: first_chunk == NULL and PyErr_Occurred");
+        return false;
+    }
   }
 
   if(request->headers == NULL) {
@@ -112,6 +117,7 @@ wsgi_call_application(Request* request)
       "wsgi application returned before start_response was called"
     );
     Py_XDECREF(first_chunk);
+    log_warn("wsgi: application returned before start_response was called");
     return false;
   }
 

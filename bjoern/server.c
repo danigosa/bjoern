@@ -192,6 +192,7 @@ ev_io_on_read(struct ev_loop* mainloop, ev_io* watcher, const int events)
     /* Client disconnected */
     read_state = aborted;
     DBG_REQ(request, "Client disconnected");
+    log_error("Parse error: Client disconnectged");
   } else if (read_bytes < 0) {
     /* Would block or error */
     if(errno == EAGAIN || errno == EWOULDBLOCK) {
@@ -199,6 +200,7 @@ ev_io_on_read(struct ev_loop* mainloop, ev_io* watcher, const int events)
     } else {
       read_state = aborted;
       DBG_REQ(request, "Hit errno %d while read()ing", errno);
+      log_error("Hit errno %d while read()ing", request->state.error_code);
     }
   } else {
     /* OK, either expect more data or done reading */
@@ -207,6 +209,7 @@ ev_io_on_read(struct ev_loop* mainloop, ev_io* watcher, const int events)
       /* HTTP parse error */
       read_state = done;
       DBG_REQ(request, "Parse error");
+      log_error("Parse error: %du", request->state.error_code);
       request->current_chunk = _PEP3333_Bytes_FromString(
         http_error_messages[request->state.error_code]);
       assert(request->iterator == NULL);
@@ -217,6 +220,7 @@ ev_io_on_read(struct ev_loop* mainloop, ev_io* watcher, const int events)
       if (!wsgi_ok) {
         /* Response is "HTTP 500 Internal Server Error" */
         DBG_REQ(request, "WSGI app error");
+        log_error("WSGI app error");
         assert(PyErr_Occurred());
         PyErr_Print();
         assert(!request->state.chunked_response);
@@ -235,12 +239,14 @@ ev_io_on_read(struct ev_loop* mainloop, ev_io* watcher, const int events)
     break;
   case done:
     DBG_REQ(request, "Stop read watcher, start write watcher");
+    log_debug("Stop read watcher client %d, start write watcher", request->client_fd);
     ev_io_stop(mainloop, &request->ev_watcher);
     ev_io_init(&request->ev_watcher, &ev_io_on_write,
                request->client_fd, EV_WRITE);
     ev_io_start(mainloop, &request->ev_watcher);
     break;
   case aborted:
+    log_debug("ev_io_on_read: aborted");
     close_connection(mainloop, request);
     break;
   }
@@ -283,6 +289,7 @@ ev_io_on_write(struct ev_loop* mainloop, ev_io* watcher, const int events)
     break;
   case done:
     if(request->state.keep_alive) {
+      log_debug("ev_io_on_write: done, keep-alive");
       DBG_REQ(request, "done, keep-alive");
       ev_io_stop(mainloop, &request->ev_watcher);
       Request_clean(request);
@@ -291,6 +298,7 @@ ev_io_on_write(struct ev_loop* mainloop, ev_io* watcher, const int events)
                  request->client_fd, EV_READ);
       ev_io_start(mainloop, &request->ev_watcher);
     } else {
+      log_debug("ev_io_on_write: done");
       DBG_REQ(request, "done, close");
       close_connection(mainloop, request);
     }
@@ -298,6 +306,7 @@ ev_io_on_write(struct ev_loop* mainloop, ev_io* watcher, const int events)
   case aborted:
     /* Response was aborted due to an error. We can't do anything graceful here
      * because at least one chunk is already sent... just close the connection. */
+    log_debug("ev_io_on_write: aborted");
     close_connection(mainloop, request);
     break;
   }
@@ -314,12 +323,14 @@ on_write_sendfile(struct ev_loop* mainloop, Request* request)
    */
   if(request->current_chunk) {
     /* Phase A) -- current_chunk contains the HTTP headers */
+    log_debug("on_write_sendfile PhaseA: sending chunked headers");
     do_send_chunk(request);
     // Either we have headers left to send, or current_chunk has been set to
     // NULL and we'll fall into Phase B) on the next invocation.
     return not_yet_done;
   } else {
     /* Phase B) */
+      log_debug("on_write_sendfile PhaseB: sending file");
     if (do_sendfile(request)) {
       // Haven't reached the end of file yet
       return not_yet_done;
@@ -357,6 +368,7 @@ on_write_chunk(struct ev_loop* mainloop, Request* request)
         /* Trying to get the next chunk raised an exception. */
         PyErr_Print();
         DBG_REQ(request, "Exception in iterator, can not recover");
+        log_error("Exception in iterator, can not recover");
         return aborted;
       } else {
         /* This was the last chunk; cleanup. */
@@ -455,6 +467,7 @@ handle_nonzero_errno(Request* request)
   } else {
     /* Serious transmission failure. Hang up. */
     fprintf(stderr, "Client %d hit errno %d\n", request->client_fd, errno);
+    log_error("Client %d hit errno %d\n", request->client_fd, errno);
     Py_XDECREF(request->current_chunk);
     Py_XCLEAR(request->iterator);
     request->state.keep_alive = false;
@@ -465,6 +478,7 @@ handle_nonzero_errno(Request* request)
 static void
 close_connection(struct ev_loop *mainloop, Request* request)
 {
+  log_debug("Closing connection: %d", request->client_fd);
   DBG_REQ(request, "Closing socket");
   ev_io_stop(mainloop, &request->ev_watcher);
   close(request->client_fd);
