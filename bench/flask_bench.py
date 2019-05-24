@@ -24,4 +24,4 @@ def bench():
     abort(400)
 
 
-bjoern.run(app, "0.0.0.0", 8080, reuse_port=True)
+bjoern.run(app, "0.0.0.0", 8080, log_level=10, reuse_port=True)

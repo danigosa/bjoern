@@ -1,4 +1,3 @@
-import base64
 import os
 import signal
 import time
@@ -44,8 +43,3 @@ def test_flask_app(flask_app, client):
     assert (
         response.content == b"Hello, World! Args: ('v', 'v2', {'k3': 'v3', 'k4': 'v4'})"
     )
-    # with open("tests/charlie.jpg", "rb") as f:
-    #     image_bytes = f.read()
-    # encoded_image = base64.encodebytes(image_bytes)
-    # response = client.post("/image", data={"image": encoded_image})
-    # assert response.status_code == 200

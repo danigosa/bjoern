@@ -81,7 +81,7 @@ void Request_parse(Request *request, const char *data, const size_t data_len) {
 #define PARSER  ((bj_parser*)parser)
 #define URL_PARSER  (((bj_parser*)parser)->url_parser)
 
-#define _set_header(k, v) PyDict_SetItem(REQUEST->headers, k, v)
+#define _set_header(k, v) PyDict_SetItem(REQUEST->headers, k, v);
 
 /* PyDict_SetItem() increases the ref-count for value */
 #define _set_header_free_value(k, v) \
@@ -93,6 +93,7 @@ void Request_parse(Request *request, const char *data, const size_t data_len) {
 
 static void
 _set_or_append_header(PyObject *headers, PyObject *k, const char *val, size_t len) {
+    log_debug("_set_or_append_header(%zu)", len);
     PyObject *py_val = _PEP3333_String_FromLatin1StringAndSize(val, len);
     PyObject *py_val_old = PyDict_GetItem(headers, k);
 
@@ -108,6 +109,7 @@ _set_or_append_header(PyObject *headers, PyObject *k, const char *val, size_t le
 
 static int
 on_message_begin(http_parser *parser) {
+    log_debug("Message Begin");
     assert(PARSER->field == NULL);
     REQUEST->headers = PyDict_New();
     return 0;
@@ -115,6 +117,7 @@ on_message_begin(http_parser *parser) {
 
 static int
 on_url(http_parser *parser, const char *path, size_t len) {
+    log_debug("URL(%zu)", len);
     if (*http_method_str(parser->method) != HTTP_CONNECT && http_parser_parse_url(path, len, 0, &URL_PARSER)) {
         log_error("Failed to parse URL: (%zu) %s", len, path);
         return 1;
@@ -144,6 +147,7 @@ on_url(http_parser *parser, const char *path, size_t len) {
 
 static int
 on_header_field(http_parser *parser, const char *field, size_t len) {
+    log_debug("Header Field(%zu)", len);
     if (PARSER->last_call_was_header_value) {
         /* We are starting a new header */
         Py_XDECREF(PARSER->field);
@@ -185,6 +189,7 @@ on_header_field(http_parser *parser, const char *field, size_t len) {
 
 static int
 on_header_value(http_parser *parser, const char *value, size_t len) {
+    log_debug("Header Value(%zu)", len);
     PARSER->last_call_was_header_value = true;
     if (!PARSER->invalid_header) {
         /* Set header, or append data to header if this is not the first call */
@@ -202,16 +207,10 @@ on_body(http_parser *parser, const char *data, const size_t len) {
     PyObject *body;
     body = PyDict_GetItem(REQUEST->headers, _wsgi_input);
     if (body == NULL) {
-        if (!parser->content_length && !len) {
+        if (!parser->content_length) {
             REQUEST->state.error_code = HTTP_LENGTH_REQUIRED;
             log_error("Bad Body Length(%zu):\n%s", len, data);
             return 1;
-        }
-        if (!parser->content_length && len) {
-            char len_s[256];
-            snprintf(len_s, sizeof len_s, "%zu", len);
-            parser->content_length = len;
-            _set_or_append_header(REQUEST->headers, _CONTENT_LENGTH, len_s, strlen(len_s));
         }
         body = PyObject_CallMethodObjArgs(IO_module, _BytesIO, NULL);
         if (body == NULL) {
@@ -232,6 +231,7 @@ on_body(http_parser *parser, const char *data, const size_t len) {
 
 static int
 on_message_complete(http_parser *parser) {
+    log_debug("Message Complete");
     /* HTTP_CONTENT_{LENGTH,TYPE} -> CONTENT_{LENGTH,TYPE} */
     PyDict_ReplaceKey(REQUEST->headers, _HTTP_CONTENT_LENGTH, _CONTENT_LENGTH);
     PyDict_ReplaceKey(REQUEST->headers, _HTTP_CONTENT_TYPE, _CONTENT_TYPE);
@@ -257,7 +257,11 @@ on_message_complete(http_parser *parser) {
         /* first do a seek(0) and then read() returns all data */
         log_debug("on_message_complete: request has body and we seek to 0");
         PyObject *buf = PyObject_CallMethodObjArgs(body, _seek, _FromLong(0), NULL);
-        Py_DECREF(buf); /* Discard the return value */
+        if (buf) {
+            Py_DECREF(buf); /* Discard the return value */
+        } else {
+            log_error("Could not seek body to 0, continuing without seeking!");
+        }
     } else {
         /* Request has no body */
         log_debug("on_message_complete: request has no body");
