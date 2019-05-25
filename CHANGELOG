@@ -2,6 +2,7 @@
     - Added benchmarks with image input
     - Refactored Makefile
     - Added tests
+    - Initial config for Py37
 
 4.0.2 (May 2019)
     - Fixed problems uploading big POST bodies
