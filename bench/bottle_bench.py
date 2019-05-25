@@ -1,8 +1,7 @@
 import json
 
-from bottle import Bottle, request, response
-
 import bjoern
+from bottle import Bottle, request, response
 
 app = Bottle(__name__)
 

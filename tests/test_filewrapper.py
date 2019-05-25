@@ -4,7 +4,6 @@ import sys
 import time
 
 import pytest
-
 from tests.conftest import _run_app
 
 with open("README.md", "rb") as _f:

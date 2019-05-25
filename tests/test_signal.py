@@ -4,7 +4,6 @@ import time
 from wsgiref.validate import validator
 
 import pytest
-
 from tests.conftest import _run_app
 
 

@@ -3,10 +3,10 @@ import logging
 import time
 from multiprocessing import Process
 
-import pytest
 import requests
 
 import bjoern
+import pytest
 
 
 class TestClient:

@@ -1,8 +1,7 @@
 import json
 
-import falcon
-
 import bjoern
+import falcon
 
 
 class AppResource:

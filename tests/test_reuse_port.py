@@ -5,7 +5,6 @@ import time
 from collections import defaultdict
 
 import pytest
-
 from tests.conftest import _run_app
 
 N_PROCESSES = 10

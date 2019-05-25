@@ -1,6 +1,9 @@
 FROM ubuntu:bionic
 
-MAINTAINER <danigosa danigosa@gmail.com>
+MAINTAINER <danius danigosa@gmail.com>
+
+ENV LC_ALL C.UTF-8
+ENV LANG C.UTF-8
 
 # base packages
 RUN \
@@ -37,9 +40,16 @@ RUN \
 	python3-wheel && \
   rm -rf /var/lib/apt/lists/*
 
-RUN pip3 install virtualenv==16.6.0 && \
-    pip3 install --upgrade pip==19.1.1 setuptools==41.0.1 wheel==0.33.4 Cython==0.29.7 && \
-    python3 -m virtualenv -p /usr/bin/python3 --system-site-packages /bjoern/.py36-venv
+RUN pip3 install \
+    black==19.3b0 \
+    isort[requirements]==4.3.20
+
+RUN python3 -m venv /.py36-venv && \
+    /.py36-venv/bin/python -m pip install --upgrade \
+        pip==19.1.1 \
+        setuptools==41.0.1\
+        wheel==0.33.4 \
+        Cython==0.29.7
 
 # Python3.7
 RUN \
@@ -51,11 +61,13 @@ RUN \
     python3.7-venv && \
   rm -rf /var/lib/apt/lists/*
 
-RUN python3.7 -m pip install virtualenv==16.6.0 && \
-    python3.7 -m pip install --upgrade pip==19.1.1 setuptools==41.0.1 wheel==0.33.4 Cython==0.29.7 && \
-    python3.7 -m virtualenv -p /usr/bin/python3.7 --system-site-packages /bjoern/.py37-venv
+RUN python3.7 -m venv /.py37-venv && \
+    /.py37-venv/bin/python -m pip install --upgrade \
+        pip==19.1.1 \
+        setuptools==41.0.1\
+        wheel==0.33.4 \
+        Cython==0.29.7
 
 
 RUN ldconfig
 
-CMD ["python3", "--version"] 

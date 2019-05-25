@@ -1,7 +1,6 @@
+import bjoern
 from flask import Flask, jsonify, request
 from werkzeug.exceptions import abort
-
-import bjoern
 
 app = Flask(__name__)
 

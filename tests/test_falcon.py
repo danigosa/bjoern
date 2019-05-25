@@ -5,7 +5,6 @@ import time
 
 import falcon
 import pytest
-
 from tests.conftest import _run_app
 
 

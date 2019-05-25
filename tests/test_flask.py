@@ -4,7 +4,6 @@ import time
 
 import pytest
 from flask import Flask, request
-
 from tests.conftest import _run_app
 
 

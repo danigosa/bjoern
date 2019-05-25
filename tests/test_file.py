@@ -4,7 +4,6 @@ import time
 from io import BytesIO
 
 import pytest
-
 from tests.conftest import _run_app
 
 FILES: dict = {"big": None, "small": None}

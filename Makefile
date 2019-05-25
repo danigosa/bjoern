@@ -5,12 +5,11 @@ default: test
 
 SOURCE_DIR	:= bjoern
 BUILD_DIR	:= build
-PYTHON36	:= python3
-PY36	:= py36
+PYTHON36	:= /.py36-venv/bin/python
 DEBUG := DEBUG=True
 
-PYTHON_INCLUDE	:= $(shell ${PYTHON36}-config --includes | sed s/-I/-isystem\ /g)
-PYTHON_LDFLAGS	:= $(shell ${PYTHON36}-config --ldflags)
+PYTHON36_INCLUDE	:= $(shell python3-config --includes | sed s/-I/-isystem\ /g)
+PYTHON36_LDFLAGS	:= $(shell python3-config --ldflags)
 
 HTTP_PARSER_DIR	:= http-parser
 HTTP_PARSER_OBJ := $(HTTP_PARSER_DIR)/http_parser.o
@@ -39,15 +38,15 @@ ifndef SIGNAL_CHECK_INTERVAL
 FEATURES	+= -D SIGNAL_CHECK_INTERVAL=0.1
 endif
 CC 			:= gcc
-CPPFLAGS	+= $(PYTHON_INCLUDE) -I . -I $(SOURCE_DIR) -I $(HTTP_PARSER_DIR)
+CPPFLAGS	+= $(PYTHON36_INCLUDE) -I . -I $(SOURCE_DIR) -I $(HTTP_PARSER_DIR)
 CFLAGS		+= $(FEATURES) -std=c99 -fno-strict-aliasing -fcommon -fPIC -Wall
-LDFLAGS		+= $(PYTHON_LDFLAGS) -pthread -shared -fcommon
+LDFLAGS		+= $(PYTHON36_LDFLAGS) -pthread -shared -fcommon
 
 IMAGE_B64 	:= $(shell cat tests/charlie.jpg | base64)
 AB			:= ab -c 100 -n 10000
 TEST_URL	:= "http://127.0.0.1:8080/a/b/c?k=v&k2=v2"
 
-ab1 := /tmp/ab1$(shell date +%s).tmp
+flask_bench := bench/flask.txt
 
 # Targets
 setup: clean prepare-build
@@ -74,12 +73,12 @@ $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.c
 # foo.o: shortcut to $(BUILD_DIR)/foo.o
 %.o: $(BUILD_DIR)/%.o
 
-reqs: install-requirements requirements.txt
-	@bash install-requirements
+reqs-36: install-requirements
+	@bash install-requirements $(PYTHON36)
 
-fmt: reqs
+fmt:
 	@isort --settings-path=/.isort.cfg **/*.py
-	@black -t $(PY36) .
+	@black .
 
 prepare-build: fmt
 	@mkdir -p $(BUILD_DIR)
@@ -89,14 +88,13 @@ clean:
 	@rm -f /tmp/*.tmp
 
 # Test
-test: reqs fmt install_debug
+test: reqs-36 fmt install_debug
 	@pytest
 
 # Benchmarks
-flask_bench := bench/flask.txt
 $(flask_bench): bench/flask.txt
 	@$(PYTHON36) bench/flask_bench.py & jobs -p >/var/run/flask_bench.pid
-    @sleep 5
+	@sleep 5
 
 flask_ab:
 	@cat $(ab1) | tee $(flask_bench)
@@ -121,6 +119,7 @@ falcon_ab: _falcon_bench ab1 ab1k ab2 ab2k
 
 bjoern_bench: clean fmt install
 
+ab1 := /tmp/ab1$(shell date +%s).tmp
 $(ab1): $(ab1)
 	$(AB) $(TEST_URL) | tee $@
 
@@ -160,24 +159,24 @@ memwatch:
 	   tail -n +25 /proc/$$(pgrep -n ${PYTHON36})/smaps'
 
 # Pypi
-uninstall: clean
+uninstall-36: clean
 	@pip3 uninstall -y bjoern || { echo "Not installed."; }
 
-install_debug: uninstall
+install-debug-36: uninstall-36
 	@DEBUG=True PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) ${PYTHON36} setup.py build_ext
 	@DEBUG=True PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) ${PYTHON36} setup.py install
 
-install: uninstall
+install-36: uninstall-36
 	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) ${PYTHON36} setup.py build_ext
 	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) ${PYTHON36} setup.py install
 
-upload:
+upload-36:
 	${PYTHON36} setup.py sdist upload
 
-wheel:
+wheel-36:
 	${PYTHON36} setup.py bdist_wheel
 
-upload-wheel: wheel
+upload-wheel-36: wheel
 	twine upload --skip-existing dist/*.whl
 
 # Vendors

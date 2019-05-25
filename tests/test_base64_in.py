@@ -5,7 +5,6 @@ import time
 
 import pytest
 from flask import Flask, jsonify, request
-
 from tests.conftest import _run_app
 
 with open("tests/charlie.jpg", "rb") as f:
