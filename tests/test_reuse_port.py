@@ -43,4 +43,4 @@ def test_reuse_port(reuse_port_app, client):
         responder_count[responder] += 1
     print(responder_count)
     for responder, count in responder_count.items():
-        assert N_REQUESTS_PER_PROCESS * 0.8 < count < N_REQUESTS_PER_PROCESS * 1.2
+        assert N_REQUESTS_PER_PROCESS * 0.7 < count < N_REQUESTS_PER_PROCESS * 1.2
