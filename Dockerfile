@@ -21,6 +21,7 @@ RUN \
 	psmisc \
 	valgrind \
 	apache2-utils \
+	gridsite-clients \
 	libev-dev && \
   wget -O /tmp/checkmake.deb \
     --content-disposition https://packagecloud.io/mrtazz/checkmake/packages/ubuntu/trusty/checkmake_0.1.0-1_amd64.deb/download.deb && \
@@ -44,7 +45,7 @@ RUN pip3 install \
     black==19.3b0 \
     isort[requirements]==4.3.20
 
-RUN python3 -m venv /.py36-venv && \
+RUN python3 -m venv --system-site-packages /.py36-venv && \
     /.py36-venv/bin/python -m pip install --upgrade \
         pip==19.1.1 \
         setuptools==41.0.1\
@@ -61,7 +62,7 @@ RUN \
     python3.7-venv && \
   rm -rf /var/lib/apt/lists/*
 
-RUN python3.7 -m venv /.py37-venv && \
+RUN python3.7 -m venv --system-site-packages /.py37-venv && \
     /.py37-venv/bin/python -m pip install --upgrade \
         pip==19.1.1 \
         setuptools==41.0.1\

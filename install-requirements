@@ -1,36 +1,38 @@
 #!/bin/bash
 # It requires python command as parameter
-"$1 -m pip install -r requirements.txt --quiet" <<- EOC
-    appdirs==1.4.3
-    atomicwrites==1.3.0
-    attrs==19.1.0
-    bleach==3.1.0
-    bottle==0.12.16
-    certifi==2019.3.9
-    chardet==3.0.4
-    Click==7.0
-    docutils==0.14
-    Flask==1.0.3
-    idna==2.8
-    itsdangerous==1.1.0
-    Jinja2==2.10.1
-    MarkupSafe==1.1.1
-    more-itertools==7.0.0
-    pkginfo==1.5.0.1
-    pluggy==0.11.0
-    py==1.8.0
-    Pygments==2.4.0
-    pytest==4.5.0
-    readme-renderer==24.0
-    requests==2.22.0
-    requests-toolbelt==0.9.1
-    six==1.12.0
-    toml==0.10.0
-    tqdm==4.32.1
-    twine==1.13.0
-    urllib3==1.25.2
-    wcwidth==0.1.7
-    webencodings==0.5.1
+set -euo
+
+"$1" -m pip install             \
+    appdirs==1.4.3              \
+    atomicwrites==1.3.0         \
+    attrs==19.1.0               \
+    bleach==3.1.0               \
+    bottle==0.12.16             \
+    certifi==2019.3.9           \
+    chardet==3.0.4              \
+    Click==7.0                  \
+    docutils==0.14              \
+    Flask==1.0.3                \
+    idna==2.8                   \
+    itsdangerous==1.1.0         \
+    Jinja2==2.10.1              \
+    MarkupSafe==1.1.1           \
+    more-itertools==7.0.0       \
+    pkginfo==1.5.0.1            \
+    pluggy==0.11.0              \
+    py==1.8.0                   \
+    Pygments==2.4.0             \
+    pytest==4.5.0               \
+    readme-renderer==24.0       \
+    requests==2.22.0            \
+    requests-toolbelt==0.9.1    \
+    six==1.12.0                 \
+    toml==0.10.0                \
+    tqdm==4.32.1                \
+    twine==1.13.0               \
+    urllib3==1.25.2             \
+    wcwidth==0.1.7              \
+    webencodings==0.5.1         \
     Werkzeug==0.15.4
-EOC
-"$1 install --no-binary :all: falcon==2.0.0 --quiet"
+
+"$1" -m pip install --no-binary :all: falcon==2.0.0

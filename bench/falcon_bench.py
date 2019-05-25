@@ -18,11 +18,12 @@ class AppResource:
         k2 = request.get_param("k2")
         asdfghjkl = request.get_param("asdfghjkl")
         qwerty = request.get_param("qwerty")
+        image = request.get_param("image")
 
         response.status_code = 200
         response.content_type = "application/json"
         response.body = json.dumps(
-            {"k": k, "k2": k2, "asdfghjkl": asdfghjkl, "qwerty": qwerty}
+            {"k": k, "k2": k2, "asdfghjkl": asdfghjkl, "qwerty": qwerty, "image": image}
         )
 
 

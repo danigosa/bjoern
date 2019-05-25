@@ -42,16 +42,21 @@ CPPFLAGS	+= $(PYTHON36_INCLUDE) -I . -I $(SOURCE_DIR) -I $(HTTP_PARSER_DIR)
 CFLAGS		+= $(FEATURES) -std=c99 -fno-strict-aliasing -fcommon -fPIC -Wall
 LDFLAGS		+= $(PYTHON36_LDFLAGS) -pthread -shared -fcommon
 
-IMAGE_B64 	:= $(shell cat tests/charlie.jpg | base64)
 AB			:= ab -c 100 -n 10000
 TEST_URL	:= "http://127.0.0.1:8080/a/b/c?k=v&k2=v2"
 
-flask_bench := bench/flask.txt
+IMAGE_B64 := $(shell cat tests/charlie.jpg | base64 | xargs urlencode)
+IMAGE_B64_LEN := $(shell cat tests/charlie.jpg | base64 | xargs urlencode | wc -c)
+flask_bench_36 := bench/flask_py36.txt
+bottle_bench_36 := bench/bottle_py36.txt
+falcon_bench_36 := bench/falcon_py36.txt
+ab1 := /tmp/ab1.tmp
+ab2 := /tmp/ab2.tmp
 
 # Targets
-setup: clean prepare-build
+setup-36: clean prepare-build reqs-36
 
-all: setup $(objects) _bjoernmodule test
+all-36: setup-36 $(objects) _bjoernmodule test
 
 print-env:
 	@echo CFLAGS=$(CFLAGS)
@@ -88,62 +93,63 @@ clean:
 	@rm -f /tmp/*.tmp
 
 # Test
-test: reqs-36 fmt install_debug
-	@pytest
+test-36: fmt reqs-36 install-debug-36
+	@$(PYTHON36) -m pytest
 
 # Benchmarks
-$(flask_bench): bench/flask.txt
+$(flask_bench_36):
 	@$(PYTHON36) bench/flask_bench.py & jobs -p >/var/run/flask_bench.pid
 	@sleep 5
 
-flask_ab:
-	@cat $(ab1) | tee $(flask_bench)
+flask-ab-36: $(flask_bench_36) $(ab1) $(ab2)
+	@echo -e "\n====== GET ======\n" | tee -a $(flask_bench_36) > /dev/null
+	@cat $(ab1) | tee $(flask_bench_36) > /dev/null
+	@echo -e "\n====== POST ======\n" | tee -a $(flask_bench_36) > /dev/null
+	@cat $(ab2) | tee -a $(flask_bench_36) > /dev/null
 	@cat /var/run/flask_bench.pid | xargs -n1 kill -9 > /dev/null 2>&1
 	@rm -f /var/run/flask_bench.pid > /dev/null 2>&1
 
-_bottle_bench:
+$(bottle_bench_36):
 	@$(PYTHON36) bench/bottle_bench.py & jobs -p >/var/run/bottle_bench.pid
 	@sleep 5
 
-bottle_ab: _bottle_bench ab1 ab1k ab2 ab2k
+bottle-ab-36: $(bottle_bench_36) $(ab1) $(ab2)
+	@echo -e "\n====== GET ======\n" | tee -a $(bottle_bench_36) > /dev/null
+	@cat $(ab1) | tee $(bottle_bench_36) > /dev/null
+	@echo -e "\n====== POST ======\n" | tee -a $(bottle_bench_36) > /dev/null
+	@cat $(ab2) | tee -a $(bottle_bench_36) > /dev/null
 	@cat /var/run/bottle_bench.pid | xargs -n1 kill -9 > /dev/null 2>&1
 	@rm -f /var/run/bottle_bench.pid > /dev/null 2>&1
 
-_falcon_bench:
+$(falcon_bench_36):
 	@$(PYTHON36) bench/falcon_bench.py & jobs -p >/var/run/falcon_bench.pid
 	@sleep 5
 
-falcon_ab: _falcon_bench ab1 ab1k ab2 ab2k
+falcon-ab-36: $(falcon_bench_36) $(ab1) $(ab2)
+	@echo -e "\n====== GET ======\n" | tee -a $(falcon_bench_36) > /dev/null
+	@cat $(ab1) | tee $(falcon_bench_36) > /dev/null
+	@echo -e "\n====== POST ======\n" | tee -a $(falcon_bench_36) > /dev/null
+	@cat $(ab2) | tee -a $(falcon_bench_36) > /dev/null
 	@cat /var/run/falcon_bench.pid | xargs -n1 kill -9 > /dev/null 2>&1
 	@rm -f /var/run/falcon_bench.pid > /dev/null 2>&1
 
-bjoern_bench: clean fmt install
+_clean_bench:
+	@rm -rf bench/*.txt
+	@rm -rf tmp/*.tmp
 
-ab1 := /tmp/ab1$(shell date +%s).tmp
-$(ab1): $(ab1)
-	$(AB) $(TEST_URL) | tee $@
+bjoern-bench-36: clean _clean_bench setup-36 install-36 flask-ab-36 bottle-ab-36 falcon-ab-36
 
-ab2:
-	@echo 'asdfghjkl=asdfghjkl&qwerty:qwertyuiop&image=$(IMAGE_B64)' > /tmp/bjoern-post.tmp
-	$(AB) -p /tmp/bjoern-post.tmp $(TEST_URL)
+$(ab1): /tmp/ab1.tmp
+	@$(AB) $(TEST_URL) | tee "$@"
+	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a "$@"
+	@$(AB) -k $(TEST_URL) | tee -a "$@"
 
-ab1k:
-	$(AB) -k $(TEST_URL)
-ab2k:
-	@echo 'asdfghjkl=asdfghjkl&qwerty=qwertyuiop' > /tmp/bjoern-post.tmp
-	$(AB) -k -p /tmp/bjoern-post.tmp $(TEST_URL)
-
-ab1j:
-	$(AB) -T application/json $(TEST_URL)
-ab2j:
-	@echo {asdfghjkl=asdfghjkl&qwerty:qwertyuiop}' > /tmp/bjoern-post.tmp
-	$(AB) -p /tmp/bjoern-post.tmp $(TEST_URL)
-
-ab1jk:
-	$(AB) -T application/json -k $(TEST_URL)
-ab2jk:
-	@echo {asdfghjkl=asdfghjkl&qwerty:qwertyuiop}' > /tmp/bjoern-post.tmp
-	$(AB) -T application/json -k -p /tmp/bjoern-post.tmp  $(TEST_URL)
+$(ab2): /tmp/ab2.tmp
+	@echo 'asdfghjkl=asdfghjkl&qwerty=qwertyuiop&image=$(IMAGE_B64)' > /tmp/bjoern-post.tmp
+	@echo $(IMAGE_B64_LEN)
+	$(AB) -T 'application/x-www-form-urlencoded' -p /tmp/bjoern-post.tmp $(TEST_URL) | tee "$@"
+	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a "$@"
+	$(AB) -T 'application/x-www-form-urlencoded' -k -p /tmp/bjoern-post.tmp $(TEST_URL) | tee -a "$@"
 
 # Memory checks
 valgrind:
@@ -159,7 +165,7 @@ memwatch:
 	   tail -n +25 /proc/$$(pgrep -n ${PYTHON36})/smaps'
 
 # Pypi
-uninstall-36: clean
+uninstall-36:
 	@pip3 uninstall -y bjoern || { echo "Not installed."; }
 
 install-debug-36: uninstall-36

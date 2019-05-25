@@ -192,7 +192,7 @@ ev_io_on_read(struct ev_loop* mainloop, ev_io* watcher, const int events)
     /* Client disconnected */
     read_state = aborted;
     DBG_REQ(request, "Client disconnected");
-    log_error("Parse error: Client disconnectged");
+    log_debug("Parse error: Client disconnectged");
   } else if (read_bytes < 0) {
     /* Would block or error */
     if(errno == EAGAIN || errno == EWOULDBLOCK) {

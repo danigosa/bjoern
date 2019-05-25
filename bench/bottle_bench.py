@@ -20,9 +20,10 @@ def bench_post():
     k = request.params.get("k")
     k2 = request.params.get("k2")
     asdfghjkl = request.params["asdfghjkl"]
+    image = request.form.get("image")
 
     response.content_type = "application/json"
-    return json.dumps({"k": k, "k2": k2, "asdfghjkl": asdfghjkl})
+    return json.dumps({"k": k, "k2": k2, "asdfghjkl": asdfghjkl, "image": image})
 
 
 bjoern.run(app, "0.0.0.0", 8080, reuse_port=True)

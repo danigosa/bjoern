@@ -20,13 +20,7 @@ def bench():
         image = request.form.get("image")
 
         return jsonify(
-            {
-                "k": k,
-                "k2": k2,
-                "asdfghjkl": asdfghjkl,
-                "qwerty": qwerty,
-                "image": image.decode(),
-            }
+            {"k": k, "k2": k2, "asdfghjkl": asdfghjkl, "qwerty": qwerty, "image": image}
         )
 
     abort(400)
