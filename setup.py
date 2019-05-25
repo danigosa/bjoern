@@ -22,6 +22,7 @@ if _DEBUG:
         "-Wextra",
         "-Wno-unused-parameter",
         "-Wno-missing-field-initializers",
+        "-D DEBUG",
         "-g",
     ]
 else:

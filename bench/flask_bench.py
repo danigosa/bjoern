@@ -18,10 +18,19 @@ def bench():
         k2 = request.args.get("k2")
         asdfghjkl = request.form.get("asdfghjkl")
         qwerty = request.form.get("qwerty")
+        image = request.form.get("image")
 
-        return jsonify({"k": k, "k2": k2, "asdfghjkl": asdfghjkl, "qwerty": qwerty})
+        return jsonify(
+            {
+                "k": k,
+                "k2": k2,
+                "asdfghjkl": asdfghjkl,
+                "qwerty": qwerty,
+                "image": image.decode(),
+            }
+        )
 
     abort(400)
 
 
-bjoern.run(app, "0.0.0.0", 8080, log_level=10, reuse_port=True)
+bjoern.run(app, "0.0.0.0", 8080, log_level=30, reuse_port=True)

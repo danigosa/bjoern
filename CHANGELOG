@@ -1,3 +1,10 @@
+4.0.2 (May 2019)
+    - Fixed problems uploading big POST bodies
+    - Refactored and added tests
+
+4.0.1 (May 2019)
+    - Refactored and added tests
+
 4.0.0-a1 (May 2019)
     - Fork from master@9884381ffdbc279fbf1ef640003fcce0a6f0996a
     - Drop support for Python2, supporting only Python3.6+

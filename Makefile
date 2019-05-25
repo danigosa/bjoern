@@ -1,22 +1,28 @@
-SOURCE_DIR	= bjoern
-BUILD_DIR	= build
-PYTHON	= python3
-PY36	= py36
-DEBUG = DEBUG=True
+SHELL=/bin/bash
 
-PYTHON_INCLUDE	= $(shell ${PYTHON}-config --includes | sed s/-I/-isystem\ /g)
-PYTHON_LDFLAGS	= $(shell ${PYTHON}-config --ldflags)
+.PHONY: default setup test all again clean
+default: test
 
-HTTP_PARSER_DIR	= http-parser
-HTTP_PARSER_OBJ = $(HTTP_PARSER_DIR)/http_parser.o
-HTTP_PARSER_SRC = $(HTTP_PARSER_DIR)/http_parser.c
+SOURCE_DIR	:= bjoern
+BUILD_DIR	:= build
+PYTHON36	:= python3
+PY36	:= py36
+DEBUG := DEBUG=True
 
-HTTP_PARSER_URL_DIR	= http-parser/contrib
-HTTP_PARSER_URL_OBJ = $(HTTP_PARSER_URL_DIR)/url_parser
+PYTHON_INCLUDE	:= $(shell ${PYTHON36}-config --includes | sed s/-I/-isystem\ /g)
+PYTHON_LDFLAGS	:= $(shell ${PYTHON36}-config --ldflags)
 
-objects		= 	$(HTTP_PARSER_OBJ) $(HTTP_PARSER_URL_OBJ) \
+HTTP_PARSER_DIR	:= http-parser
+HTTP_PARSER_OBJ := $(HTTP_PARSER_DIR)/http_parser.o
+HTTP_PARSER_SRC := $(HTTP_PARSER_DIR)/http_parser.c
+
+HTTP_PARSER_URL_DIR	:= http-parser/contrib
+HTTP_PARSER_URL_OBJ := $(HTTP_PARSER_URL_DIR)/url_parser
+
+objects		:= 	$(HTTP_PARSER_OBJ) $(HTTP_PARSER_URL_OBJ) \
 		  		$(patsubst $(SOURCE_DIR)/%.c, $(BUILD_DIR)/%.o, \
 		             $(wildcard $(SOURCE_DIR)/*.c))
+FEATURES :=
 ifneq ($(WANT_SENDFILE), no)
 FEATURES	+= -D WANT_SENDFILE
 endif
@@ -32,17 +38,21 @@ endif
 ifndef SIGNAL_CHECK_INTERVAL
 FEATURES	+= -D SIGNAL_CHECK_INTERVAL=0.1
 endif
-CC 			= gcc
+CC 			:= gcc
 CPPFLAGS	+= $(PYTHON_INCLUDE) -I . -I $(SOURCE_DIR) -I $(HTTP_PARSER_DIR)
-CFLAGS		+= $(FEATURES) -std=c99 -fno-strict-aliasing -fcommon -fPIC -Wall -g
+CFLAGS		+= $(FEATURES) -std=c99 -fno-strict-aliasing -fcommon -fPIC -Wall
 LDFLAGS		+= $(PYTHON_LDFLAGS) -pthread -shared -fcommon
 
+IMAGE_B64 	:= $(shell cat tests/charlie.jpg | base64)
+AB			:= ab -c 100 -n 10000
+TEST_URL	:= "http://127.0.0.1:8080/a/b/c?k=v&k2=v2"
+
+ab1 := /tmp/ab1$(shell date +%s).tmp
+
+# Targets
 setup: clean prepare-build
 
-test: reqs fmt install_real
-	pytest
-
-all: setup prepare-build $(objects) _bjoernmodule test
+all: setup $(objects) _bjoernmodule test
 
 print-env:
 	@echo CFLAGS=$(CFLAGS)
@@ -51,23 +61,11 @@ print-env:
 	@echo args=$(HTTP_PARSER_SRC) $(wildcard $(SOURCE_DIR)/*.c)
 	@echo FEATURES=$(FEATURES)
 
-opt: clean
-	CFLAGS='-O3' make
-
-small: clean
-	CFLAGS='-Os -s' make
-
-fast: clean
-	CFLAGS='-Os -s -O3 -march=core-avx2 -mtune=core-avx2' make
-
 _bjoernmodule:
 	@$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $(objects) -o $(BUILD_DIR)/_bjoern.so -lev
-	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) ${PYTHON} -c 'import bjoern;print(f"Bjoern version: {bjoern.__version__}");'
+	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) ${PYTHON36} -c 'import bjoern;print(f"Bjoern version: {bjoern.__version__}");'
 
 again: clean all
-
-debug:
-	CFLAGS='-D DEBUG -g' make again
 
 $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.c
 	@echo ' -> ' $(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
@@ -88,80 +86,101 @@ prepare-build: fmt
 
 clean:
 	@rm -rf $(BUILD_DIR)/*
+	@rm -f /tmp/*.tmp
 
-AB		= ab -c 100 -n 10000
-TEST_URL	= "http://127.0.0.1:8080/a/b/c?k=v&k2=v2"
+# Test
+test: reqs fmt install_debug
+	@pytest
 
-_flask_bench: fmt install_real
-	@$(PYTHON) bench/flask_bench.py & jobs -p >/var/run/flask_bench.pid
+# Benchmarks
+flask_bench := bench/flask.txt
+$(flask_bench): bench/flask.txt
+	@$(PYTHON36) bench/flask_bench.py & jobs -p >/var/run/flask_bench.pid
+    @sleep 5
+
+flask_ab:
+	@cat $(ab1) | tee $(flask_bench)
+	@cat /var/run/flask_bench.pid | xargs -n1 kill -9 > /dev/null 2>&1
+	@rm -f /var/run/flask_bench.pid > /dev/null 2>&1
+
+_bottle_bench:
+	@$(PYTHON36) bench/bottle_bench.py & jobs -p >/var/run/bottle_bench.pid
 	@sleep 5
 
-flask_ab: _flask_bench ab1 ab2 ab3 ab4
-	@cat /var/run/flask_bench.pid | xargs -n1 kill -9
-	@rm -f /var/run/flask_bench.pid
+bottle_ab: _bottle_bench ab1 ab1k ab2 ab2k
+	@cat /var/run/bottle_bench.pid | xargs -n1 kill -9 > /dev/null 2>&1
+	@rm -f /var/run/bottle_bench.pid > /dev/null 2>&1
 
-_bottle_bench: fmt install_real
-	@$(PYTHON) bench/bottle_bench.py & jobs -p >/var/run/bottle_bench.pid
+_falcon_bench:
+	@$(PYTHON36) bench/falcon_bench.py & jobs -p >/var/run/falcon_bench.pid
 	@sleep 5
 
-bottle_ab: _bottle_bench ab1 ab2 ab3 ab4
-	@cat /var/run/bottle_bench.pid | xargs -n1 kill -9
-	@rm -f /var/run/bottle_bench.pid
+falcon_ab: _falcon_bench ab1 ab1k ab2 ab2k
+	@cat /var/run/falcon_bench.pid | xargs -n1 kill -9 > /dev/null 2>&1
+	@rm -f /var/run/falcon_bench.pid > /dev/null 2>&1
 
-_falcon_bench: fmt install_real
-	@$(PYTHON) bench/falcon_bench.py & jobs -p >/var/run/falcon_bench.pid
-	@sleep 5
+bjoern_bench: clean fmt install
 
-falcon_ab: _falcon_bench ab1 ab2 ab3 ab4
-	@cat /var/run/falcon_bench.pid | xargs -n1 kill -9
-	@rm -f /var/run/falcon_bench.pid
+$(ab1): $(ab1)
+	$(AB) $(TEST_URL) | tee $@
 
-ab1:
-	$(AB) $(TEST_URL)
 ab2:
-	@echo 'asdfghjkl=asdfghjkl&qwerty=qwertyuiop' > /tmp/bjoern-post.tmp
+	@echo 'asdfghjkl=asdfghjkl&qwerty:qwertyuiop&image=$(IMAGE_B64)' > /tmp/bjoern-post.tmp
 	$(AB) -p /tmp/bjoern-post.tmp $(TEST_URL)
-ab3:
+
+ab1k:
 	$(AB) -k $(TEST_URL)
-ab4:
+ab2k:
 	@echo 'asdfghjkl=asdfghjkl&qwerty=qwertyuiop' > /tmp/bjoern-post.tmp
 	$(AB) -k -p /tmp/bjoern-post.tmp $(TEST_URL)
 
-wget:
-	wget -O - -q -S $(TEST_URL)
+ab1j:
+	$(AB) -T application/json $(TEST_URL)
+ab2j:
+	@echo {asdfghjkl=asdfghjkl&qwerty:qwertyuiop}' > /tmp/bjoern-post.tmp
+	$(AB) -p /tmp/bjoern-post.tmp $(TEST_URL)
 
+ab1jk:
+	$(AB) -T application/json -k $(TEST_URL)
+ab2jk:
+	@echo {asdfghjkl=asdfghjkl&qwerty:qwertyuiop}' > /tmp/bjoern-post.tmp
+	$(AB) -T application/json -k -p /tmp/bjoern-post.tmp  $(TEST_URL)
+
+# Memory checks
 valgrind:
-	valgrind --leak-check=full --show-reachable=yes ${PYTHON} tests/empty.py
+	valgrind --leak-check=full --show-reachable=yes ${PYTHON36} tests/empty.py
 
 callgrind:
-	valgrind --tool=callgrind ${PYTHON} tests/wsgitest-round-robin.py
+	valgrind --tool=callgrind ${PYTHON36} tests/wsgitest-round-robin.py
 
 memwatch:
 	watch -n 0.5 \
-	  'cat /proc/$$(pgrep -n ${PYTHON})/cmdline | tr "\0" " " | head -c -1; \
+	  'cat /proc/$$(pgrep -n ${PYTHON36})/cmdline | tr "\0" " " | head -c -1; \
 	   echo; echo; \
-	   tail -n +25 /proc/$$(pgrep -n ${PYTHON})/smaps'
+	   tail -n +25 /proc/$$(pgrep -n ${PYTHON36})/smaps'
 
-uninstall:
+# Pypi
+uninstall: clean
 	@pip3 uninstall -y bjoern || { echo "Not installed."; }
 
-install: clean uninstall all
-	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) $(DEBUG) ${PYTHON} setup.py build_ext
-	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) $(DEBUG) ${PYTHON} setup.py install
+install_debug: uninstall
+	@DEBUG=True PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) ${PYTHON36} setup.py build_ext
+	@DEBUG=True PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) ${PYTHON36} setup.py install
 
-install_real: clean uninstall fast
-	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) ${PYTHON} setup.py build_ext
-	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) ${PYTHON} setup.py install
+install: uninstall
+	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) ${PYTHON36} setup.py build_ext
+	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) ${PYTHON36} setup.py install
 
-upload: test
-	${PYTHON} setup.py sdist upload --repository=robbie-pypi
+upload:
+	${PYTHON36} setup.py sdist upload
 
-wheel: test
-	${PYTHON} setup.py bdist_wheel
+wheel:
+	${PYTHON36} setup.py bdist_wheel
 
 upload-wheel: wheel
 	twine upload --skip-existing dist/*.whl
 
+# Vendors
 libev:
 	# http-parser 2.9.2
 	@git submodule update --init --recursive
