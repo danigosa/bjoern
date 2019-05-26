@@ -6,10 +6,13 @@ default: test-36
 SOURCE_DIR	:= bjoern
 BUILD_DIR	:= build
 PYTHON36	:= /.py36-venv/bin/python
+PYTHON37	:= /.py37-venv/bin/python
 DEBUG := DEBUG=True
 
 PYTHON36_INCLUDE	:= $(shell python3-config --includes | sed s/-I/-isystem\ /g)
-PYTHON36_LDFLAGS	:= $(shell python3-config --ldflags)
+PYTHON36_LDFLAGS_36	:= $(shell python3-config --ldflags)
+PYTHON37_INCLUDE	:= $(shell python3.7-config --includes | sed s/-I/-isystem\ /g)
+PYTHON37_LDFLAGS_36	:= $(shell python3.7-config --ldflags)
 
 HTTP_PARSER_DIR	:= http-parser
 HTTP_PARSER_OBJ := $(HTTP_PARSER_DIR)/http_parser.o
@@ -38,9 +41,11 @@ ifndef SIGNAL_CHECK_INTERVAL
 FEATURES	+= -D SIGNAL_CHECK_INTERVAL=0.1
 endif
 CC 				:= gcc
-CPPFLAGS		+= $(PYTHON36_INCLUDE) -I . -I $(SOURCE_DIR) -I $(HTTP_PARSER_DIR)
+CPPFLAGS_36		+= $(PYTHON36_INCLUDE) -I . -I $(SOURCE_DIR) -I $(HTTP_PARSER_DIR)CPPFLAGS
+CPPFLAGS_37		+= $(PYTHON37_INCLUDE) -I . -I $(SOURCE_DIR) -I $(HTTP_PARSER_DIR)CPPFLAGS
 CFLAGS			+= $(FEATURES) -std=c99 -fno-strict-aliasing -fcommon -fPIC -Wall
-LDFLAGS			+= $(PYTHON36_LDFLAGS) -pthread -shared -fcommon
+LDFLAGS_36		+= $(PYTHON36_LDFLAGS_36) -pthread -shared -fcommon
+LDFLAGS_37		+= $(PYTHON37_LDFLAGS_36) -pthread -shared -fcommon
 
 AB			:= ab -c 100 -n 10000
 TEST_URL	:= "http://127.0.0.1:8080/a/b/c?k=v&k2=v2"
@@ -55,31 +60,40 @@ ab2 := /tmp/ab2.tmp
 
 # Targets
 setup-36: clean prepare-build reqs-36
+setup-37: clean prepare-build reqs-37
 
 all-36: setup-36 $(objects) _bjoernmodule_36 test-36
+all-37: setup-36 $(objects) _bjoernmodule_37 test-37
 
 print-env:
 	@echo CFLAGS=$(CFLAGS)
-	@echo CPPFLAGS=$(CPPFLAGS)
-	@echo LDFLAGS=$(LDFLAGS)
+	@echo CPPFLAGS_36=$(CPPFLAGS_36)
+	@echo LDFLAGS_36=$(LDFLAGS_36)
 	@echo args=$(HTTP_PARSER_SRC) $(wildcard $(SOURCE_DIR)/*.c)
 	@echo FEATURES=$(FEATURES)
 
 _bjoernmodule_36:
-	@$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $(objects) -o $(BUILD_DIR)/_bjoern.so -lev
+	@$(CC) $(CPPFLAGS_36) $(CFLAGS) $(LDFLAGS_36) $(objects) -o $(BUILD_DIR)/_bjoern.so -lev
 	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) ${PYTHON36} -c 'import bjoern;print(f"Bjoern version: {bjoern.__version__}");'
+
+_bjoernmodule_37:
+	@$(CC) $(CPPFLAGS_37) $(CFLAGS) $(LDFLAGS_37) $(objects) -o $(BUILD_DIR)/_bjoern.so -lev
+	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) ${PYTHON37} -c 'import bjoern;print(f"Bjoern version: {bjoern.__version__}");'
 
 again-36: clean all-36
 
 $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.c
-	@echo ' -> ' $(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
-	@$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+	@echo ' -> ' $(CC) $(CPPFLAGS_36) $(CFLAGS) -c $< -o $@
+	@$(CC) $(CPPFLAGS_36) $(CFLAGS) -c $< -o $@
 
 # foo.o: shortcut to $(BUILD_DIR)/foo.o
 %.o: $(BUILD_DIR)/%.o
 
 reqs-36: install-requirements
 	@bash install-requirements $(PYTHON36)
+
+reqs-37: install-requirements
+	@bash install-requirements $(PYTHON37)
 
 fmt:
 	@isort --settings-path=/.isort.cfg **/*.py
@@ -95,6 +109,9 @@ clean:
 # Test
 test-36: fmt reqs-36 install-debug-36
 	@$(PYTHON36) -m pytest
+
+test-37: fmt reqs-37 install-debug-37
+	@$(PYTHON37) -m pytest
 
 # Benchmarks
 $(flask_bench_36):
@@ -162,11 +179,22 @@ memwatch-36:
 	watch -n 0.5 \
 	  'cat /proc/$$(pgrep -n ${PYTHON36})/cmdline | tr "\0" " " | head -c -1; \
 	   echo; echo; \
-	   tail -n +25 /proc/$$(pgrep -n ${PYTHON36})/smaps'
+	   tail -n +25 /proc/$$(pgrep -n ${PYTHON36})smaps'
+valgrind-37:
+	valgrind --leak-check=full --show-reachable=yes ${PYTHON37} tests/empty.py
+
+callgrind-37:
+	valgrind --tool=callgrind ${PYTHON37} tests/wsgitest-round-robin.py
+
+memwatch-37:
+	watch -n 0.5 \
+	  'cat /proc/$$(pgrep -n ${PYTHON37})/cmdline | tr "\0" " " | head -c -1; \
+	   echo; echo; \
+	   tail -n +25 /proc/$$(pgrep -n ${PYTHON37})smaps'
 
 # Pypi
 uninstall-36:
-	@pip3 uninstall -y bjoern || { echo "Not installed."; }
+	@$(PYHHON36) -m pip uninstall -y bjoern || { echo "Not installed."; }
 
 install-debug-36: uninstall-36
 	@DEBUG=True PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) ${PYTHON36} setup.py build_ext
@@ -182,8 +210,28 @@ upload-36:
 wheel-36:
 	${PYTHON36} setup.py bdist_wheel
 
-upload-wheel-36: wheel
-	twine upload --skip-existing dist/*.whl
+uninstall-37:
+	@$(PYHHON37) -m pip uninstall -y bjoern || { echo "Not installed."; }
+
+install-debug-37: uninstall-36
+	@DEBUG=True PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) ${PYTHON37} setup.py build_ext
+	@DEBUG=True PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) ${PYTHON37} setup.py install
+
+install-37: uninstall-37
+	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) ${PYTHON37} setup.py build_ext
+	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) ${PYTHON37} setup.py install
+
+upload-37:
+	${PYTHON37} setup.py sdist upload
+
+wheel-37:
+	${PYTHON37} setup.py bdist_wheel
+
+upload-wheel-36: wheel-36
+	@$(PYHHON36) -m twine upload --skip-existing dist/*.whl
+
+upload-wheel-37: wheel-37
+	@$(PYHHON37) -m twine upload --skip-existing dist/*.whl
 
 # Vendors
 libev:

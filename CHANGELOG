@@ -1,3 +1,10 @@
+CHANGELOG
+=========
+
+4.0.4 (May 2019)
+    - Added more tests
+    - Tests passing on Py37
+
 4.0.3 (May 2019)
     - Added benchmarks with image input
     - Refactored Makefile
