@@ -15,8 +15,6 @@
 
 typedef struct { char* data; size_t len; } string;
 
-enum bjoern_http_status { HTTP_BAD_REQUEST = 1, HTTP_LENGTH_REQUIRED, HTTP_SERVER_ERROR };
-
 void _init_common(void);
 
 PyObject *_REMOTE_ADDR, *_PATH_INFO, *_QUERY_STRING, *_REQUEST_METHOD, *_GET,

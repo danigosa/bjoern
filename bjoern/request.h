@@ -2,7 +2,7 @@
 #define __request_h__
 
 #include <ev.h>
-#include <../http-parser/http_parser.h>
+#include "../http-parser/http_parser.h"
 #include "common.h"
 #include "server.h"
 
@@ -11,7 +11,7 @@ void _initialize_request_module(ServerInfo* server_info);
 typedef struct http_parser_url http_parser_url;
 
 typedef struct {
-  unsigned error_code : 2;
+  int error_code: 32;
   unsigned parse_finished : 1;
   unsigned start_response_called : 1;
   unsigned wsgi_call_done : 1;

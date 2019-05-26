@@ -73,8 +73,10 @@ void Request_parse(Request *request, const char *data, const size_t data_len) {
     assert(data_len);
     size_t nparsed = http_parser_execute((http_parser *) &request->parser,
                                          &parser_settings, data, data_len);
-    if (nparsed != data_len)
-        request->state.error_code = HTTP_BAD_REQUEST;
+    if (nparsed != data_len){
+        log_error("Bad length(%zu != %zu): BAD REQUEST", nparsed, data_len);
+        request->state.error_code = HTTP_STATUS_BAD_REQUEST;
+    }
     request->state.upgrade = request->parser.parser.upgrade;
 }
 
@@ -196,15 +198,17 @@ on_header_value(http_parser *parser, const char *value, size_t len) {
 
 static int
 on_body(http_parser *parser, const char *data, const size_t len) {
-    if (REQUEST->is_final)
+    if (REQUEST->is_final) {
+        log_debug("Body is Final(%zu)", len);
         return 0;
+    }
 
     log_debug("Body(%zu)", len);
     PyObject *body;
     body = PyDict_GetItem(REQUEST->headers, _wsgi_input);
     if (body == NULL) {
-        if (!parser->content_length && !parser->http_minor) {
-            REQUEST->state.error_code = HTTP_LENGTH_REQUIRED;
+        if (!parser->content_length && !parser->http_minor && !(parser->flags & F_CHUNKED)) {
+            REQUEST->state.error_code = HTTP_STATUS_LENGTH_REQUIRED;
             log_error("Bad Body Length(%zu:%zu):\n%s", parser->content_length, len, data);
             return 1;
         }
@@ -252,12 +256,14 @@ on_message_complete(http_parser *parser) {
     PyObject *body = PyDict_GetItem(REQUEST->headers, _wsgi_input);
     if (body) {
         /* first do a seek(0) and then read() returns all data */
-        log_debug("on_message_complete: request has body and we seek to 0");
+        log_debug("on_message_complete: request has body and we seek to 0 [%s, HTTP1.%d %d]",
+                  http_method_str(parser->method), parser->http_minor, REQUEST->state.error_code);
         PyObject *buf = PyObject_CallMethodObjArgs(body, _seek, _FromLong(0), NULL);
         Py_DECREF(buf); /* Discard the return value */
     } else {
         /* Request has no body */
-        log_debug("on_message_complete: request has no body");
+        log_debug("on_message_complete: request has no body [%s, HTTP1.%d %d]",
+                  http_method_str(parser->method), parser->http_minor, REQUEST->state.error_code);
         body = PyObject_CallMethodObjArgs(IO_module, _BytesIO, NULL);
         _set_header_free_value(_wsgi_input, body);
     }

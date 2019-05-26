@@ -1,13 +1,13 @@
 SHELL=/bin/bash
 
 .PHONY: default setup test all again clean
-default: test-36
+default: test
 
 SOURCE_DIR	:= bjoern
 BUILD_DIR	:= build
 PYTHON36	:= /.py36-venv/bin/python
 PYTHON37	:= /.py37-venv/bin/python
-DEBUG := DEBUG=True
+DEBUG 		:= DEBUG=True
 
 PYTHON36_INCLUDE	:= $(shell python3-config --includes | sed s/-I/-isystem\ /g)
 PYTHON36_LDFLAGS_36	:= $(shell python3-config --ldflags)
@@ -43,20 +43,23 @@ endif
 CC 				:= gcc
 CPPFLAGS_36		+= $(PYTHON36_INCLUDE) -I . -I $(SOURCE_DIR) -I $(HTTP_PARSER_DIR)CPPFLAGS
 CPPFLAGS_37		+= $(PYTHON37_INCLUDE) -I . -I $(SOURCE_DIR) -I $(HTTP_PARSER_DIR)CPPFLAGS
-CFLAGS			+= $(FEATURES) -std=c99 -fno-strict-aliasing -fcommon -fPIC -Wall
+CFLAGS			+= $(FEATURES) -D DEBUG -std=c99 -fno-strict-aliasing -fcommon -fPIC -Wall -g
 LDFLAGS_36		+= $(PYTHON36_LDFLAGS_36) -pthread -shared -fcommon
 LDFLAGS_37		+= $(PYTHON37_LDFLAGS_36) -pthread -shared -fcommon
 
 AB			:= ab -c 100 -n 10000
 TEST_URL	:= "http://127.0.0.1:8080/a/b/c?k=v&k2=v2"
 
-IMAGE_B64 := $(shell cat tests/charlie.jpg | base64 | xargs urlencode)
-IMAGE_B64_LEN := $(shell cat tests/charlie.jpg | base64 | xargs urlencode | wc -c)
-flask_bench_36 := bench/flask_py36.txt
+IMAGE_B64 		:= $(shell cat tests/charlie.jpg | base64 | xargs urlencode)
+IMAGE_B64_LEN 	:= $(shell cat tests/charlie.jpg | base64 | xargs urlencode | wc -c)
+flask_bench_36 	:= bench/flask_py36.txt
 bottle_bench_36 := bench/bottle_py36.txt
 falcon_bench_36 := bench/falcon_py36.txt
-ab1 := /tmp/ab1.tmp
-ab2 := /tmp/ab2.tmp
+flask_bench_37 	:= bench/flask_py37.txt
+bottle_bench_37 := bench/bottle_py37.txt
+falcon_bench_37 := bench/falcon_py37.txt
+ab1 			:= /tmp/ab1.tmp
+ab2 			:= /tmp/ab2.tmp
 
 # Targets
 setup-36: clean prepare-build reqs-36
@@ -74,11 +77,11 @@ print-env:
 
 _bjoernmodule_36:
 	@$(CC) $(CPPFLAGS_36) $(CFLAGS) $(LDFLAGS_36) $(objects) -o $(BUILD_DIR)/_bjoern.so -lev
-	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) ${PYTHON36} -c 'import bjoern;print(f"Bjoern version: {bjoern.__version__}");'
+	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) $(PYTHON36) -c 'import bjoern;print(f"Bjoern version: {bjoern.__version__}");'
 
 _bjoernmodule_37:
 	@$(CC) $(CPPFLAGS_37) $(CFLAGS) $(LDFLAGS_37) $(objects) -o $(BUILD_DIR)/_bjoern.so -lev
-	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) ${PYTHON37} -c 'import bjoern;print(f"Bjoern version: {bjoern.__version__}");'
+	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) $(PYTHON37) -c 'import bjoern;print(f"Bjoern version: {bjoern.__version__}");'
 
 again-36: clean all-36
 
@@ -104,14 +107,17 @@ prepare-build: fmt
 
 clean:
 	@rm -rf $(BUILD_DIR)/*
+	@rm -rf dist/*
 	@rm -f /tmp/*.tmp
 
 # Test
-test-36: fmt reqs-36 install-debug-36
+test-36: fmt clean reqs-36 install-debug-36
 	@$(PYTHON36) -m pytest
 
-test-37: fmt reqs-37 install-debug-37
+test-37: fmt clean reqs-37 install-debug-37
 	@$(PYTHON37) -m pytest
+
+test: test-36 test-37
 
 # Benchmarks
 $(flask_bench_36):
@@ -119,8 +125,9 @@ $(flask_bench_36):
 	@sleep 5
 
 flask-ab-36: $(flask_bench_36) $(ab1) $(ab2)
+	@echo -e "\n====== Flask(Python3.6) ======\n" | tee -a $(flask_bench_36) > /dev/null
 	@echo -e "\n====== GET ======\n" | tee -a $(flask_bench_36) > /dev/null
-	@cat $(ab1) | tee $(flask_bench_36) > /dev/null
+	@cat $(ab1) | tee -a  $(flask_bench_36) > /dev/null
 	@echo -e "\n====== POST ======\n" | tee -a $(flask_bench_36) > /dev/null
 	@cat $(ab2) | tee -a $(flask_bench_36) > /dev/null
 	@cat /var/run/flask_bench.pid | xargs -n1 kill -9 > /dev/null 2>&1
@@ -131,8 +138,9 @@ $(bottle_bench_36):
 	@sleep 5
 
 bottle-ab-36: $(bottle_bench_36) $(ab1) $(ab2)
+	@echo -e "\n====== Bottle(Python3.6) ======\n" | tee -a $(bottle_bench_36) > /dev/null
 	@echo -e "\n====== GET ======\n" | tee -a $(bottle_bench_36) > /dev/null
-	@cat $(ab1) | tee $(bottle_bench_36) > /dev/null
+	@cat $(ab1) | tee -a  $(bottle_bench_36) > /dev/null
 	@echo -e "\n====== POST ======\n" | tee -a $(bottle_bench_36) > /dev/null
 	@cat $(ab2) | tee -a $(bottle_bench_36) > /dev/null
 	@cat /var/run/bottle_bench.pid | xargs -n1 kill -9 > /dev/null 2>&1
@@ -143,18 +151,64 @@ $(falcon_bench_36):
 	@sleep 5
 
 falcon-ab-36: $(falcon_bench_36) $(ab1) $(ab2)
+	@echo -e "\n====== Falcon(Python3.6) ======\n" | tee -a $(falcon_bench_36) > /dev/null
 	@echo -e "\n====== GET ======\n" | tee -a $(falcon_bench_36) > /dev/null
-	@cat $(ab1) | tee $(falcon_bench_36) > /dev/null
+	@cat $(ab1) | tee -a  $(falcon_bench_36) > /dev/null
 	@echo -e "\n====== POST ======\n" | tee -a $(falcon_bench_36) > /dev/null
 	@cat $(ab2) | tee -a $(falcon_bench_36) > /dev/null
 	@cat /var/run/falcon_bench.pid | xargs -n1 kill -9 > /dev/null 2>&1
 	@rm -f /var/run/falcon_bench.pid > /dev/null 2>&1
 
-_clean_bench:
-	@rm -rf bench/*.txt
-	@rm -rf tmp/*.tmp
+_clean_bench_36:
+	@rm -rf bench/*36.txt
 
-bjoern-bench-36: clean _clean_bench setup-36 install-36 flask-ab-36 bottle-ab-36 falcon-ab-36
+bjoern-bench-36: clean _clean_bench_36 setup-36 install-36 flask-ab-36 bottle-ab-36 falcon-ab-36
+
+$(flask_bench_37):
+	@$(PYTHON37) bench/flask_bench.py & jobs -p >/var/run/flask_bench.pid
+	@sleep 5
+
+flask-ab-37: $(flask_bench_37) $(ab1) $(ab2)
+	@echo -e "\n====== Flask(Python3.7) ======\n" | tee -a $(flask_bench_37) > /dev/null
+	@echo -e "\n====== GET ======\n" | tee -a $(flask_bench_37) > /dev/null
+	@cat $(ab1) | tee -a $(flask_bench_37) > /dev/null
+	@echo -e "\n====== POST ======\n" | tee -a $(flask_bench_37) > /dev/null
+	@cat $(ab2) | tee -a $(flask_bench_37) > /dev/null
+	@cat /var/run/flask_bench.pid | xargs -n1 kill -9 > /dev/null 2>&1
+	@rm -f /var/run/flask_bench.pid > /dev/null 2>&1
+
+$(bottle_bench_37):
+	@$(PYTHON37) bench/bottle_bench.py & jobs -p >/var/run/bottle_bench.pid
+	@sleep 5
+
+bottle-ab-37: $(bottle_bench_37) $(ab1) $(ab2)
+	@echo -e "\n====== Bottle(Python3.7) ======\n" | tee -a $(bottle_bench_37) > /dev/null
+	@echo -e "\n====== GET ======\n" | tee -a $(bottle_bench_37) > /dev/null
+	@cat $(ab1) | tee -a  $(bottle_bench_37) > /dev/null
+	@echo -e "\n====== POST ======\n" | tee -a $(bottle_bench_37) > /dev/null
+	@cat $(ab2) | tee -a $(bottle_bench_37) > /dev/null
+	@cat /var/run/bottle_bench.pid | xargs -n1 kill -9 > /dev/null 2>&1
+	@rm -f /var/run/bottle_bench.pid > /dev/null 2>&1
+
+$(falcon_bench_37):
+	@$(PYTHON37) bench/falcon_bench.py & jobs -p >/var/run/falcon_bench.pid
+	@sleep 5
+
+falcon-ab-37: $(falcon_bench_37) $(ab1) $(ab2)
+	@echo -e "\n====== Falcon(Python3.7) ======\n" | tee -a $(falcon_bench_37) > /dev/null
+	@echo -e "\n====== GET ======\n" | tee -a $(falcon_bench_37) > /dev/null
+	@cat $(ab1) | tee -a  $(falcon_bench_37) > /dev/null
+	@echo -e "\n====== POST ======\n" | tee -a $(falcon_bench_37) > /dev/null
+	@cat $(ab2) | tee -a $(falcon_bench_37) > /dev/null
+	@cat /var/run/falcon_bench.pid | xargs -n1 kill -9 > /dev/null 2>&1
+	@rm -f /var/run/falcon_bench.pid > /dev/null 2>&1
+
+_clean_bench_37:
+	@rm -rf bench/*37.txt
+
+bjoern-bench-37: clean _clean_bench_37 setup-37 install-37 flask-ab-37 bottle-ab-37 falcon-ab-37
+
+bjoern-bench: bjoern-bench-36 bjoern-bench-37
 
 $(ab1): /tmp/ab1.tmp
 	@$(AB) $(TEST_URL) | tee "$@"
@@ -170,65 +224,56 @@ $(ab2): /tmp/ab2.tmp
 
 # Memory checks
 valgrind-36:
-	valgrind --leak-check=full --show-reachable=yes ${PYTHON36} tests/empty.py
+	valgrind --leak-check=full --show-reachable=yes $(PYTHON36) tests/empty.py
 
 callgrind-36:
-	valgrind --tool=callgrind ${PYTHON36} tests/wsgitest-round-robin.py
+	valgrind --tool=callgrind $(PYTHON36) tests/wsgitest-round-robin.py
 
 memwatch-36:
 	watch -n 0.5 \
-	  'cat /proc/$$(pgrep -n ${PYTHON36})/cmdline | tr "\0" " " | head -c -1; \
+	  'cat /proc/$$(pgrep -n $(PYTHON36))/cmdline | tr "\0" " " | head -c -1; \
 	   echo; echo; \
-	   tail -n +25 /proc/$$(pgrep -n ${PYTHON36})smaps'
+	   tail -n +25 /proc/$$(pgrep -n $(PYTHON36))smaps'
+
 valgrind-37:
-	valgrind --leak-check=full --show-reachable=yes ${PYTHON37} tests/empty.py
+	valgrind --leak-check=full --show-reachable=yes $(PYTHON37) tests/empty.py
 
 callgrind-37:
-	valgrind --tool=callgrind ${PYTHON37} tests/wsgitest-round-robin.py
+	valgrind --tool=callgrind $(PYTHON37) tests/wsgitest-round-robin.py
 
 memwatch-37:
 	watch -n 0.5 \
-	  'cat /proc/$$(pgrep -n ${PYTHON37})/cmdline | tr "\0" " " | head -c -1; \
+	  'cat /proc/$$(pgrep -n $(PYTHON37))/cmdline | tr "\0" " " | head -c -1; \
 	   echo; echo; \
-	   tail -n +25 /proc/$$(pgrep -n ${PYTHON37})smaps'
+	   tail -n +25 /proc/$$(pgrep -n $(PYTHON37))smaps'
 
 # Pypi
-uninstall-36:
-	@$(PYHHON36) -m pip uninstall -y bjoern || { echo "Not installed."; }
+install-debug-36:
+	@DEBUG=True PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) $(PYTHON36) -m pip install --editable .
 
-install-debug-36: uninstall-36
-	@DEBUG=True PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) ${PYTHON36} setup.py build_ext
-	@DEBUG=True PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) ${PYTHON36} setup.py install
-
-install-36: uninstall-36
-	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) ${PYTHON36} setup.py build_ext
-	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) ${PYTHON36} setup.py install
+install-36:
+	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) $(PYTHON36) -m pip install --editable .
 
 upload-36:
-	${PYTHON36} setup.py sdist upload
+	$(PYTHON36) setup.py sdist upload
 
 wheel-36:
-	${PYTHON36} setup.py bdist_wheel
+	$(PYTHON36) setup.py bdist_wheel
 
-uninstall-37:
-	@$(PYHHON37) -m pip uninstall -y bjoern || { echo "Not installed."; }
+install-debug-37:
+	@DEBUG=True PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) $(PYTHON37) -m pip install --editable .
 
-install-debug-37: uninstall-36
-	@DEBUG=True PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) ${PYTHON37} setup.py build_ext
-	@DEBUG=True PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) ${PYTHON37} setup.py install
-
-install-37: uninstall-37
-	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) ${PYTHON37} setup.py build_ext
-	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) ${PYTHON37} setup.py install
+install-37:
+	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) $(PYTHON37) -m pip install --editable .
 
 upload-37:
-	${PYTHON37} setup.py sdist upload
+	$(PYTHON37) setup.py sdist upload
 
 wheel-37:
-	${PYTHON37} setup.py bdist_wheel
+	$(PYTHON37) setup.py bdist_wheel
 
 upload-wheel-36: wheel-36
-	@$(PYHHON36) -m twine upload --skip-existing dist/*.whl
+	@$(PYTHON36) -m twine upload --skip-existing dist/*.whl
 
 upload-wheel-37: wheel-37
 	@$(PYHHON37) -m twine upload --skip-existing dist/*.whl

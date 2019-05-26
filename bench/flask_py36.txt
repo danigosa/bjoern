@@ -1,3 +1,9 @@
+
+====== Flask(Python3.6) ======
+
+
+====== GET ======
+
 This is ApacheBench, Version 2.3 <$Revision: 1807734 $>
 Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
 Licensed to The Apache Software Foundation, http://www.apache.org/
@@ -13,33 +19,33 @@ Document Path:          /a/b/c?k=v&k2=v2
 Document Length:        20 bytes
 
 Concurrency Level:      100
-Time taken for tests:   3.025 seconds
+Time taken for tests:   3.223 seconds
 Complete requests:      10000
 Failed requests:        0
 Total transferred:      1100000 bytes
 HTML transferred:       200000 bytes
-Requests per second:    3306.05 [#/sec] (mean)
-Time per request:       30.248 [ms] (mean)
-Time per request:       0.302 [ms] (mean, across all concurrent requests)
-Transfer rate:          355.14 [Kbytes/sec] received
+Requests per second:    3102.46 [#/sec] (mean)
+Time per request:       32.233 [ms] (mean)
+Time per request:       0.322 [ms] (mean, across all concurrent requests)
+Transfer rate:          333.27 [Kbytes/sec] received
 
 Connection Times (ms)
               min  mean[+/-sd] median   max
-Connect:        0    0   0.9      0      11
-Processing:     2   30   2.2     30      36
-Waiting:        1   30   2.2     30      36
-Total:         13   30   1.8     30      36
+Connect:        0    0   1.5      0      19
+Processing:     5   32   2.4     32      38
+Waiting:        3   32   2.4     32      38
+Total:         13   32   1.7     32      43
 
 Percentage of the requests served within a certain time (ms)
-  50%     30
-  66%     30
-  75%     30
-  80%     30
+  50%     32
+  66%     32
+  75%     32
+  80%     33
   90%     33
-  95%     34
+  95%     33
   98%     35
-  99%     35
- 100%     36 (longest request)
+  99%     37
+ 100%     43 (longest request)
 
 ~~~~~ Keep Alive ~~~~~
 
@@ -58,34 +64,34 @@ Document Path:          /a/b/c?k=v&k2=v2
 Document Length:        20 bytes
 
 Concurrency Level:      100
-Time taken for tests:   2.303 seconds
+Time taken for tests:   2.317 seconds
 Complete requests:      10000
 Failed requests:        0
 Keep-Alive requests:    10000
 Total transferred:      1150000 bytes
 HTML transferred:       200000 bytes
-Requests per second:    4341.90 [#/sec] (mean)
-Time per request:       23.031 [ms] (mean)
-Time per request:       0.230 [ms] (mean, across all concurrent requests)
-Transfer rate:          487.62 [Kbytes/sec] received
+Requests per second:    4316.12 [#/sec] (mean)
+Time per request:       23.169 [ms] (mean)
+Time per request:       0.232 [ms] (mean, across all concurrent requests)
+Transfer rate:          484.72 [Kbytes/sec] received
 
 Connection Times (ms)
               min  mean[+/-sd] median   max
 Connect:        0    0   0.6      0       8
-Processing:     1   23   2.1     23      30
-Waiting:        1   23   2.1     23      30
-Total:          9   23   2.2     23      35
+Processing:     4   23   1.4     23      32
+Waiting:        4   23   1.4     23      32
+Total:         12   23   1.5     23      34
 
 Percentage of the requests served within a certain time (ms)
   50%     23
-  66%     24
-  75%     24
-  80%     24
-  90%     25
-  95%     29
-  98%     29
-  99%     30
- 100%     35 (longest request)
+  66%     23
+  75%     23
+  80%     23
+  90%     24
+  95%     25
+  98%     28
+  99%     31
+ 100%     34 (longest request)
 
 ====== POST ======
 
@@ -104,36 +110,36 @@ Document Path:          /a/b/c?k=v&k2=v2
 Document Length:        124028 bytes
 
 Concurrency Level:      100
-Time taken for tests:   93.244 seconds
+Time taken for tests:   127.004 seconds
 Complete requests:      10000
 Failed requests:        0
 Total transferred:      1241220000 bytes
 Total body sent:        1484210000
 HTML transferred:       1240280000 bytes
-Requests per second:    107.25 [#/sec] (mean)
-Time per request:       932.438 [ms] (mean)
-Time per request:       9.324 [ms] (mean, across all concurrent requests)
-Transfer rate:          12999.57 [Kbytes/sec] received
-                        15544.46 kb/s sent
-                        28544.02 kb/s total
+Requests per second:    78.74 [#/sec] (mean)
+Time per request:       1270.045 [ms] (mean)
+Time per request:       12.700 [ms] (mean, across all concurrent requests)
+Transfer rate:          9543.99 [Kbytes/sec] received
+                        11412.38 kb/s sent
+                        20956.37 kb/s total
 
 Connection Times (ms)
               min  mean[+/-sd] median   max
-Connect:        0    0   0.4      0       6
-Processing:    31  927  90.8    951    1085
-Waiting:       30  927  90.8    951    1085
-Total:         36  927  90.7    951    1085
+Connect:        0    0   0.8      0       8
+Processing:    33 1264 206.6   1243    1836
+Waiting:       32 1263 206.7   1242    1835
+Total:         41 1264 206.4   1243    1836
 
 Percentage of the requests served within a certain time (ms)
-  50%    951
-  66%    981
-  75%    982
-  80%    982
-  90%   1014
-  95%   1050
-  98%   1055
-  99%   1057
- 100%   1085 (longest request)
+  50%   1243
+  66%   1311
+  75%   1386
+  80%   1417
+  90%   1526
+  95%   1602
+  98%   1703
+  99%   1760
+ 100%   1836 (longest request)
 
 ~~~~~ Keep Alive ~~~~~
 
@@ -152,34 +158,34 @@ Document Path:          /a/b/c?k=v&k2=v2
 Document Length:        124028 bytes
 
 Concurrency Level:      100
-Time taken for tests:   109.110 seconds
+Time taken for tests:   135.004 seconds
 Complete requests:      10000
 Failed requests:        0
 Keep-Alive requests:    10000
 Total transferred:      1241270000 bytes
 Total body sent:        1484450000
 HTML transferred:       1240280000 bytes
-Requests per second:    91.65 [#/sec] (mean)
-Time per request:       1091.102 [ms] (mean)
-Time per request:       10.911 [ms] (mean, across all concurrent requests)
-Transfer rate:          11109.67 [Kbytes/sec] received
-                        13286.19 kb/s sent
-                        24395.86 kb/s total
+Requests per second:    74.07 [#/sec] (mean)
+Time per request:       1350.038 [ms] (mean)
+Time per request:       13.500 [ms] (mean, across all concurrent requests)
+Transfer rate:          8978.84 [Kbytes/sec] received
+                        10737.91 kb/s sent
+                        19716.75 kb/s total
 
 Connection Times (ms)
               min  mean[+/-sd] median   max
-Connect:        0    0   0.5      0       5
-Processing:    36 1090  78.3   1081    1429
-Waiting:       35 1088  78.2   1079    1429
-Total:         41 1090  78.3   1081    1429
+Connect:        0    0   1.0      0      11
+Processing:    27 1348 124.0   1401    1523
+Waiting:       27 1340 123.6   1394    1513
+Total:         39 1348 123.8   1401    1523
 
 Percentage of the requests served within a certain time (ms)
-  50%   1081
-  66%   1087
-  75%   1107
-  80%   1124
-  90%   1189
-  95%   1267
-  98%   1332
-  99%   1361
- 100%   1429 (longest request)
+  50%   1401
+  66%   1413
+  75%   1423
+  80%   1434
+  90%   1477
+  95%   1489
+  98%   1494
+  99%   1505
+ 100%   1523 (longest request)

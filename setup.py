@@ -23,7 +23,6 @@ if _DEBUG:
         "-Wno-unused-parameter",
         "-Wno-missing-field-initializers",
         "-D DEBUG",
-        "-g",
     ]
 else:
     extra_compile_args = [

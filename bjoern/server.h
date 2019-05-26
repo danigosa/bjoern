@@ -1,8 +1,6 @@
 #ifndef __server_h__
 #define __server_h__
 
-#include "../http-parser/http_parser.h"
-
 typedef struct {
   int sockfd;
   PyObject* wsgi_app;
