@@ -1,7 +1,7 @@
 SHELL=/bin/bash
 
 .PHONY: default setup test all again clean
-default: test
+default: test-36
 
 SOURCE_DIR	:= bjoern
 BUILD_DIR	:= build
@@ -37,10 +37,10 @@ endif
 ifndef SIGNAL_CHECK_INTERVAL
 FEATURES	+= -D SIGNAL_CHECK_INTERVAL=0.1
 endif
-CC 			:= gcc
-CPPFLAGS	+= $(PYTHON36_INCLUDE) -I . -I $(SOURCE_DIR) -I $(HTTP_PARSER_DIR)
-CFLAGS		+= $(FEATURES) -std=c99 -fno-strict-aliasing -fcommon -fPIC -Wall
-LDFLAGS		+= $(PYTHON36_LDFLAGS) -pthread -shared -fcommon
+CC 				:= gcc
+CPPFLAGS		+= $(PYTHON36_INCLUDE) -I . -I $(SOURCE_DIR) -I $(HTTP_PARSER_DIR)
+CFLAGS			+= $(FEATURES) -std=c99 -fno-strict-aliasing -fcommon -fPIC -Wall
+LDFLAGS			+= $(PYTHON36_LDFLAGS) -pthread -shared -fcommon
 
 AB			:= ab -c 100 -n 10000
 TEST_URL	:= "http://127.0.0.1:8080/a/b/c?k=v&k2=v2"
@@ -56,7 +56,7 @@ ab2 := /tmp/ab2.tmp
 # Targets
 setup-36: clean prepare-build reqs-36
 
-all-36: setup-36 $(objects) _bjoernmodule test
+all-36: setup-36 $(objects) _bjoernmodule_36 test-36
 
 print-env:
 	@echo CFLAGS=$(CFLAGS)
@@ -65,11 +65,11 @@ print-env:
 	@echo args=$(HTTP_PARSER_SRC) $(wildcard $(SOURCE_DIR)/*.c)
 	@echo FEATURES=$(FEATURES)
 
-_bjoernmodule:
+_bjoernmodule_36:
 	@$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $(objects) -o $(BUILD_DIR)/_bjoern.so -lev
 	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) ${PYTHON36} -c 'import bjoern;print(f"Bjoern version: {bjoern.__version__}");'
 
-again: clean all
+again-36: clean all-36
 
 $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.c
 	@echo ' -> ' $(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
@@ -152,13 +152,13 @@ $(ab2): /tmp/ab2.tmp
 	$(AB) -T 'application/x-www-form-urlencoded' -k -p /tmp/bjoern-post.tmp $(TEST_URL) | tee -a "$@"
 
 # Memory checks
-valgrind:
+valgrind-36:
 	valgrind --leak-check=full --show-reachable=yes ${PYTHON36} tests/empty.py
 
-callgrind:
+callgrind-36:
 	valgrind --tool=callgrind ${PYTHON36} tests/wsgitest-round-robin.py
 
-memwatch:
+memwatch-36:
 	watch -n 0.5 \
 	  'cat /proc/$$(pgrep -n ${PYTHON36})/cmdline | tr "\0" " " | head -c -1; \
 	   echo; echo; \
