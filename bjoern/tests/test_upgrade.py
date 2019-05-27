@@ -3,7 +3,7 @@ import signal
 import time
 
 import pytest
-from tests.conftest import _run_app
+from bjoern.tests.conftest import _run_app
 
 
 @pytest.fixture()

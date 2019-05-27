@@ -18,12 +18,16 @@ file_log = None
 
 
 def bind_and_listen(
-    host, port=None, reuse_port=False, listen_backlog=DEFAULT_LISTEN_BACKLOG
+    host,
+    port=None,
+    reuse_port=False,
+    listen_backlog=DEFAULT_LISTEN_BACKLOG,
+    fileno=None,
 ):
     global _sock
-    if _sock is not None:
-        return _sock
-    if host.startswith("unix:@"):
+    if fileno:
+        sock = socket.socket(fileno=fileno)
+    elif host.startswith("unix:@"):
         # Abstract UNIX socket: "unix:@foobar"
         sock = socket.socket(socket.AF_UNIX)
         sock.bind("\0" + host[6:])
@@ -46,6 +50,7 @@ def bind_and_listen(
 
     sock.listen(listen_backlog)
     _sock = sock
+    return _sock
 
 
 def server_run(sock, wsgi_app, *args):
@@ -85,7 +90,12 @@ def setup_file_logging(log_level_, log_file_):
 
 
 def listen(
-    wsgi_app, host, port=None, reuse_port=False, listen_backlog=DEFAULT_LISTEN_BACKLOG
+    wsgi_app,
+    host,
+    port=None,
+    reuse_port=False,
+    listen_backlog=DEFAULT_LISTEN_BACKLOG,
+    fileno=None,
 ):
     """
     Makes bjoern listen to 'host:port' and use 'wsgi_app' as WSGI application.
@@ -97,7 +107,9 @@ def listen(
     global _default_instance, _wsgi_app, _sock
     if _default_instance:
         raise RuntimeError("Only one global server instance possible")
-    bind_and_listen(host, port, reuse_port, listen_backlog=listen_backlog)
+    _sock = bind_and_listen(
+        host, port, reuse_port, listen_backlog=listen_backlog, fileno=fileno
+    )
     if _wsgi_app is None:
         _wsgi_app = wsgi_app
     _default_instance = (_sock, _wsgi_app)
@@ -110,7 +122,7 @@ log_file_level = int(os.environ.get("BJ_LOG_FILE_LEVEL", log_level))
 log_file = os.environ.get("BJ_LOG_FILE", "/var/log/bjoern.log")
 
 setup_console_logging(log_console_level)
-setup_console_logging(log_file_level)
+setup_file_logging(log_file_level, log_file)
 
 
 def run(*args, **kwargs):
@@ -127,6 +139,8 @@ def run(*args, **kwargs):
     pid = os.getpid()
     uid = os.getuid()
     gid = os.getgid()
+    if "fileno" in kwargs:
+        args = [args[0], "fileno", kwargs["fileno"]]
 
     info = f"Booting Bjoern:\n"
     f"- host: {args[1]} \n"

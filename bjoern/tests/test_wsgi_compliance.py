@@ -4,15 +4,16 @@ import time
 from wsgiref.validate import validator
 
 import pytest
-from tests.conftest import _run_app
+
+from bjoern.tests.conftest import _run_app
 
 
 @pytest.fixture()
-def wsgi_empty_app():
+def wsgi_compliance_app():
     @validator
-    def app(e, s):
-        s("200 ok", [("Content-Type", "text/plain")])
-        return [b""]
+    def app(environ, start_response):
+        start_response("200 OK", [("Content-Type", "text/plain")])
+        return [b"Hello, World!"]
 
     p = _run_app(app)
     try:
@@ -22,8 +23,8 @@ def wsgi_empty_app():
         time.sleep(1)  # Should be enough for the server to stop
 
 
-def test_wsgi_empty(wsgi_empty_app, client):
+def test_wsgi_compliance_app(wsgi_compliance_app, client):
     response = client.get("/")
     assert response.status_code == 200
-    assert response.reason == "ok"
-    assert response.content == b""
+    assert response.reason == "OK"
+    assert response.content == b"Hello, World!"

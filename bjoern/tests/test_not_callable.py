@@ -2,7 +2,7 @@ import os
 import signal
 import time
 
-from tests.conftest import _run_app
+from bjoern.tests.conftest import _run_app
 
 
 def test_not_callable(client):

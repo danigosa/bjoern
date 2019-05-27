@@ -52,8 +52,8 @@ LDFLAGS_37		+= $(PYTHON37_LDFLAGS_36) -pthread -shared -fcommon
 AB			:= ab -c 100 -n 10000
 TEST_URL	:= "http://127.0.0.1:8080/a/b/c?k=v&k2=v2"
 
-IMAGE_B64 		:= $(shell cat tests/charlie.jpg | base64 | xargs urlencode)
-IMAGE_B64_LEN 	:= $(shell cat tests/charlie.jpg | base64 | xargs urlencode | wc -c)
+IMAGE_B64 		:= $(shell cat bjoern/tests/charlie.jpg | base64 | xargs urlencode)
+IMAGE_B64_LEN 	:= $(shell cat bjoern/tests/charlie.jpg | base64 | xargs urlencode | wc -c)
 flask_bench_36 	:= bench/flask_py36.txt
 bottle_bench_36 := bench/bottle_py36.txt
 falcon_bench_36 := bench/falcon_py36.txt
@@ -232,10 +232,10 @@ $(ab2): /tmp/ab2.tmp
 
 # Memory checks
 valgrind-36:
-	valgrind --leak-check=full --show-reachable=yes $(PYTHON36) tests/empty.py
+	valgrind --leak-check=full --show-reachable=yes $(PYTHON36) bjoern/tests/empty.py
 
 callgrind-36:
-	valgrind --tool=callgrind $(PYTHON36) tests/wsgitest-round-robin.py
+	valgrind --tool=callgrind $(PYTHON36) bjoern/tests/wsgitest-round-robin.py
 
 memwatch-36:
 	watch -n 0.5 \
@@ -244,10 +244,10 @@ memwatch-36:
 	   tail -n +25 /proc/$$(pgrep -n $(PYTHON36))smaps'
 
 valgrind-37:
-	valgrind --leak-check=full --show-reachable=yes $(PYTHON37) tests/empty.py
+	valgrind --leak-check=full --show-reachable=yes $(PYTHON37) bjoern/tests/empty.py
 
 callgrind-37:
-	valgrind --tool=callgrind $(PYTHON37) tests/wsgitest-round-robin.py
+	valgrind --tool=callgrind $(PYTHON37) bjoern/tests/wsgitest-round-robin.py
 
 memwatch-37:
 	watch -n 0.5 \

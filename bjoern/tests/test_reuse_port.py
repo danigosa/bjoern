@@ -5,7 +5,7 @@ import time
 from collections import defaultdict
 
 import pytest
-from tests.conftest import _run_app
+from bjoern.tests.conftest import _run_app
 
 N_PROCESSES = 10
 N_REQUESTS_PER_PROCESS = 100
@@ -20,7 +20,7 @@ def reuse_port_app():
 
     processes = [
         _run_app(app, log_level=logging.INFO, reuse_port=True)
-        for _ in range(N_PROCESSES)
+        for _ in range(3 * N_PROCESSES)
     ]
 
     time.sleep(N_PROCESSES)

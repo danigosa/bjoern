@@ -5,9 +5,9 @@ import time
 
 import pytest
 from flask import Flask, jsonify, request
-from tests.conftest import _run_app
+from bjoern.tests.conftest import _run_app
 
-with open("tests/charlie.jpg", "rb") as f:
+with open("bjoern/tests/charlie.jpg", "rb") as f:
     raw_data: bytes = f.read()
     data = base64.b64encode(raw_data).decode()
 

@@ -70,6 +70,6 @@ setup(
         "Programming Language :: Python :: 3",
         "Topic :: Internet :: WWW/HTTP :: WSGI :: Server",
     ],
-    py_modules=["bjoern"],
+    py_modules=["bjoern", "bjoern.tests"],
     ext_modules=[bjoern_extension],
 )

@@ -5,7 +5,7 @@ import time
 
 import falcon
 import pytest
-from tests.conftest import _run_app
+from bjoern.tests.conftest import _run_app
 
 
 @pytest.fixture()
