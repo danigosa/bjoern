@@ -20,7 +20,7 @@ HTTP_PARSER_DIR	:= vendors/http-parser
 HTTP_PARSER_OBJ := $(HTTP_PARSER_DIR)/http_parser.o
 HTTP_PARSER_SRC := $(HTTP_PARSER_DIR)/http_parser.c
 
-HTTP_PARSER_URL_DIR	:= vendors/http-parser/contrib
+HTTP_PARSER_URL_DIR	:= vendors/http-parser
 HTTP_PARSER_URL_OBJ := $(HTTP_PARSER_URL_DIR)/url_parser
 
 objects		:= 	$(HTTP_PARSER_OBJ) $(HTTP_PARSER_URL_OBJ) \
@@ -43,8 +43,8 @@ ifndef SIGNAL_CHECK_INTERVAL
 FEATURES	+= -D SIGNAL_CHECK_INTERVAL=0.1
 endif
 CC 				:= gcc
-CPPFLAGS_36		+= $(PYTHON36_INCLUDE) -I . -I $(SOURCE_DIR) -I $(HTTP_PARSER_DIR)CPPFLAGS
-CPPFLAGS_37		+= $(PYTHON37_INCLUDE) -I . -I $(SOURCE_DIR) -I $(HTTP_PARSER_DIR)CPPFLAGS
+CPPFLAGS_36		+= $(PYTHON36_INCLUDE) -I . -I $(SOURCE_DIR) -I $(HTTP_PARSER_DIR)
+CPPFLAGS_37		+= $(PYTHON37_INCLUDE) -I . -I $(SOURCE_DIR) -I $(HTTP_PARSER_DIR)
 CFLAGS			+= $(FEATURES) -D DEBUG -std=c99 -fno-strict-aliasing -fcommon -fPIC -Wall -g
 LDFLAGS_36		+= $(PYTHON36_LDFLAGS_36) -pthread -shared -fcommon
 LDFLAGS_37		+= $(PYTHON37_LDFLAGS_36) -pthread -shared -fcommon
@@ -289,7 +289,7 @@ upload-wheel-37: wheel-37
 # Vendors
 http-parser:
 	# http-parser 2.9.2
-	@cd $(HTTP_PARSER_DIR) && git fetch
+	@cd $(HTTP_PARSER_DIR) && git checkout 5c17dad400e45c5a442a63f250fff2638d144682
 
 $(HTTP_PARSER_OBJ): http-parser
 	$(MAKE) -C $(HTTP_PARSER_DIR) http_parser.o url_parser CFLAGS_DEBUG_EXTRA=-fPIC CFLAGS_FAST_EXTRA="-pthread -fPIC -march='core-avx2' -mtune='core-avx2'"

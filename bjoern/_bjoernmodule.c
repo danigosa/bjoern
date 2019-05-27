@@ -1,9 +1,11 @@
 #include <Python.h>
+#include <stdio.h>
 #include "server.h"
 #include "wsgi.h"
 #include "filewrapper.h"
 #include "log.h"
 #include "py3.h"
+
 
 char *slice_str(const char *str, size_t size, size_t start, size_t end) {
     char *buffer = malloc(sizeof(char[size]));
@@ -21,41 +23,80 @@ run(PyObject *self, PyObject *args) {
 
     PyObject *socket;
 
-    PyObject *log_level;
+    PyObject *log_console_level;
+    PyObject *log_file_level;
+    PyObject *log_file;
 
-    if (!PyArg_ParseTuple(args, "OOO:server_run", &socket, &info.wsgi_app, &log_level)) {
+    if (!PyArg_ParseTuple(args, "OOOOO:server_run", &socket, &info.wsgi_app, &log_console_level, &log_file_level,
+                          &log_file)) {
         return NULL;
     }
 
-    // Set logging
-    info.log_level = log_level;
-    long l_level = PyLong_AsLong(info.log_level);
-    int level = 0;
-    switch (l_level) {
+    // Set console logging
+    info.log_console_level = log_console_level;
+    long l_console_level = PyLong_AsLong(info.log_console_level);
+    int console_level = 0;
+    switch (l_console_level) {
         case 0:
-            level = LOG_TRACE;
+            console_level = LOG_TRACE;
             break;
         case 10:
-            level = LOG_DEBUG;
+            console_level = LOG_DEBUG;
             break;
         case 20:
-            level = LOG_INFO;
+            console_level = LOG_INFO;
             break;
         case 30:
-            level = LOG_WARN;
+            console_level = LOG_WARN;
             break;
         case 40:
-            level = LOG_ERROR;
+            console_level = LOG_ERROR;
             break;
         case 50:
-            level = LOG_FATAL;
+            console_level = LOG_FATAL;
             break;
         default:
-            log_set_level(LOG_INFO);
+            console_level = LOG_INFO;
+            log_set_console_level(LOG_INFO);
             break;
     }
-    log_set_level(level);
-    log_info("Logging level set to: %d", level * 10);
+    log_set_console_level(console_level);
+    log_info("ConsoleLogging level set to: %d", console_level * 10);
+
+    // Set file logging
+    info.log_file_level = log_file_level;
+    long l_file_level = PyLong_AsLong(info.log_file_level);
+    if (log_file != NULL){
+        info.log_file = fopen(PyUnicode_AS_DATA(log_file), "w");
+        log_set_fp(info.log_file);
+        int file_level = 0;
+        switch (l_file_level) {
+            case 0:
+                file_level = LOG_TRACE;
+                break;
+            case 10:
+                file_level = LOG_DEBUG;
+                break;
+            case 20:
+                file_level = LOG_INFO;
+                break;
+            case 30:
+                file_level = LOG_WARN;
+                break;
+            case 40:
+                file_level = LOG_ERROR;
+                break;
+            case 50:
+                file_level = LOG_FATAL;
+                break;
+            default:
+                file_level = LOG_INFO;
+                log_set_file_level(LOG_INFO);
+                break;
+        }
+        log_set_file_level(file_level);
+        log_info("FileLogging level set to: %d", file_level * 10);
+    }
 
     // Check socket
     info.sockfd = PyObject_AsFileDescriptor(socket);

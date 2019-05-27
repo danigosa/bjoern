@@ -4,7 +4,7 @@ from setuptools import setup, Extension
 
 VERSION = "4.0.4"
 
-SOURCE_FILES = [os.path.join("http-parser", "http_parser.c")] + sorted(
+SOURCE_FILES = [os.path.join("vendors", "http-parser", "http_parser.c")] + sorted(
     glob.glob(os.path.join("bjoern", "*.c"))
 )
 

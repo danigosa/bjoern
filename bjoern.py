@@ -38,16 +38,30 @@ def bind_and_listen(
     return sock
 
 
-def server_run(sock, wsgi_app, log_level):
-    _bjoern.server_run(sock, wsgi_app, log_level)
+def server_run(sock, wsgi_app, log_console_level, log_file_level, log_file):
+    _bjoern.server_run(sock, wsgi_app, log_console_level, log_file_level, log_file)
 
 
-def setup_loggin(log_level):
+def setup_console_logging(log_level):
     root = logging.getLogger(f"bjoern({__version__})")
-    root.setLevel(logging.DEBUG)
+    root.setLevel(log_level)
 
     handler = logging.StreamHandler(sys.stdout)
-    handler.setLevel(logging.DEBUG)
+    handler.setLevel(log_level)
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
+    handler.setFormatter(formatter)
+    root.addHandler(handler)
+    return root
+
+
+def setup_file_logging(log_level, log_file):
+    root = logging.getLogger(f"bjoern({__version__})")
+    root.setLevel(log_level)
+
+    handler = logging.FileHandler(log_file)
+    handler.setLevel(log_level)
     formatter = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
@@ -88,21 +102,35 @@ def run(*args, **kwargs):
     log_level = kwargs.pop(
         "log_level", int(os.environ.get("BJ_LOG_LEVEL", logging.INFO))
     )
-    log = setup_loggin(log_level)
+    log_console_level = kwargs.pop(
+        "log_console_level", int(os.environ.get("BJ_LOG_CONSOLE_LEVEL", log_level))
+    )
+    log_file_level = kwargs.pop(
+        "log_file_level", int(os.environ.get("BJ_LOG_FILE_LEVEL", log_level))
+    )
+    log_file = kwargs.pop(
+        "log_file_level", os.environ.get("BJ_LOG_FILE", "/var/log/bjoern.log")
+    )
+    console_log = setup_console_logging(log_console_level)
+    file_log = setup_console_logging(log_file_level)
     pid = os.getpid()
     uid = os.getuid()
     gid = os.getgid()
-    log.info(
-        f"Booting Bjoern:\n"
-        f"- host: {args[1]} \n"
-        f"- port: {args[2]} \n"
-        f"- LogLevel: {log_level} \n"
-        f"- reuse_port: {kwargs.get('reusePort', False)} \n"
-        f"- listen_backlog: {kwargs.get('listen_backlog', DEFAULT_LISTEN_BACKLOG)} \n"
-        f"- pid: {pid} \n"
-        f"- uid: {uid} \n"
-        f"- gid: {gid} \n"
-    )
+
+    info = f"Booting Bjoern:\n"
+    f"- host: {args[1]} \n"
+    f"- port: {args[2]} \n"
+    f"- LogConsoleLevel: {log_console_level} \n"
+    f"- LogFileLevel: {log_file_level} \n"
+    f"- LogToFile: {log_file}"
+    f"- reuse_port: {kwargs.get('reusePort', False)} \n"
+    f"- listen_backlog: {kwargs.get('listen_backlog', DEFAULT_LISTEN_BACKLOG)} \n"
+    f"- pid: {pid} \n"
+    f"- uid: {uid} \n"
+    f"- gid: {gid} \n"
+    console_log.info(info)
+    file_log.info(info)
+
     if args or kwargs:
         # Called as `bjoern.run(wsgi_app, host, ...)`
         listen(*args, **kwargs)
@@ -116,7 +144,7 @@ def run(*args, **kwargs):
             )
     sock, wsgi_app = _default_instance
     try:
-        server_run(sock, wsgi_app, log_level)
+        server_run(sock, wsgi_app, log_console_level, log_file_level, log_file)
     finally:
         if sock.family == socket.AF_UNIX:
             filename = sock.getsockname()
