@@ -289,12 +289,10 @@ upload-wheel-37: wheel-37
 # Vendors
 http-parser:
 	# http-parser 2.9.2
-	@git submodule --update --init --recursive
 	@cd $(HTTP_PARSER_DIR) && git checkout 5c17dad400e45c5a442a63f250fff2638d144682
 
 $(HTTP_PARSER_OBJ): http-parser
 	$(MAKE) -C $(HTTP_PARSER_DIR) http_parser.o url_parser CFLAGS_DEBUG_EXTRA=-fPIC CFLAGS_FAST_EXTRA="-pthread -fPIC -march='core-avx2' -mtune='core-avx2'"
 
 log.c:
-	@git submodule update --init --recursive
-	@cd $(LOG_C_DIR) && git pull
+	@cd $(LOG_C_DIR) && git checkout master && git fetch

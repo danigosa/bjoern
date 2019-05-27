@@ -1,7 +1,6 @@
-[submodule "http-parser"]
-  path = vendors/http-parser
-  url = git://github.com/nodejs/http-parser
-
-[submodule "log.c"]
-  path = vendors/log.c
-  url = git://github.com/danigosa/log.c
+[submodule "vendors/http-parser"]
+	path = vendors/http-parser
+	url = https://github.com/nodejs/http-parser.git
+[submodule "vendors/log.c"]
+	path = vendors/log.c
+	url = https://github.com/danigosa/log.c.git
