@@ -11,7 +11,7 @@ _default_instance = None
 _sock = None
 _wsgi_app = None
 
-DEFAULT_LISTEN_BACKLOG = 1024
+DEFAULT_LISTEN_BACKLOG = 2048
 
 console_log = None
 file_log = None
