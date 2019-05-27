@@ -1,11 +1,12 @@
 import os
 import glob
 from setuptools import setup, Extension
+import bjoern
 
-VERSION = "4.0.4"
+VERSION = bjoern.__version__
 
 SOURCE_FILES = [os.path.join("vendors", "http-parser", "http_parser.c")] + sorted(
-    glob.glob(os.path.join("bjoern", "*.c"))
+    glob.glob(os.path.join("src", "*.c"))
 )
 
 _DEBUG = bool(os.environ.get("DEBUG", False))

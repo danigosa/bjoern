@@ -33,6 +33,7 @@ set -euo
     urllib3==1.25.2             \
     wcwidth==0.1.7              \
     webencodings==0.5.1         \
-    Werkzeug==0.15.4
+    Werkzeug==0.15.4            \
+    gunicorn==19.9.0
 
 "$1" -m pip install --no-binary :all: falcon==2.0.0

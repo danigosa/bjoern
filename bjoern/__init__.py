@@ -1,17 +1,28 @@
 import logging
 import os
+import signal
 import socket
-import _bjoern
 import sys
 
-__version__ = ".".join(f"{i}" for i in _bjoern.version)
+import _bjoern
+
+__version__ = "4.0.5"
 _default_instance = None
+_sock = None
+_wsgi_app = None
+
 DEFAULT_LISTEN_BACKLOG = 1024
+
+console_log = None
+file_log = None
 
 
 def bind_and_listen(
     host, port=None, reuse_port=False, listen_backlog=DEFAULT_LISTEN_BACKLOG
 ):
+    global _sock
+    if _sock is not None:
+        return _sock
     if host.startswith("unix:@"):
         # Abstract UNIX socket: "unix:@foobar"
         sock = socket.socket(socket.AF_UNIX)
@@ -34,43 +45,45 @@ def bind_and_listen(
         sock.bind((host, int(port)))
 
     sock.listen(listen_backlog)
-
-    return sock
-
-
-def server_run(sock, wsgi_app, log_console_level, log_file_level, log_file):
-    _bjoern.server_run(sock, wsgi_app, log_console_level, log_file_level, log_file)
+    _sock = sock
 
 
-def setup_console_logging(log_level):
-    root = logging.getLogger(f"bjoern({__version__})")
-    root.setLevel(log_level)
+def server_run(sock, wsgi_app, *args):
+    _bjoern.server_run(sock, wsgi_app, *args)
+
+
+def setup_console_logging(log_level_):
+    global console_log, log_console_level
+    console_log = logging.getLogger(f"bjoern.console")
+    console_log.setLevel(log_level_)
 
     handler = logging.StreamHandler(sys.stdout)
-    handler.setLevel(log_level)
+    handler.setLevel(log_level_)
     formatter = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
     handler.setFormatter(formatter)
-    root.addHandler(handler)
-    return root
+    console_log.addHandler(handler)
+    log_console_level = log_level_
+    return console_log
 
 
-def setup_file_logging(log_level, log_file):
-    root = logging.getLogger(f"bjoern({__version__})")
-    root.setLevel(log_level)
+def setup_file_logging(log_level_, log_file_):
+    global file_log, log_file_level
+    file_log = logging.getLogger(f"bjoern.file")
+    file_log.setLevel(log_level_)
 
-    handler = logging.FileHandler(log_file)
-    handler.setLevel(log_level)
+    handler = logging.FileHandler(log_file_)
+    handler.setLevel(log_level_)
     formatter = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
     handler.setFormatter(formatter)
-    root.addHandler(handler)
-    return root
+    file_log.addHandler(handler)
+    log_file_level = log_level_
+    return file_log
 
 
-# Backwards compatibility API
 def listen(
     wsgi_app, host, port=None, reuse_port=False, listen_backlog=DEFAULT_LISTEN_BACKLOG
 ):
@@ -81,11 +94,23 @@ def listen(
     'reuse_port' -- whether to set SO_REUSEPORT (if available on platform)
     'listen_backlog' -- listen backlog value (default: 1024)
     """
-    global _default_instance
+    global _default_instance, _wsgi_app, _sock
     if _default_instance:
         raise RuntimeError("Only one global server instance possible")
-    sock = bind_and_listen(host, port, reuse_port, listen_backlog=listen_backlog)
-    _default_instance = (sock, wsgi_app)
+    bind_and_listen(host, port, reuse_port, listen_backlog=listen_backlog)
+    if _wsgi_app is None:
+        _wsgi_app = wsgi_app
+    _default_instance = (_sock, _wsgi_app)
+    return _default_instance
+
+
+log_level = int(os.environ.get("BJ_LOG_LEVEL", logging.INFO))
+log_console_level = int(os.environ.get("BJ_LOG_CONSOLE_LEVEL", log_level))
+log_file_level = int(os.environ.get("BJ_LOG_FILE_LEVEL", log_level))
+log_file = os.environ.get("BJ_LOG_FILE", "/var/log/bjoern.log")
+
+setup_console_logging(log_console_level)
+setup_console_logging(log_file_level)
 
 
 def run(*args, **kwargs):
@@ -97,22 +122,8 @@ def run(*args, **kwargs):
         Starts the server mainloop. listen(...) has to be called before calling
         run() without arguments."
     """
-    global _default_instance
+    global _default_instance, console_log, file_log, log_console_level, log_file_level, log_file
 
-    log_level = kwargs.pop(
-        "log_level", int(os.environ.get("BJ_LOG_LEVEL", logging.INFO))
-    )
-    log_console_level = kwargs.pop(
-        "log_console_level", int(os.environ.get("BJ_LOG_CONSOLE_LEVEL", log_level))
-    )
-    log_file_level = kwargs.pop(
-        "log_file_level", int(os.environ.get("BJ_LOG_FILE_LEVEL", log_level))
-    )
-    log_file = kwargs.pop(
-        "log_file_level", os.environ.get("BJ_LOG_FILE", "/var/log/bjoern.log")
-    )
-    console_log = setup_console_logging(log_console_level)
-    file_log = setup_console_logging(log_file_level)
     pid = os.getpid()
     uid = os.getuid()
     gid = os.getgid()
@@ -128,12 +139,32 @@ def run(*args, **kwargs):
     f"- pid: {pid} \n"
     f"- uid: {uid} \n"
     f"- gid: {gid} \n"
+
+    _log_level = kwargs.pop(
+        "log_level", int(os.environ.get("BJ_LOG_LEVEL", logging.INFO))
+    )
+    _log_console_level = kwargs.pop(
+        "log_console_level", int(os.environ.get("BJ_LOG_CONSOLE_LEVEL", _log_level))
+    )
+    _log_file_level = kwargs.pop(
+        "log_file_level", int(os.environ.get("BJ_LOG_FILE_LEVEL", _log_level))
+    )
+    _log_file = kwargs.pop(
+        "log_file", os.environ.get("BJ_LOG_FILE", "/var/log/bjoern.log")
+    )
+
+    if console_log is None:
+        console_log = setup_console_logging(_log_console_level)
+
+    if file_log is None:
+        file_log = setup_console_logging(_log_file_level)
+
     console_log.info(info)
     file_log.info(info)
 
     if args or kwargs:
         # Called as `bjoern.run(wsgi_app, host, ...)`
-        listen(*args, **kwargs)
+        _default_instance = listen(*args, **kwargs)
     else:
         # Called as `bjoern.run()`
         if not _default_instance:
@@ -152,3 +183,15 @@ def run(*args, **kwargs):
                 os.unlink(sock.getsockname())
         sock.close()
         _default_instance = None
+
+
+def stop():
+    global _default_instance, _sock, _wsgi_app, console_log, file_log, log_level, log_console_level, log_file_level, log_file
+    pid = os.getpid()
+    try:
+        os.kill(pid, signal.SIGTERM)
+    finally:
+        os.kill(pid, signal.SIGKILL)
+    _default_instance, _sock, _wsgi_app, console_log, file_log, log_level, log_console_level, log_file_level, log_file = (
+        (None,) * 9
+    )

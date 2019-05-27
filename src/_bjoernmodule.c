@@ -172,6 +172,5 @@ PyMODINIT_FUNC INIT_BJOERN(void) {
         return NULL;
     }
 
-    PyModule_AddObject(bjoern_module, "version", Py_BuildValue("(iii)", 4, 0, 5));
     return bjoern_module;
 }

@@ -3,7 +3,7 @@ SHELL=/bin/bash
 .PHONY: default setup test all again clean
 default: test
 
-SOURCE_DIR	:= bjoern
+SOURCE_DIR	:= src
 BUILD_DIR	:= build
 PYTHON36	:= /.py36-venv/bin/python
 PYTHON37	:= /.py37-venv/bin/python

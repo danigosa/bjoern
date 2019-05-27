@@ -23,7 +23,7 @@ def reuse_port_app():
         for _ in range(N_PROCESSES)
     ]
 
-    time.sleep(0.75 * N_PROCESSES)
+    time.sleep(N_PROCESSES)
 
     try:
         yield processes
