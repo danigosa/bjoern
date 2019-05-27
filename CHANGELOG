@@ -1,6 +1,9 @@
 CHANGELOG
 =========
 
+4.0.6 (May 2019)
+    - Fix bad import when building from source externally with setup.py
+
 4.0.5 (May 2019)
     - use http_parser.h methods for BAD_REQUEST, REQUIRED_LENGTH and SERVER_ERROR
     - Fix when to raise HTTP_STATUS_REQUIRED_LENGTH(411)

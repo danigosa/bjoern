@@ -5,9 +5,10 @@ import bjoern
 
 VERSION = bjoern.__version__
 
-SOURCE_FILES = [os.path.join("vendors", "http-parser", "http_parser.c")] + sorted(
-    glob.glob(os.path.join("src", "*.c"))
-)
+SOURCE_FILES = [
+    os.path.join("vendors", "http-parser", "http_parser.c"),
+    os.path.join("vendors", "http-parser", "contrib", "url_parser.c"),
+] + sorted(glob.glob(os.path.join("src", "*.c")))
 
 _DEBUG = bool(os.environ.get("DEBUG", False))
 
@@ -45,7 +46,7 @@ bjoern_extension = Extension(
     "_bjoern",
     sources=SOURCE_FILES,
     libraries=["ev"],
-    include_dirs=["http-parser", "/usr/include/libev"],
+    include_dirs=["vendors/http-parser", "/usr/include/libev"],
     define_macros=[
         ("WANT_SENDFILE", "1"),
         ("WANT_SIGINT_HANDLING", "1"),
@@ -63,8 +64,9 @@ setup(
     url="https://github.com/jonashaag/bjoern",
     description="A screamingly fast Python 2 + 3 WSGI server written in C.",
     version=VERSION,
+    include_package_data=True,
     classifiers=[
-        "Development Status :: 4 - Beta",
+        "Development Status :: 5 - Production",
         "License :: OSI Approved :: BSD License",
         "Programming Language :: C",
         "Programming Language :: Python :: 3",

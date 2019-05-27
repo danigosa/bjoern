@@ -256,6 +256,12 @@ memwatch-37:
 	   tail -n +25 /proc/$$(pgrep -n $(PYTHON37))smaps'
 
 # Pypi
+extension-36:
+	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) $(PYTHON36) setup.py build_ext
+
+extension-37:
+	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) $(PYTHON37) setup.py build_ext
+
 install-debug-36:
 	@DEBUG=True PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) $(PYTHON36) -m pip install --editable .
 
@@ -263,7 +269,7 @@ install-36:
 	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) $(PYTHON36) -m pip install --editable .
 
 upload-36:
-	$(PYTHON36) setup.py sdist upload
+	$(PYTHON36) setup.py sdist upload --repository=robbie-pypi
 
 wheel-36:
 	$(PYTHON36) setup.py bdist_wheel
