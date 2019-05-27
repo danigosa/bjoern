@@ -2,7 +2,7 @@
 #define __request_h__
 
 #include <ev.h>
-#include "../http-parser/http_parser.h"
+#include "../vendors/http-parser/http_parser.h"
 #include "common.h"
 #include "server.h"
 

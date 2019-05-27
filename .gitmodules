@@ -1,3 +1,7 @@
 [submodule "http-parser"]
-  path = http-parser
+  path = vendors/http-parser
   url = git://github.com/nodejs/http-parser
+
+[submodule "log.c"]
+  path = vendors/log.c
+  url = git://github.com/danigosa/log.c

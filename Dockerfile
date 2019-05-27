@@ -69,6 +69,5 @@ RUN python3.7 -m venv --system-site-packages /.py37-venv && \
         wheel==0.33.4 \
         Cython==0.29.7
 
-
 RUN ldconfig
 

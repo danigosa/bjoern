@@ -14,17 +14,19 @@ PYTHON36_LDFLAGS_36	:= $(shell python3-config --ldflags)
 PYTHON37_INCLUDE	:= $(shell python3.7-config --includes | sed s/-I/-isystem\ /g)
 PYTHON37_LDFLAGS_36	:= $(shell python3.7-config --ldflags)
 
-HTTP_PARSER_DIR	:= http-parser
+LOG_C_DIR	:= vendors/log.c
+
+HTTP_PARSER_DIR	:= vendors/http-parser
 HTTP_PARSER_OBJ := $(HTTP_PARSER_DIR)/http_parser.o
 HTTP_PARSER_SRC := $(HTTP_PARSER_DIR)/http_parser.c
 
-HTTP_PARSER_URL_DIR	:= http-parser/contrib
+HTTP_PARSER_URL_DIR	:= vendors/http-parser/contrib
 HTTP_PARSER_URL_OBJ := $(HTTP_PARSER_URL_DIR)/url_parser
 
 objects		:= 	$(HTTP_PARSER_OBJ) $(HTTP_PARSER_URL_OBJ) \
 		  		$(patsubst $(SOURCE_DIR)/%.c, $(BUILD_DIR)/%.o, \
 		             $(wildcard $(SOURCE_DIR)/*.c))
-FEATURES :=
+FEATURES := -D LOG_USE_COLOR
 ifneq ($(WANT_SENDFILE), no)
 FEATURES	+= -D WANT_SENDFILE
 endif
@@ -121,6 +123,7 @@ test: test-36 test-37
 
 # Benchmarks
 $(flask_bench_36):
+	@rm -rf /tmp/ab*.tmp
 	@$(PYTHON36) bench/flask_bench.py & jobs -p >/var/run/flask_bench.pid
 	@sleep 5
 
@@ -134,6 +137,7 @@ flask-ab-36: $(flask_bench_36) $(ab1) $(ab2)
 	@rm -f /var/run/flask_bench.pid > /dev/null 2>&1
 
 $(bottle_bench_36):
+	@rm -rf /tmp/ab*.tmp
 	@$(PYTHON36) bench/bottle_bench.py & jobs -p >/var/run/bottle_bench.pid
 	@sleep 5
 
@@ -147,6 +151,7 @@ bottle-ab-36: $(bottle_bench_36) $(ab1) $(ab2)
 	@rm -f /var/run/bottle_bench.pid > /dev/null 2>&1
 
 $(falcon_bench_36):
+	@rm -rf /tmp/ab*.tmp
 	@$(PYTHON36) bench/falcon_bench.py & jobs -p >/var/run/falcon_bench.pid
 	@sleep 5
 
@@ -165,6 +170,7 @@ _clean_bench_36:
 bjoern-bench-36: clean _clean_bench_36 setup-36 install-36 flask-ab-36 bottle-ab-36 falcon-ab-36
 
 $(flask_bench_37):
+	@rm -rf /tmp/ab*.tmp
 	@$(PYTHON37) bench/flask_bench.py & jobs -p >/var/run/flask_bench.pid
 	@sleep 5
 
@@ -178,6 +184,7 @@ flask-ab-37: $(flask_bench_37) $(ab1) $(ab2)
 	@rm -f /var/run/flask_bench.pid > /dev/null 2>&1
 
 $(bottle_bench_37):
+	@rm -rf /tmp/ab*.tmp
 	@$(PYTHON37) bench/bottle_bench.py & jobs -p >/var/run/bottle_bench.pid
 	@sleep 5
 
@@ -191,6 +198,7 @@ bottle-ab-37: $(bottle_bench_37) $(ab1) $(ab2)
 	@rm -f /var/run/bottle_bench.pid > /dev/null 2>&1
 
 $(falcon_bench_37):
+	@rm -rf /tmp/ab*.tmp
 	@$(PYTHON37) bench/falcon_bench.py & jobs -p >/var/run/falcon_bench.pid
 	@sleep 5
 
@@ -279,10 +287,14 @@ upload-wheel-37: wheel-37
 	@$(PYHHON37) -m twine upload --skip-existing dist/*.whl
 
 # Vendors
-libev:
+http-parser:
 	# http-parser 2.9.2
-	@git submodule update --init --recursive
+	@git submodule --update --init --recursive
 	@cd $(HTTP_PARSER_DIR) && git checkout 5c17dad400e45c5a442a63f250fff2638d144682
 
-$(HTTP_PARSER_OBJ): libev
+$(HTTP_PARSER_OBJ): http-parser
 	$(MAKE) -C $(HTTP_PARSER_DIR) http_parser.o url_parser CFLAGS_DEBUG_EXTRA=-fPIC CFLAGS_FAST_EXTRA="-pthread -fPIC -march='core-avx2' -mtune='core-avx2'"
+
+log.c:
+	@git submodule update --init --recursive
+	@cd $(LOG_C_DIR) && git pull
