@@ -153,14 +153,14 @@ $(flask_gworker_bench_36):
 	@sleep 5
 
 flask-ab-gworker-36: $(flask_gworker_bench_36) $(ab_post)
-	@echo -e "\n====== Falcon(Python3.6) ======\n" | tee -a $(flask_gworker_bench_36)
-	@echo -e "\n====== GET ======\n" | tee -a $(flask_gworker_bench_36)
-	@$(AB) $(TEST_URL) | tee $(flask_gworker_bench_36)
-	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gworker_bench_36)
-	@$(AB) -k $(TEST_URL) | tee -a $(flask_gworker_bench_36)
-	@echo -e "\n====== POST ======\n" | tee -a $(flask_gworker_bench_36)
-	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gworker_bench_36)
-	$(AB) -T 'application/x-www-form-urlencoded' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_gworker_bench_36)
+	@echo -e "\n====== Falcon(Python3.6) ======\n" | tee -a $(flask_gworker_bench_36) > /dev/null
+	@echo -e "\n====== GET ======\n" | tee -a $(flask_gworker_bench_36) > /dev/null
+	@$(AB) $(TEST_URL) | tee $(flask_gworker_bench_36) > /dev/null
+	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gworker_bench_36) > /dev/null
+	@$(AB) -k $(TEST_URL) | tee -a $(flask_gworker_bench_36) > /dev/null
+	@echo -e "\n====== POST ======\n" | tee -a $(flask_gworker_bench_36) > /dev/null
+	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gworker_bench_36) > /dev/null
+	$(AB) -T 'application/x-www-form-urlencoded' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_gworker_bench_36) > /dev/null
 	@killall -9 $(PYTHON36)
 
 $(flask_gunicorn_bench_36):
@@ -168,14 +168,14 @@ $(flask_gunicorn_bench_36):
 	@sleep 5
 
 flask-ab-gunicorn-36: $(flask_gunicorn_bench_36) $(ab_post)
-	@echo -e "\n====== Falcon(Python3.6) ======\n" | tee -a $(flask_gunicorn_bench_36)
-	@echo -e "\n====== GET ======\n" | tee -a $(flask_gunicorn_bench_36)
-	@$(AB) $(TEST_URL) | tee $(flask_gunicorn_bench_36)
-	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gunicorn_bench_36)
-	@$(AB) -k $(TEST_URL) | tee -a $(flask_gunicorn_bench_36)
-	@echo -e "\n====== POST ======\n" | tee -a $(flask_gunicorn_bench_36)
-	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gunicorn_bench_36)
-	$(AB) -T 'application/x-www-form-urlencoded' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_gunicorn_bench_36)
+	@echo -e "\n====== Falcon(Python3.6) ======\n" | tee -a $(flask_gunicorn_bench_36) > /dev/null
+	@echo -e "\n====== GET ======\n" | tee -a $(flask_gunicorn_bench_36) > /dev/null
+	@$(AB) $(TEST_URL) | tee $(flask_gunicorn_bench_36) > /dev/null
+	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gunicorn_bench_36) > /dev/null
+	@$(AB) -k $(TEST_URL) | tee -a $(flask_gunicorn_bench_36) > /dev/null
+	@echo -e "\n====== POST ======\n" | tee -a $(flask_gunicorn_bench_36) > /dev/null
+	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gunicorn_bench_36) > /dev/null
+	$(AB) -T 'application/x-www-form-urlencoded' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_gunicorn_bench_36) > /dev/null
 	@killall -9 $(PYTHON36)
 
 $(bottle_bench_36):
@@ -252,14 +252,14 @@ $(flask_gunicorn_bench_37):
 	@sleep 5
 
 flask-ab-gunicorn-37: $(flask_gunicorn_bench_37) $(ab_post)
-	@echo -e "\n====== Falcon(Python3.7) ======\n" | tee -a $(flask_gunicorn_bench_37)
-	@echo -e "\n====== GET ======\n" | tee -a $(flask_gunicorn_bench_37)
-	@$(AB) $(TEST_URL) | tee $(flask_gunicorn_bench_37)
-	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gunicorn_bench_37)
-	@$(AB) -k $(TEST_URL) | tee -a $(flask_gunicorn_bench_37)
-	@echo -e "\n====== POST ======\n" | tee -a $(flask_gunicorn_bench_37)
-	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gunicorn_bench_37)
-	$(AB) -T 'application/x-www-form-urlencoded' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_gunicorn_bench_37)
+	@echo -e "\n====== Falcon(Python3.7) ======\n" | tee -a $(flask_gunicorn_bench_37) > /dev/null
+	@echo -e "\n====== GET ======\n" | tee -a $(flask_gunicorn_bench_37) > /dev/null
+	@$(AB) $(TEST_URL) | tee $(flask_gunicorn_bench_37) > /dev/null
+	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gunicorn_bench_37) > /dev/null
+	@$(AB) -k $(TEST_URL) | tee -a $(flask_gunicorn_bench_37) > /dev/null
+	@echo -e "\n====== POST ======\n" | tee -a $(flask_gunicorn_bench_37) > /dev/null
+	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gunicorn_bench_37) > /dev/null
+	$(AB) -T 'application/x-www-form-urlencoded' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_gunicorn_bench_37) > /dev/null
 	@killall -9 $(PYTHON37)
 
 $(bottle_bench_37):
