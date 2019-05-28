@@ -2,6 +2,7 @@ import os
 import sys
 
 import bjoern
+from gunicorn.glogging import Logger
 from gunicorn.workers.base import Worker
 
 
@@ -18,6 +19,8 @@ class BjoernWorker(Worker):
 
     def run(self):
         bjoern.console_log = self.log
+        bjoern.log_console_level = Logger.loglevel
+        bjoern.file_console_level = Logger.loglevel
         bjoern.log_file = str(self.log.logfile)
         bjoern.run(
             self.wsgi,

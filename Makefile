@@ -47,7 +47,7 @@ endif
 CC 				:= gcc
 CPPFLAGS_36		+= $(PYTHON36_INCLUDE) -I . -I $(SOURCE_DIR) -I $(HTTP_PARSER_DIR)
 CPPFLAGS_37		+= $(PYTHON37_INCLUDE) -I . -I $(SOURCE_DIR) -I $(HTTP_PARSER_DIR)
-CFLAGS			+= $(FEATURES) -D DEBUG -std=c99 -fno-strict-aliasing -fcommon -fPIC -Wall -g
+CFLAGS			+= $(FEATURES) -std=c99 -fno-strict-aliasing -fcommon -fPIC -Wall
 LDFLAGS_36		+= $(PYTHON36_LDFLAGS_36) -pthread -shared -fcommon
 LDFLAGS_37		+= $(PYTHON37_LDFLAGS_36) -pthread -shared -fcommon
 
@@ -114,6 +114,7 @@ prepare-build: fmt
 
 clean:
 	@rm -rf $(BUILD_DIR)/*
+	@rm -rf *.egg
 	@rm -rf dist/*
 	@rm -f /tmp/*.tmp
 
@@ -132,7 +133,7 @@ $(ab_post): /tmp/bjoern-post.tmp
 	@echo $(IMAGE_B64_LEN)
 
 $(flask_bench_36):
-	@$(PYTHON36) bench/flask_bench.py & jobs -p >/var/run/flask_bench.pid
+	@$(PYTHON36) bench/flask_bench.py --log-level inf & jobs -p >/var/run/flask_bench.pid
 	@sleep 5
 
 flask-ab-36: $(flask_bench_36) $(ab_post)
@@ -163,7 +164,7 @@ flask-ab-gworker-36: $(flask_gworker_bench_36) $(ab_post)
 	@killall -9 $(PYTHON36)
 
 $(flask_gunicorn_bench_36):
-	@$(GUNICORN36) bench.flask_bench:app --backlog 2048 --timeout 1800 &
+	@$(GUNICORN36) bench.flask_bench:app --log-level info --backlog 2048 --timeout 1800 &
 	@sleep 5
 
 flask-ab-gunicorn-36: $(flask_gunicorn_bench_36) $(ab_post)
@@ -212,7 +213,7 @@ falcon-ab-36: $(falcon_bench_36) $(ab_post)
 _clean_bench_36:
 	@rm -rf bench/*36.txt
 
-bjoern-bench-36: clean _clean_bench_36 setup-36 install-36 flask-ab-gunicorn-36 flask-ab-gworker-36 flask-ab-36 bottle-ab-36 falcon-ab-36
+bjoern-bench-36: _clean_bench_36 setup-36 install-36-bench flask-ab-gunicorn-36 flask-ab-gworker-36 flask-ab-36 bottle-ab-36 falcon-ab-36
 
 
 $(flask_bench_37):
@@ -296,7 +297,7 @@ falcon-ab-37: $(falcon_bench_37) $(ab_post)
 _clean_bench_37:
 	@rm -rf bench/*37.txt
 
-bjoern-bench-37: clean _clean_bench_37 setup-37 install-37 flask-ab-37 bottle-ab-37 falcon-ab-37
+bjoern-bench-37: _clean_bench_37 setup-37 install-37-bench flask-ab-gunicorn-37 flask-ab-gworker-37 flask-ab-37 bottle-ab-37 falcon-ab-37
 
 bjoern-bench: bjoern-bench-36 bjoern-bench-37
 
@@ -335,8 +336,14 @@ extension-37:
 install-debug-36:
 	@DEBUG=True PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) $(PYTHON36) -m pip install --editable .
 
+uninstall-36: clean
+	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) $(PYTHON36) -m pip uninstall -y bjoern
+
 install-36:
 	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) $(PYTHON36) -m pip install --editable .
+
+install-36-bench: uninstall-36 extension-36
+	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) $(PYTHON36) setup.py install
 
 upload-36:
 	$(PYTHON36) setup.py sdist
@@ -348,8 +355,14 @@ wheel-36:
 install-debug-37:
 	@DEBUG=True PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) $(PYTHON37) -m pip install --editable .
 
+uninstall-37: clean
+	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) $(PYTHON37) -m pip uninstall -y bjoern
+
 install-37:
 	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) $(PYTHON37) -m pip install --editable .
+
+install-37-bench: uninstall-37 extension-37
+	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) $(PYTHON37) setup.py install
 
 upload-37:
 	$(PYTHON37) setup.py sdist upload
