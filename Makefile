@@ -123,25 +123,23 @@ test: test-36 test-37
 
 # Benchmarks
 $(flask_bench_36):
-	@rm -rf /tmp/ab*.tmp
 	@$(PYTHON36) bench/flask_bench.py & jobs -p >/var/run/flask_bench.pid
 	@sleep 5
 
-flask-ab-36: $(flask_bench_36) $(ab1) $(ab2)
+flask-ab-36: $(flask_bench_36) ab1 ab2
 	@echo -e "\n====== Flask(Python3.6) ======\n" | tee -a $(flask_bench_36) > /dev/null
 	@echo -e "\n====== GET ======\n" | tee -a $(flask_bench_36) > /dev/null
-	@cat $(ab1) | tee -a  $(flask_bench_36) > /dev/null
+	@cat $(ab1) | tee -a $(flask_bench_36) > /dev/null
 	@echo -e "\n====== POST ======\n" | tee -a $(flask_bench_36) > /dev/null
 	@cat $(ab2) | tee -a $(flask_bench_36) > /dev/null
 	@cat /var/run/flask_bench.pid | xargs -n1 kill -9 > /dev/null 2>&1
 	@rm -f /var/run/flask_bench.pid > /dev/null 2>&1
 
 $(bottle_bench_36):
-	@rm -rf /tmp/ab*.tmp
 	@$(PYTHON36) bench/bottle_bench.py & jobs -p >/var/run/bottle_bench.pid
 	@sleep 5
 
-bottle-ab-36: $(bottle_bench_36) $(ab1) $(ab2)
+bottle-ab-36: $(bottle_bench_36) ab1 ab2
 	@echo -e "\n====== Bottle(Python3.6) ======\n" | tee -a $(bottle_bench_36) > /dev/null
 	@echo -e "\n====== GET ======\n" | tee -a $(bottle_bench_36) > /dev/null
 	@cat $(ab1) | tee -a  $(bottle_bench_36) > /dev/null
@@ -151,11 +149,10 @@ bottle-ab-36: $(bottle_bench_36) $(ab1) $(ab2)
 	@rm -f /var/run/bottle_bench.pid > /dev/null 2>&1
 
 $(falcon_bench_36):
-	@rm -rf /tmp/ab*.tmp
 	@$(PYTHON36) bench/falcon_bench.py & jobs -p >/var/run/falcon_bench.pid
 	@sleep 5
 
-falcon-ab-36: $(falcon_bench_36) $(ab1) $(ab2)
+falcon-ab-36: $(falcon_bench_36) ab1 ab2
 	@echo -e "\n====== Falcon(Python3.6) ======\n" | tee -a $(falcon_bench_36) > /dev/null
 	@echo -e "\n====== GET ======\n" | tee -a $(falcon_bench_36) > /dev/null
 	@cat $(ab1) | tee -a  $(falcon_bench_36) > /dev/null
@@ -170,11 +167,10 @@ _clean_bench_36:
 bjoern-bench-36: clean _clean_bench_36 setup-36 install-36 flask-ab-36 bottle-ab-36 falcon-ab-36
 
 $(flask_bench_37):
-	@rm -rf /tmp/ab*.tmp
 	@$(PYTHON37) bench/flask_bench.py & jobs -p >/var/run/flask_bench.pid
 	@sleep 5
 
-flask-ab-37: $(flask_bench_37) $(ab1) $(ab2)
+flask-ab-37: $(flask_bench_37) ab1 ab2
 	@echo -e "\n====== Flask(Python3.7) ======\n" | tee -a $(flask_bench_37) > /dev/null
 	@echo -e "\n====== GET ======\n" | tee -a $(flask_bench_37) > /dev/null
 	@cat $(ab1) | tee -a $(flask_bench_37) > /dev/null
@@ -184,11 +180,10 @@ flask-ab-37: $(flask_bench_37) $(ab1) $(ab2)
 	@rm -f /var/run/flask_bench.pid > /dev/null 2>&1
 
 $(bottle_bench_37):
-	@rm -rf /tmp/ab*.tmp
 	@$(PYTHON37) bench/bottle_bench.py & jobs -p >/var/run/bottle_bench.pid
 	@sleep 5
 
-bottle-ab-37: $(bottle_bench_37) $(ab1) $(ab2)
+bottle-ab-37: $(bottle_bench_37) ab1 ab2
 	@echo -e "\n====== Bottle(Python3.7) ======\n" | tee -a $(bottle_bench_37) > /dev/null
 	@echo -e "\n====== GET ======\n" | tee -a $(bottle_bench_37) > /dev/null
 	@cat $(ab1) | tee -a  $(bottle_bench_37) > /dev/null
@@ -198,11 +193,10 @@ bottle-ab-37: $(bottle_bench_37) $(ab1) $(ab2)
 	@rm -f /var/run/bottle_bench.pid > /dev/null 2>&1
 
 $(falcon_bench_37):
-	@rm -rf /tmp/ab*.tmp
 	@$(PYTHON37) bench/falcon_bench.py & jobs -p >/var/run/falcon_bench.pid
 	@sleep 5
 
-falcon-ab-37: $(falcon_bench_37) $(ab1) $(ab2)
+falcon-ab-37: $(falcon_bench_37) ab1 ab2
 	@echo -e "\n====== Falcon(Python3.7) ======\n" | tee -a $(falcon_bench_37) > /dev/null
 	@echo -e "\n====== GET ======\n" | tee -a $(falcon_bench_37) > /dev/null
 	@cat $(ab1) | tee -a  $(falcon_bench_37) > /dev/null
@@ -219,16 +213,22 @@ bjoern-bench-37: clean _clean_bench_37 setup-37 install-37 flask-ab-37 bottle-ab
 bjoern-bench: bjoern-bench-36 bjoern-bench-37
 
 $(ab1): /tmp/ab1.tmp
+	@truncate -s0 "$@"
 	@$(AB) $(TEST_URL) | tee "$@"
 	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a "$@"
 	@$(AB) -k $(TEST_URL) | tee -a "$@"
 
+ab1: $(ab1)
+
 $(ab2): /tmp/ab2.tmp
+	@truncate -s0 "$@"
 	@echo 'asdfghjkl=asdfghjkl&qwerty=qwertyuiop&image=$(IMAGE_B64)' > /tmp/bjoern-post.tmp
 	@echo $(IMAGE_B64_LEN)
 	$(AB) -T 'application/x-www-form-urlencoded' -p /tmp/bjoern-post.tmp $(TEST_URL) | tee "$@"
 	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a "$@"
 	$(AB) -T 'application/x-www-form-urlencoded' -k -p /tmp/bjoern-post.tmp $(TEST_URL) | tee -a "$@"
+
+ab2: $(ab2)
 
 # Memory checks
 valgrind-36:
@@ -269,7 +269,8 @@ install-36:
 	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) $(PYTHON36) -m pip install --editable .
 
 upload-36:
-	$(PYTHON36) setup.py sdist upload --repository=robbie-pypi
+	$(PYTHON36) setup.py sdist
+	$(PYTHON36) -m twine upload --repository=robbie-pypi dist/*.tar.gz
 
 wheel-36:
 	$(PYTHON36) setup.py bdist_wheel
