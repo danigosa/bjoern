@@ -6,6 +6,8 @@ default: test
 SOURCE_DIR	:= src
 BUILD_DIR	:= build
 PYTHON36	:= /.py36-venv/bin/python
+GUNICORN36	:= /.py36-venv/bin/gunicorn
+GUNICORN36	:= /.py37-venv/bin/gunicorn
 PYTHON37	:= /.py37-venv/bin/python
 DEBUG 		:= DEBUG=True
 
@@ -52,16 +54,19 @@ LDFLAGS_37		+= $(PYTHON37_LDFLAGS_36) -pthread -shared -fcommon
 AB			:= ab -c 100 -n 10000
 TEST_URL	:= "http://127.0.0.1:8080/a/b/c?k=v&k2=v2"
 
-IMAGE_B64 		:= $(shell cat bjoern/tests/charlie.jpg | base64 | xargs urlencode)
-IMAGE_B64_LEN 	:= $(shell cat bjoern/tests/charlie.jpg | base64 | xargs urlencode | wc -c)
-flask_bench_36 	:= bench/flask_py36.txt
-bottle_bench_36 := bench/bottle_py36.txt
-falcon_bench_36 := bench/falcon_py36.txt
-flask_bench_37 	:= bench/flask_py37.txt
-bottle_bench_37 := bench/bottle_py37.txt
-falcon_bench_37 := bench/falcon_py37.txt
-ab1 			:= /tmp/ab1.tmp
-ab2 			:= /tmp/ab2.tmp
+IMAGE_B64 				:= $(shell cat bjoern/tests/charlie.jpg | base64 | xargs urlencode)
+IMAGE_B64_LEN 			:= $(shell cat bjoern/tests/charlie.jpg | base64 | xargs urlencode | wc -c)
+flask_bench_36 			:= bench/flask_py36.txt
+flask_gworker_bench_36 	:= bench/flask_gworker_py36.txt
+flask_gunicorn_bench_36 := bench/flask_gunicorn_py36.txt
+bottle_bench_36 		:= bench/bottle_py36.txt
+falcon_bench_36 		:= bench/falcon_py36.txt
+flask_bench_37 			:= bench/flask_py37.txt
+bottle_bench_37 		:= bench/bottle_py37.txt
+falcon_bench_37 		:= bench/falcon_py37.txt
+flask_gworker_bench_37 	:= bench/flask_gworker_py37.txt
+flask_gunicorn_bench_37 := bench/flask_gunicorn_py37.txt
+ab_post 				:= /tmp/bjoern-post.tmp
 
 # Targets
 setup-36: clean prepare-build reqs-36
@@ -122,29 +127,69 @@ test-37: fmt clean reqs-37 install-debug-37
 test: test-36 test-37
 
 # Benchmarks
+$(ab_post): /tmp/bjoern-post.tmp
+	@echo 'asdfghjkl=asdfghjkl&qwerty=qwertyuiop&image=$(IMAGE_B64)' > "$@"
+	@echo $(IMAGE_B64_LEN)
+
 $(flask_bench_36):
 	@$(PYTHON36) bench/flask_bench.py & jobs -p >/var/run/flask_bench.pid
 	@sleep 5
 
-flask-ab-36: $(flask_bench_36) ab1 ab2
-	@echo -e "\n====== Flask(Python3.6) ======\n" | tee -a $(flask_bench_36) > /dev/null
-	@echo -e "\n====== GET ======\n" | tee -a $(flask_bench_36) > /dev/null
-	@cat $(ab1) | tee -a $(flask_bench_36) > /dev/null
-	@echo -e "\n====== POST ======\n" | tee -a $(flask_bench_36) > /dev/null
-	@cat $(ab2) | tee -a $(flask_bench_36) > /dev/null
+flask-ab-36: $(flask_bench_36) $(ab_post)
+	@echo -e "\n====== Falcon(Python3.6) ======\n" | tee -a $(flask_bench_36)
+	@echo -e "\n====== GET ======\n" | tee -a $(flask_bench_36)
+	@$(AB) $(TEST_URL) | tee $(flask_bench_36)
+	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_bench_36)
+	@$(AB) -k $(TEST_URL) | tee -a $(flask_bench_36)
+	@echo -e "\n====== POST ======\n" | tee -a $(flask_bench_36)
+	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_bench_36)
+	$(AB) -T 'application/x-www-form-urlencoded' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_bench_36)
 	@cat /var/run/flask_bench.pid | xargs -n1 kill -9 > /dev/null 2>&1
 	@rm -f /var/run/flask_bench.pid > /dev/null 2>&1
+
+$(flask_gworker_bench_36):
+	@$(GUNICORN36) bench.flask_bench:app --backlog 2048 --timeout 1800 --worker-class bjoern.gworker.BjoernWorker & jobs -p >/var/run/flask_bench_gworker.pid
+	@sleep 5
+
+flask-ab-gworker-36: $(flask_gworker_bench_36) $(ab_post)
+	@echo -e "\n====== Falcon(Python3.6) ======\n" | tee -a $(flask_gworker_bench_36)
+	@echo -e "\n====== GET ======\n" | tee -a $(flask_gworker_bench_36)
+	@$(AB) $(TEST_URL) | tee $(flask_gworker_bench_36)
+	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gworker_bench_36)
+	@$(AB) -k $(TEST_URL) | tee -a $(flask_gworker_bench_36)
+	@echo -e "\n====== POST ======\n" | tee -a $(flask_gworker_bench_36)
+	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gworker_bench_36)
+	$(AB) -T 'application/x-www-form-urlencoded' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_gworker_bench_36)
+	@killall -9 $(PYTHON36)
+
+$(flask_gunicorn_bench_36):
+	@$(GUNICORN36) bench.flask_bench:app --backlog 2048 --timeout 1800 &
+	@sleep 5
+
+flask-ab-gunicorn-36: $(flask_gunicorn_bench_36) $(ab_post)
+	@echo -e "\n====== Falcon(Python3.6) ======\n" | tee -a $(flask_gunicorn_bench_36)
+	@echo -e "\n====== GET ======\n" | tee -a $(flask_gunicorn_bench_36)
+	@$(AB) $(TEST_URL) | tee $(flask_gunicorn_bench_36)
+	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gunicorn_bench_36)
+	@$(AB) -k $(TEST_URL) | tee -a $(flask_gunicorn_bench_36)
+	@echo -e "\n====== POST ======\n" | tee -a $(flask_gunicorn_bench_36)
+	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gunicorn_bench_36)
+	$(AB) -T 'application/x-www-form-urlencoded' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_gunicorn_bench_36)
+	@killall -9 $(PYTHON36)
 
 $(bottle_bench_36):
 	@$(PYTHON36) bench/bottle_bench.py & jobs -p >/var/run/bottle_bench.pid
 	@sleep 5
 
-bottle-ab-36: $(bottle_bench_36) ab1 ab2
-	@echo -e "\n====== Bottle(Python3.6) ======\n" | tee -a $(bottle_bench_36) > /dev/null
-	@echo -e "\n====== GET ======\n" | tee -a $(bottle_bench_36) > /dev/null
-	@cat $(ab1) | tee -a  $(bottle_bench_36) > /dev/null
-	@echo -e "\n====== POST ======\n" | tee -a $(bottle_bench_36) > /dev/null
-	@cat $(ab2) | tee -a $(bottle_bench_36) > /dev/null
+bottle-ab-36: $(bottle_bench_36) $(ab_post)
+	@echo -e "\n====== Falcon(Python3.6) ======\n" | tee -a $(bottle_bench_36)
+	@echo -e "\n====== GET ======\n" | tee -a $(bottle_bench_36)
+	@$(AB) $(TEST_URL) | tee $(bottle_bench_36)
+	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(bottle_bench_36)
+	@$(AB) -k $(TEST_URL) | tee -a $(bottle_bench_36)
+	@echo -e "\n====== POST ======\n" | tee -a $(bottle_bench_36)
+	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(bottle_bench_36)
+	$(AB) -T 'application/x-www-form-urlencoded' -k -p $(ab_post) $(TEST_URL) | tee -a $(bottle_bench_36)
 	@cat /var/run/bottle_bench.pid | xargs -n1 kill -9 > /dev/null 2>&1
 	@rm -f /var/run/bottle_bench.pid > /dev/null 2>&1
 
@@ -152,43 +197,83 @@ $(falcon_bench_36):
 	@$(PYTHON36) bench/falcon_bench.py & jobs -p >/var/run/falcon_bench.pid
 	@sleep 5
 
-falcon-ab-36: $(falcon_bench_36) ab1 ab2
-	@echo -e "\n====== Falcon(Python3.6) ======\n" | tee -a $(falcon_bench_36) > /dev/null
-	@echo -e "\n====== GET ======\n" | tee -a $(falcon_bench_36) > /dev/null
-	@cat $(ab1) | tee -a  $(falcon_bench_36) > /dev/null
-	@echo -e "\n====== POST ======\n" | tee -a $(falcon_bench_36) > /dev/null
-	@cat $(ab2) | tee -a $(falcon_bench_36) > /dev/null
+falcon-ab-36: $(falcon_bench_36) $(ab_post)
+	@echo -e "\n====== Falcon(Python3.6) ======\n" | tee -a $(falcon_bench_36)
+	@echo -e "\n====== GET ======\n" | tee -a $(falcon_bench_36)
+	@$(AB) $(TEST_URL) | tee $(falcon_bench_36)
+	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(falcon_bench_36)
+	@$(AB) -k $(TEST_URL) | tee -a $(falcon_bench_36)
+	@echo -e "\n====== POST ======\n" | tee -a $(falcon_bench_36)
+	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(falcon_bench_36)
+	$(AB) -T 'application/x-www-form-urlencoded' -k -p $(ab_post) $(TEST_URL) | tee -a $(falcon_bench_36)
 	@cat /var/run/falcon_bench.pid | xargs -n1 kill -9 > /dev/null 2>&1
 	@rm -f /var/run/falcon_bench.pid > /dev/null 2>&1
 
 _clean_bench_36:
 	@rm -rf bench/*36.txt
 
-bjoern-bench-36: clean _clean_bench_36 setup-36 install-36 flask-ab-36 bottle-ab-36 falcon-ab-36
+bjoern-bench-36: clean _clean_bench_36 setup-36 install-36 flask-ab-gunicorn-36 flask-ab-gworker-36 flask-ab-36 bottle-ab-36 falcon-ab-36
+
 
 $(flask_bench_37):
 	@$(PYTHON37) bench/flask_bench.py & jobs -p >/var/run/flask_bench.pid
 	@sleep 5
 
-flask-ab-37: $(flask_bench_37) ab1 ab2
-	@echo -e "\n====== Flask(Python3.7) ======\n" | tee -a $(flask_bench_37) > /dev/null
-	@echo -e "\n====== GET ======\n" | tee -a $(flask_bench_37) > /dev/null
-	@cat $(ab1) | tee -a $(flask_bench_37) > /dev/null
-	@echo -e "\n====== POST ======\n" | tee -a $(flask_bench_37) > /dev/null
-	@cat $(ab2) | tee -a $(flask_bench_37) > /dev/null
+flask-ab-37: $(flask_bench_37) $(ab_post)
+	@echo -e "\n====== Falcon(Python3.7) ======\n" | tee -a $(flask_bench_37)
+	@echo -e "\n====== GET ======\n" | tee -a $(flask_bench_37)
+	@$(AB) $(TEST_URL) | tee $(flask_bench_37)
+	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_bench_37)
+	@$(AB) -k $(TEST_URL) | tee -a $(flask_bench_37)
+	@echo -e "\n====== POST ======\n" | tee -a $(flask_bench_37)
+	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_bench_37)
+	$(AB) -T 'application/x-www-form-urlencoded' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_bench_37)
 	@cat /var/run/flask_bench.pid | xargs -n1 kill -9 > /dev/null 2>&1
 	@rm -f /var/run/flask_bench.pid > /dev/null 2>&1
+
+$(flask_gworker_bench_37):
+	@$(GUNICORN37) bench.flask_bench:app --backlog 2048 --timeout 1800 --worker-class bjoern.gworker.BjoernWorker & jobs -p >/var/run/flask_bench_gworker.pid
+	@sleep 5
+
+flask-ab-gworker-37: $(flask_gworker_bench_37) $(ab_post)
+	@echo -e "\n====== Falcon(Python3.7) ======\n" | tee -a $(flask_gworker_bench_37)
+	@echo -e "\n====== GET ======\n" | tee -a $(flask_gworker_bench_37)
+	@$(AB) $(TEST_URL) | tee $(flask_gworker_bench_37)
+	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gworker_bench_37)
+	@$(AB) -k $(TEST_URL) | tee -a $(flask_gworker_bench_37)
+	@echo -e "\n====== POST ======\n" | tee -a $(flask_gworker_bench_37)
+	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gworker_bench_37)
+	$(AB) -T 'application/x-www-form-urlencoded' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_gworker_bench_37)
+	@killall -9 $(PYTHON37)
+
+$(flask_gunicorn_bench_37):
+	@$(GUNICORN37) bench.flask_bench:app --backlog 2048 --timeout 1800 &
+	@sleep 5
+
+flask-ab-gunicorn-37: $(flask_gunicorn_bench_37) $(ab_post)
+	@echo -e "\n====== Falcon(Python3.7) ======\n" | tee -a $(flask_gunicorn_bench_37)
+	@echo -e "\n====== GET ======\n" | tee -a $(flask_gunicorn_bench_37)
+	@$(AB) $(TEST_URL) | tee $(flask_gunicorn_bench_37)
+	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gunicorn_bench_37)
+	@$(AB) -k $(TEST_URL) | tee -a $(flask_gunicorn_bench_37)
+	@echo -e "\n====== POST ======\n" | tee -a $(flask_gunicorn_bench_37)
+	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gunicorn_bench_37)
+	$(AB) -T 'application/x-www-form-urlencoded' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_gunicorn_bench_37)
+	@killall -9 $(PYTHON37)
 
 $(bottle_bench_37):
 	@$(PYTHON37) bench/bottle_bench.py & jobs -p >/var/run/bottle_bench.pid
 	@sleep 5
 
-bottle-ab-37: $(bottle_bench_37) ab1 ab2
-	@echo -e "\n====== Bottle(Python3.7) ======\n" | tee -a $(bottle_bench_37) > /dev/null
-	@echo -e "\n====== GET ======\n" | tee -a $(bottle_bench_37) > /dev/null
-	@cat $(ab1) | tee -a  $(bottle_bench_37) > /dev/null
-	@echo -e "\n====== POST ======\n" | tee -a $(bottle_bench_37) > /dev/null
-	@cat $(ab2) | tee -a $(bottle_bench_37) > /dev/null
+bottle-ab-37: $(bottle_bench_37) $(ab_post)
+	@echo -e "\n====== Falcon(Python3.7) ======\n" | tee -a $(bottle_bench_37)
+	@echo -e "\n====== GET ======\n" | tee -a $(bottle_bench_37)
+	@$(AB) $(TEST_URL) | tee $(bottle_bench_37)
+	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(bottle_bench_37)
+	@$(AB) -k $(TEST_URL) | tee -a $(bottle_bench_37)
+	@echo -e "\n====== POST ======\n" | tee -a $(bottle_bench_37)
+	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(bottle_bench_37)
+	$(AB) -T 'application/x-www-form-urlencoded' -k -p $(ab_post) $(TEST_URL) | tee -a $(bottle_bench_37)
 	@cat /var/run/bottle_bench.pid | xargs -n1 kill -9 > /dev/null 2>&1
 	@rm -f /var/run/bottle_bench.pid > /dev/null 2>&1
 
@@ -196,12 +281,15 @@ $(falcon_bench_37):
 	@$(PYTHON37) bench/falcon_bench.py & jobs -p >/var/run/falcon_bench.pid
 	@sleep 5
 
-falcon-ab-37: $(falcon_bench_37) ab1 ab2
-	@echo -e "\n====== Falcon(Python3.7) ======\n" | tee -a $(falcon_bench_37) > /dev/null
-	@echo -e "\n====== GET ======\n" | tee -a $(falcon_bench_37) > /dev/null
-	@cat $(ab1) | tee -a  $(falcon_bench_37) > /dev/null
-	@echo -e "\n====== POST ======\n" | tee -a $(falcon_bench_37) > /dev/null
-	@cat $(ab2) | tee -a $(falcon_bench_37) > /dev/null
+falcon-ab-37: $(falcon_bench_37) $(ab_post)
+	@echo -e "\n====== Falcon(Python3.7) ======\n" | tee -a $(falcon_bench_37)
+	@echo -e "\n====== GET ======\n" | tee -a $(falcon_bench_37)
+	@$(AB) $(TEST_URL) | tee $(falcon_bench_37)
+	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(falcon_bench_37)
+	@$(AB) -k $(TEST_URL) | tee -a $(falcon_bench_37)
+	@echo -e "\n====== POST ======\n" | tee -a $(falcon_bench_37)
+	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(falcon_bench_37)
+	$(AB) -T 'application/x-www-form-urlencoded' -k -p $(ab_post) $(TEST_URL) | tee -a $(falcon_bench_37)
 	@cat /var/run/falcon_bench.pid | xargs -n1 kill -9 > /dev/null 2>&1
 	@rm -f /var/run/falcon_bench.pid > /dev/null 2>&1
 
@@ -211,24 +299,6 @@ _clean_bench_37:
 bjoern-bench-37: clean _clean_bench_37 setup-37 install-37 flask-ab-37 bottle-ab-37 falcon-ab-37
 
 bjoern-bench: bjoern-bench-36 bjoern-bench-37
-
-$(ab1): /tmp/ab1.tmp
-	@truncate -s0 "$@"
-	@$(AB) $(TEST_URL) | tee "$@"
-	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a "$@"
-	@$(AB) -k $(TEST_URL) | tee -a "$@"
-
-ab1: $(ab1)
-
-$(ab2): /tmp/ab2.tmp
-	@truncate -s0 "$@"
-	@echo 'asdfghjkl=asdfghjkl&qwerty=qwertyuiop&image=$(IMAGE_B64)' > /tmp/bjoern-post.tmp
-	@echo $(IMAGE_B64_LEN)
-	$(AB) -T 'application/x-www-form-urlencoded' -p /tmp/bjoern-post.tmp $(TEST_URL) | tee "$@"
-	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a "$@"
-	$(AB) -T 'application/x-www-form-urlencoded' -k -p /tmp/bjoern-post.tmp $(TEST_URL) | tee -a "$@"
-
-ab2: $(ab2)
 
 # Memory checks
 valgrind-36:

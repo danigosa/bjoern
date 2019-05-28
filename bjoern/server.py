@@ -5,7 +5,7 @@ import socket
 import sys
 
 import _bjoern
-from bjoern import DEFAULT_LISTEN_BACKLOG
+from bjoern import DEFAULT_FILE_LOG, DEFAULT_LISTEN_BACKLOG, MAX_LISTEN_BACKLOG
 
 _default_instance = None
 _sock = None
@@ -23,6 +23,8 @@ def bind_and_listen(
     fileno=None,
 ):
     global _sock
+    if listen_backlog == 0:
+        listen_backlog = MAX_LISTEN_BACKLOG
     if fileno:
         sock = socket.socket(fileno=fileno)
     elif host.startswith("unix:@"):
@@ -117,7 +119,7 @@ def listen(
 log_level = int(os.environ.get("BJ_LOG_LEVEL", logging.INFO))
 log_console_level = int(os.environ.get("BJ_LOG_CONSOLE_LEVEL", log_level))
 log_file_level = int(os.environ.get("BJ_LOG_FILE_LEVEL", log_level))
-log_file = os.environ.get("BJ_LOG_FILE", "/var/log/bjoern.log")
+log_file = os.environ.get("BJ_LOG_FILE", DEFAULT_FILE_LOG)
 
 setup_console_logging(log_console_level)
 setup_file_logging(log_file_level, log_file)
@@ -161,9 +163,7 @@ def run(*args, **kwargs):
     _log_file_level = kwargs.pop(
         "log_file_level", int(os.environ.get("BJ_LOG_FILE_LEVEL", _log_level))
     )
-    _log_file = kwargs.pop(
-        "log_file", os.environ.get("BJ_LOG_FILE", "/var/log/bjoern.log")
-    )
+    _log_file = kwargs.pop("log_file", os.environ.get("BJ_LOG_FILE", DEFAULT_FILE_LOG))
 
     if console_log is None:
         console_log = setup_console_logging(_log_console_level)

@@ -1,5 +1,14 @@
+import subprocess
+
 __version__ = "4.0.6"
-DEFAULT_LISTEN_BACKLOG = 2048
+MAX_LISTEN_BACKLOG = int(
+    subprocess.run(["cat", "/proc/sys/net/core/somaxconn"], stdout=subprocess.PIPE)
+    .stdout.decode()
+    .splitlines()[0]
+)
+DEFAULT_LISTEN_BACKLOG = MAX_LISTEN_BACKLOG // 2
+
+DEFAULT_FILE_LOG = "-"
 
 
 def run(*args, **kwargs):

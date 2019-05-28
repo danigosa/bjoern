@@ -43,11 +43,11 @@ typedef struct {
 typedef void ev_io_callback(struct ev_loop *, ev_io *, const int);
 
 #if WANT_SIGINT_HANDLING
-typedef void ev_signal_callback(struct ev_loop*, ev_signal*, const int);
-static ev_signal_callback ev_signal_on_sigint;
+typedef void ev_sigint_callback(struct ev_loop*, ev_signal*, const int);
+static ev_sigint_callback ev_signal_on_sigint;
 #endif
 
-#if WANT_SIGINT_HANDLING
+#if WANT_SIGNAL_HANDLING
 typedef void ev_timer_callback(struct ev_loop*, ev_timer*, const int);
 static ev_timer_callback ev_timer_ontick;
 ev_timer timeout_watcher;

@@ -72,6 +72,6 @@ setup(
         "Programming Language :: Python :: 3",
         "Topic :: Internet :: WWW/HTTP :: WSGI :: Server",
     ],
-    py_modules=["bjoern", "bjoern.tests"],
+    py_modules=["bjoern", "bjoern.server", "bjoern.gworker"],
     ext_modules=[bjoern_extension],
 )

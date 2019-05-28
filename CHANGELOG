@@ -3,6 +3,9 @@ CHANGELOG
 
 4.0.6 (May 2019)
     - Fix bad import when building from source externally with setup.py
+    - configurable listen backlog, defaulted to the half of /proc/sys/net/core/somaxconn, if listen_backlog para is 0, to
+      the max of the underlying hardware/runtime
+    - Fixed benchmarks
 
 4.0.5 (May 2019)
     - use http_parser.h methods for BAD_REQUEST, REQUIRED_LENGTH and SERVER_ERROR

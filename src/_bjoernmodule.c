@@ -66,8 +66,12 @@ run(PyObject *self, PyObject *args) {
     // Set file logging
     info.log_file_level = log_file_level;
     long l_file_level = PyLong_AsLong(info.log_file_level);
-    if (log_file != NULL){
-        info.log_file = fopen(PyUnicode_AS_DATA(log_file), "w");
+    if (log_file != NULL) {
+        if (strcmp(log_file, "-")) {
+            info.log_file = stdout;
+        } else {
+            info.log_file = fopen(PyUnicode_AS_DATA(log_file), "w");
+        }
         log_set_fp(info.log_file);
         int file_level = 0;
         switch (l_file_level) {
