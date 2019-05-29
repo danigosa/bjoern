@@ -18,10 +18,7 @@ def reuse_port_app():
         start_response("200 OK", [])
         return [b"Hello from process %d\n" % os.getpid()]
 
-    processes = [
-        _run_app(app, log_level=logging.INFO, reuse_port=True)
-        for _ in range(3 * N_PROCESSES)
-    ]
+    processes = [_run_app(app, reuse_port=True) for _ in range(3 * N_PROCESSES)]
 
     time.sleep(0.5 * N_PROCESSES)
 

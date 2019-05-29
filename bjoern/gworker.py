@@ -2,8 +2,9 @@ import os
 import socket
 import sys
 
-import bjoern
 from gunicorn.workers.base import Worker
+
+import bjoern
 
 
 class BjoernWorker(Worker):
@@ -33,7 +34,6 @@ class BjoernWorker(Worker):
             host,
             port,
             listen_backlog=self.cfg.worker_connections,
-            log_level=self.log.access_log.level,
             log_console_level=self.log.access_log.level,
             log_file_level=self.log.error_log.level,
             log_file=self.log.logfile,
