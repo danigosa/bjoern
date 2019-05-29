@@ -73,10 +73,11 @@ void Request_parse(Request *request, const char *data, const size_t data_len) {
     assert(data_len);
     size_t nparsed = http_parser_execute((http_parser *) &request->parser,
                                          &parser_settings, data, data_len);
-    if (nparsed != data_len){
+    if (nparsed != data_len) {
         log_error("Bad length(%zu != %zu): BAD REQUEST", nparsed, data_len);
         request->state.error_code = HTTP_STATUS_BAD_REQUEST;
-    if (request->parser.parser.http_major == 2){
+    }
+    if (request->parser.parser.http_major == 2) {
         log_error("HTTP2 not supported: VERSION NOT SUPPORTED", nparsed, data_len);
         request->state.error_code = HTTP_STATUS_HTTP_VERSION_NOT_SUPPORTED;
     }

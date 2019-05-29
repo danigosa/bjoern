@@ -2,8 +2,10 @@ FROM ubuntu:bionic
 
 MAINTAINER <danius danigosa@gmail.com>
 
-ENV LC_ALL C.UTF-8
-ENV LANG C.UTF-8
+ENV LC_ALL=C.UTF-8
+ENV LC_CTYPE=C.UTF-8
+
+ENV PYPY_VERSION="7.1.1-beta"
 
 # base packages
 RUN \
@@ -71,3 +73,22 @@ RUN python3.7 -m venv --system-site-packages /.py37-venv && \
 
 RUN ldconfig
 
+# Install Pypy environment
+RUN \
+  apt-get -qy update && \
+  apt-get -qy install --no-install-recommends curl ca-certificates && update-ca-certificates && \
+  curl -Lo /opt/pypy.tar.bz2 https://bitbucket.org/squeaky/portable-pypy/downloads/pypy3.6-$PYPY_VERSION-linux_x86_64-portable.tar.bz2 && \
+  tar -C /opt -xjf /opt/pypy.tar.bz2 && \
+  ln -sf /opt/pypy3.6-$PYPY_VERSION-linux_x86_64-portable/bin/pypy3 /usr/bin/pypy3 && \
+  ln -sf /opt/pypy3.6-$PYPY_VERSION-linux_x86_64-portable/bin/pypy3 /usr/bin/pypy && \
+  pypy3 -m ensurepip && \
+  pypy3 -m pip install --upgrade virtualenv==16.5.0 && \
+  rm -f /opt/pypy.tar.bz2 && \
+  apt-get -qy purge curl curl ca-certificates && \
+  rm -rf /var/lib/apt/lists/*
+RUN pypy3 -m virtualenv -p /usr/bin/pypy3 --system-site-packages /.pypy36-venv && \
+        /.pypy36-venv/bin/pypy -m pip install --upgrade \
+            pip==19.1.1 \
+            setuptools==41.0.1\
+            wheel==0.33.4 \
+            Cython==0.29.7
