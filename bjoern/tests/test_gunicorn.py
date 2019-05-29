@@ -1,11 +1,9 @@
-import os
-import signal
 import subprocess
+import sys
 import time
 from pathlib import Path
 
 import pytest
-import sys
 from flask import Flask, request
 
 
@@ -53,11 +51,11 @@ def run_app_gunicorn():
     try:
         yield p
     finally:
-        os.kill(p.pid, signal.SIGTERM)
+        subprocess.run(["killall", "-9", "gunicorn"])
         time.sleep(0.5)
 
 
-def test_flask_app(run_app_gunicorn, client):
+def test_flask_gunicorn_app(run_app_gunicorn, client):
     response = client.get("/a/b/c?k=v&k2=v2")
     assert response.status_code == 200
     assert response.reason == "OK"

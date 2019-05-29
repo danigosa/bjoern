@@ -75,8 +75,8 @@ def setup_file_logging(log_level_, log_file_):
     file_log = logging.getLogger(f"bjoern.file")
     file_log.setLevel(log_level_)
 
-    if log_file_ == "-":
-        handler = logging.StreamHandler(sys.stdout)
+    if log_file_ == "-" or log_file_ is None:
+        return
     else:
         handler = logging.FileHandler(log_file_)
     handler.setLevel(log_level_)
@@ -140,15 +140,6 @@ def run(*args, **kwargs):
         "log_file_level", int(os.environ.get("BJ_LOG_FILE_LEVEL", log_level))
     )
     log_file = kwargs.pop("log_file", os.environ.get("BJ_LOG_FILE", DEFAULT_FILE_LOG))
-    fd = None
-    if isinstance(log_file, str):
-        if log_file == "-":
-            fd = sys.stdout.fileno()
-        else:
-            fo = open(log_file, "wb")
-            fd = fo.fileno()
-    elif isinstance(log_file, int):
-        fd = log_file
 
     console_log = setup_console_logging(log_console_level)
 
@@ -167,7 +158,7 @@ def run(*args, **kwargs):
     f"- gid: {gid} \n"
 
     console_log.info(info)
-    file_log.info(info)
+    file_log.info(info) if file_log is not None else None
 
     if args or kwargs:
         # Called as `bjoern.run(wsgi_app, host, ...)`
@@ -182,7 +173,7 @@ def run(*args, **kwargs):
             )
     sock, wsgi_app = _default_instance
     try:
-        server_run(sock, wsgi_app, log_console_level, log_file_level, fd)
+        server_run(sock, wsgi_app, log_console_level, log_file_level, file_log)
     finally:
         if sock.family == socket.AF_UNIX:
             filename = sock.getsockname()
@@ -190,7 +181,6 @@ def run(*args, **kwargs):
                 os.unlink(sock.getsockname())
         sock.close()
         _default_instance = None
-        close(fd) if fd is not None else None
 
 
 def stop():

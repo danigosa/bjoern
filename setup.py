@@ -13,7 +13,6 @@ SOURCE_FILES = [
 _DEBUG = bool(os.environ.get("DEBUG", False))
 
 if _DEBUG:
-    print(f"Debugging build")
     extra_compile_args = [
         "-std=c99",
         "-pthread",
@@ -23,7 +22,7 @@ if _DEBUG:
         "-Wall",
         "-Wextra",
         "-Wno-unused-parameter",
-        "-Wno-missing-field-initializers",
+        "-Wno-missing-field-initializers" "-D DEBUG",
     ]
 else:
     extra_compile_args = [

@@ -11,7 +11,6 @@ typedef struct {
     PyObject *log_console_level;
     PyObject *log_file_level;
     PyObject *log_file;
-    int log_file_fd;
 } ServerInfo;
 
 void server_run(ServerInfo *);

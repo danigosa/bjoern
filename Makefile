@@ -47,7 +47,7 @@ endif
 CC 				:= gcc
 CPPFLAGS_36		+= $(PYTHON36_INCLUDE) -I . -I $(SOURCE_DIR) -I $(HTTP_PARSER_DIR)
 CPPFLAGS_37		+= $(PYTHON37_INCLUDE) -I . -I $(SOURCE_DIR) -I $(HTTP_PARSER_DIR)
-CFLAGS			+= $(FEATURES) -std=c99 -fno-strict-aliasing -fcommon -fPIC -Wall
+CFLAGS			+= $(FEATURES) -std=c99 -fno-strict-aliasing -fcommon -fPIC -Wall -D DEBUG
 LDFLAGS_36		+= $(PYTHON36_LDFLAGS_36) -pthread -shared -fcommon
 LDFLAGS_37		+= $(PYTHON37_LDFLAGS_36) -pthread -shared -fcommon
 
