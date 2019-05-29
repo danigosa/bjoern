@@ -1,5 +1,6 @@
 #ifndef __server_h__
 #define __server_h__
+
 #include <stdio.h>
 
 typedef struct {
@@ -9,7 +10,8 @@ typedef struct {
     PyObject *port;
     PyObject *log_console_level;
     PyObject *log_file_level;
-    FILE *log_file;
+    PyObject *log_file;
+    int log_file_fd;
 } ServerInfo;
 
 void server_run(ServerInfo *);

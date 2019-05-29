@@ -26,13 +26,13 @@ PyObject *_REMOTE_ADDR, *_PATH_INFO, *_QUERY_STRING, *_REQUEST_METHOD, *_GET,
 #ifdef DEBUG
   #define DBG_REQ(request, ...) \
     do { \
-      printf("[DEBUG Req %ld] ", request->id); \
+      log_debug("[DEBUG Req %ld] ", request->id); \
       DBG(__VA_ARGS__); \
     } while(0)
   #define DBG(...) \
     do { \
-      printf(__VA_ARGS__); \
-      printf("\n"); \
+      log_debug(__VA_ARGS__); \
+      log_debug("\n"); \
     } while(0)
 #else
   #define DBG(...) do{}while(0)

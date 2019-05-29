@@ -2,7 +2,6 @@ import os
 import sys
 
 import bjoern
-from gunicorn.glogging import Logger
 from gunicorn.workers.base import Worker
 
 
@@ -18,13 +17,14 @@ class BjoernWorker(Worker):
             bjoern.stop()
 
     def run(self):
-        bjoern.console_log = self.log
-        bjoern.log_console_level = Logger.loglevel
-        bjoern.file_console_level = Logger.loglevel
-        bjoern.log_file = str(self.log.logfile)
+        bjoern.log_file = self.log.logfile
         bjoern.run(
             self.wsgi,
             listen_backlog=self.cfg.worker_connections,
+            log_level=self.log.access.level,
+            console_log_level=self.log.access.level,
+            file_log_level=self.log.error.level,
+            file_log=self.log.logfile,
             fileno=self.sockets[0].fileno(),
         )
 

@@ -24,7 +24,6 @@ if _DEBUG:
         "-Wextra",
         "-Wno-unused-parameter",
         "-Wno-missing-field-initializers",
-        "-D DEBUG",
     ]
 else:
     extra_compile_args = [
@@ -72,6 +71,14 @@ setup(
         "Programming Language :: Python :: 3",
         "Topic :: Internet :: WWW/HTTP :: WSGI :: Server",
     ],
-    py_modules=["bjoern", "bjoern.server", "bjoern.gworker"],
+    py_modules=[
+        "bjoern",
+        "bjoern.server",
+        "bjoern.bench",
+        "bjoern.bench.flask_bench",
+        "bjoern.bench.bottle_bench",
+        "bjoern.bench.falcon_bench",
+        "bjoern.gworker",
+    ],
     ext_modules=[bjoern_extension],
 )

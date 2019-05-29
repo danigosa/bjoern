@@ -1,5 +1,6 @@
 #include <Python.h>
 #include <stdio.h>
+#include <fcntl.h>
 #include "server.h"
 #include "wsgi.h"
 #include "filewrapper.h"
@@ -64,42 +65,69 @@ run(PyObject *self, PyObject *args) {
     log_info("ConsoleLogging level set to: %d", console_level * 10);
 
     // Set file logging
-    info.log_file_level = log_file_level;
-    long l_file_level = PyLong_AsLong(info.log_file_level);
-    if (log_file != NULL) {
-        if (strcmp(PyUnicode_AS_DATA(log_file), "-")) {
-            info.log_file = stdout;
-        } else {
-            info.log_file = fopen(PyUnicode_AS_DATA(log_file), "w");
-        }
-        log_set_fp(info.log_file);
-        int file_level = 0;
-        switch (l_file_level) {
+    if (info.log_file != NULL) {
+        // Check if stdout/stderr
+        info.log_file_level = log_file_level;
+        info.log_file = log_file;
+        long l_file_level = PyLong_AsLong(info.log_file_level);
+        long log_file_fileno = PyLong_AsLong(info.log_file);
+        int log_file_fd = -1;
+        switch (log_file_fileno) {
+            case -1:
+                log_error("file log descriptor not valid: %d", log_file_fileno);
+                exit(1);
+                break;
             case 0:
-                file_level = LOG_TRACE;
+                log_error("stdin not valid file log descriptor");
+                exit(1);
                 break;
-            case 10:
-                file_level = LOG_DEBUG;
+            case 1:
+                log_set_fp(stdout);
+                log_file_fd = fileno(stdout);
                 break;
-            case 20:
-                file_level = LOG_INFO;
-                break;
-            case 30:
-                file_level = LOG_WARN;
-                break;
-            case 40:
-                file_level = LOG_ERROR;
-                break;
-            case 50:
-                file_level = LOG_FATAL;
-                break;
-            default:
-                file_level = LOG_INFO;
-                log_set_file_level(LOG_INFO);
+            case 2:
+                log_set_fp(stderr);
+                log_file_fd = fileno(stderr);
                 break;
         }
-        log_set_file_level(file_level);
-        log_info("FileLogging level set to: %d", file_level * 10);
+        if (log_file_fd > 0) {
+            // Check level
+            FILE *_fd = fdopen(log_file_fileno, "w");
+            log_set_fp(_fd);
+            info.log_file_fd = fileno(_fd);
+            if (fcntl(info.log_file_fd, F_GETFD) || errno != EBADF) {
+                int file_level = 0;
+                switch (l_file_level) {
+                    case 0:
+                        file_level = LOG_TRACE;
+                        break;
+                    case 10:
+                        file_level = LOG_DEBUG;
+                        break;
+                    case 20:
+                        file_level = LOG_INFO;
+                        break;
+                    case 30:
+                        file_level = LOG_WARN;
+                        break;
+                    case 40:
+                        file_level = LOG_ERROR;
+                        break;
+                    case 50:
+                        file_level = LOG_FATAL;
+                        break;
+                    default:
+                        file_level = LOG_INFO;
+                        log_set_file_level(LOG_INFO);
+                        break;
+                }
+                log_set_file_level(file_level);
+                log_info("FileLogging level set to: %d", file_level * 10);
+            }
+        }
+
+    } else {
+        log_info("No FileLogging set");
     }
 
     // Check socket
