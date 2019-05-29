@@ -133,7 +133,7 @@ $(ab_post): /tmp/bjoern-post.tmp
 	@echo $(IMAGE_B64_LEN)
 
 $(flask_bench_36):
-	@$(PYTHON36) bench/flask_bench.py --log-level inf & jobs -p >/var/run/flask_bench.pid
+	@$(PYTHON36) bench/flask_bjoern.bench.py --log-level inf & jobs -p >/var/run/flask_bjoern.bench.pid
 	@sleep 2
 
 flask-ab-36: $(flask_bench_36) $(ab_post)
@@ -148,7 +148,7 @@ flask-ab-36: $(flask_bench_36) $(ab_post)
 	@killall -9 $(PYTHON36)
 
 $(flask_gworker_bench_36):
-	@$(GUNICORN36) bench.flask_bench:app --backlog 2048 --timeout 1800 --worker-class bjoern.gworker.BjoernWorker & jobs -p >/var/run/flask_bench_gworker.pid
+	@$(GUNICORN36) bjoern.bench.flask_bench:app --reuse-port --backlog 2048 --timeout 1800 --worker-class bjoern.gworker.BjoernWorker & jobs -p >/var/run/flask_bench_gworker.pid
 	@sleep 2
 
 flask-ab-gworker-36: $(flask_gworker_bench_36) $(ab_post)
@@ -163,7 +163,7 @@ flask-ab-gworker-36: $(flask_gworker_bench_36) $(ab_post)
 
 
 $(flask_gunicorn_bench_36):
-	@$(GUNICORN36) bench.flask_bench:app --bind localhost:8080 --log-level info --backlog 2048 --timeout 1800 &
+	@$(GUNICORN36) bjoern.bench.flask_bench:app --reuse-port --bind localhost:8080 --log-level info --backlog 2048 --timeout 1800 &
 	@sleep 2
 
 flask-ab-gunicorn-36: $(flask_gunicorn_bench_36) $(ab_post)
@@ -178,7 +178,7 @@ flask-ab-gunicorn-36: $(flask_gunicorn_bench_36) $(ab_post)
 	@killall -9 $(PYTHON36)
 
 $(bottle_bench_36):
-	@$(PYTHON36) bench/bottle_bench.py &
+	@$(PYTHON36) bench/bottle_bjoern.bench.py &
 	@sleep 2
 
 bottle-ab-36: $(bottle_bench_36) $(ab_post)
@@ -193,7 +193,7 @@ bottle-ab-36: $(bottle_bench_36) $(ab_post)
 	@killall -9 $(PYTHON36)
 
 $(falcon_bench_36):
-	@$(PYTHON36) bench/falcon_bench.py &
+	@$(PYTHON36) bench/falcon_bjoern.bench.py &
 	@sleep 2
 
 falcon-ab-36: $(falcon_bench_36) $(ab_post)
@@ -210,11 +210,11 @@ falcon-ab-36: $(falcon_bench_36) $(ab_post)
 _clean_bench_36:
 	@rm -rf bench/*36.txt
 
-bjoern-bench-36: _clean_bench_36 setup-36 install-36-bench flask-ab-gunicorn-36 flask-ab-gworker-36 flask-ab-36 bottle-ab-36 falcon-ab-36
+bjoern-bench-36: _clean_bench_36 setup-36 install-36-bench flask-ab-36 bottle-ab-36 falcon-ab-36 flask-ab-gunicorn-36 flask-ab-gworker-36
 
 
 $(flask_bench_37):
-	@$(PYTHON37) bench/flask_bench.py & jobs -p >/var/run/flask_bench.pid
+	@$(PYTHON37) bench/flask_bjoern.bench.py & jobs -p >/var/run/flask_bjoern.bench.pid
 	@sleep 2
 
 flask-ab-37: $(flask_bench_37) $(ab_post)
@@ -229,7 +229,7 @@ flask-ab-37: $(flask_bench_37) $(ab_post)
 	@killall -9 $(PYTHON37)
 
 $(flask_gworker_bench_37):
-	@$(GUNICORN37) bench.flask_bench:app --backlog 2048 --timeout 1800 --worker-class bjoern.gworker.BjoernWorker &
+	@$(GUNICORN37) bjoern.bench.flask_bench:app --backlog 2048 --timeout 1800 --worker-class bjoern.gworker.BjoernWorker &
 	@sleep 2
 
 flask-ab-gworker-37: $(flask_gworker_bench_37) $(ab_post)
@@ -244,7 +244,7 @@ flask-ab-gworker-37: $(flask_gworker_bench_37) $(ab_post)
 	@killall -9 $(PYTHON37)
 
 $(flask_gunicorn_bench_37):
-	@$(GUNICORN37) bench.flask_bench:app --backlog 2048 --timeout 1800 &
+	@$(GUNICORN37) bjoern.bench.flask_bench:app --backlog 2048 --timeout 1800 &
 	@sleep 2
 
 flask-ab-gunicorn-37: $(flask_gunicorn_bench_37) $(ab_post)
@@ -259,7 +259,7 @@ flask-ab-gunicorn-37: $(flask_gunicorn_bench_37) $(ab_post)
 	@killall -9 $(PYTHON37)
 
 $(bottle_bench_37):
-	@$(PYTHON37) bench/bottle_bench.py & jobs -p >/var/run/bottle_bench.pid
+	@$(PYTHON37) bench/bottle_bjoern.bench.py & jobs -p >/var/run/bottle_bjoern.bench.pid
 	@sleep 2
 
 bottle-ab-37: $(bottle_bench_37) $(ab_post)
@@ -274,7 +274,7 @@ bottle-ab-37: $(bottle_bench_37) $(ab_post)
 	@killall -9 $(PYTHON37)
 
 $(falcon_bench_37):
-	@$(PYTHON37) bench/falcon_bench.py & jobs -p >/var/run/falcon_bench.pid
+	@$(PYTHON37) bench/falcon_bjoern.bench.py & jobs -p >/var/run/falcon_bjoern.bench.pid
 	@sleep 2
 
 falcon-ab-37: $(falcon_bench_37) $(ab_post)
