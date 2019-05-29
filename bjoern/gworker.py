@@ -27,6 +27,7 @@ class BjoernWorker(Worker):
             port = -1
         else:
             raise RuntimeError("Invalid socket for worker")
+        self.log.info(f"Running BjoernWorker: {host}:{port} fd:{sckt.sock.fileno()}")
         bjoern.run(
             self.wsgi,
             host,

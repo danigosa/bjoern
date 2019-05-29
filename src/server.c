@@ -17,6 +17,7 @@
 #include "common.h"
 #include "wsgi.h"
 #include "server.h"
+#include "log.h"
 
 #include "py3.h"
 
@@ -77,7 +78,7 @@ static PyObject *http_error_message(unsigned short int minor, int code) {
 };
 
 void server_run(ServerInfo *server_info) {
-    struct ev_loop *mainloop = ev_loop_new(EVFLAG_AUTO);
+    struct ev_loop *mainloop = ev_loop_new(ev_recommended_backends () | EVBACKEND_EPOLL);
 
     ThreadInfo thread_info;
     thread_info.server_info = server_info;

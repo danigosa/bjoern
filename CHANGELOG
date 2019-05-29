@@ -3,6 +3,7 @@ CHANGELOG
 
 4.0.7 (May 2019)
     - Added 505 HTTP Version Not Supported on HTTP2
+    - Improvements in C logging
 
 4.0.6 (May 2019)
     - Fix bad import when building from source externally with setup.py

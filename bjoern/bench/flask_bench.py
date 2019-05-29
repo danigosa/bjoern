@@ -26,4 +26,5 @@ def bench():
     abort(400)
 
 
-bjoern.run(app, "0.0.0.0", 8080, log_level=30, reuse_port=True)
+if __name__ == "__main__":
+    bjoern.run(app, "0.0.0.0", 8080, log_level=30)

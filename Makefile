@@ -54,19 +54,23 @@ LDFLAGS_37		+= $(PYTHON37_LDFLAGS_36) -pthread -shared -fcommon
 AB			:= ab -c 100 -n 10000
 TEST_URL	:= "http://127.0.0.1:8080/a/b/c?k=v&k2=v2"
 
-IMAGE_B64 				:= $(shell cat bjoern/tests/charlie.jpg | base64 | xargs urlencode)
-IMAGE_B64_LEN 			:= $(shell cat bjoern/tests/charlie.jpg | base64 | xargs urlencode | wc -c)
-flask_bench_36 			:= bench/flask_py36.txt
-flask_gworker_bench_36 	:= bench/flask_gworker_py36.txt
-flask_gunicorn_bench_36 := bench/flask_gunicorn_py36.txt
-bottle_bench_36 		:= bench/bottle_py36.txt
-falcon_bench_36 		:= bench/falcon_py36.txt
-flask_bench_37 			:= bench/flask_py37.txt
-bottle_bench_37 		:= bench/bottle_py37.txt
-falcon_bench_37 		:= bench/falcon_py37.txt
-flask_gworker_bench_37 	:= bench/flask_gworker_py37.txt
-flask_gunicorn_bench_37 := bench/flask_gunicorn_py37.txt
-ab_post 				:= /tmp/bjoern-post.tmp
+IMAGE_B64 						:= $(shell cat bjoern/tests/charlie.jpg | base64 | xargs urlencode)
+IMAGE_B64_LEN 					:= $(shell cat bjoern/tests/charlie.jpg | base64 | xargs urlencode | wc -c)
+flask_bench_36 					:= bjoern/bench/flask_py36.txt
+flask_gworker_bench_36 			:= bjoern/bench/flask_gworker_py36.txt
+flask_gunicorn_bench_36 		:= bjoern/bench/flask_gunicorn_py36.txt
+flask_gunicorn_bench_multi_36 	:= bjoern/bench/flask_gunicorn_multi_py36.txt
+flask_gunicorn_bench_thread_36 	:= bjoern/bench/flask_gunicorn_thread_py36.txt
+bottle_bench_36 				:= bjoern/bench/bottle_py36.txt
+falcon_bench_36 				:= bjoern/bench/falcon_py36.txt
+flask_bench_37 					:= bjoern/bench/flask_py37.txt
+bottle_bench_37 				:= bjoern/bench/bottle_py37.txt
+falcon_bench_37 				:= bjoern/bench/falcon_py37.txt
+flask_gworker_bench_37 			:= bjoern/bench/flask_gworker_py37.txt
+flask_gunicorn_bench_37 		:= bjoern/bench/flask_gunicorn_py37.txt
+flask_gunicorn_bench_multi_37 	:= bjoern/bench/flask_gunicorn_multi_py37.txt
+flask_gunicorn_bench_thread_37 	:= bjoern/bench/flask_gunicorn_thread_py37.txt
+ab_post 						:= /tmp/bjoern-post.tmp
 
 # Targets
 setup-36: clean prepare-build reqs-36
@@ -128,12 +132,12 @@ test-37: fmt clean reqs-37 install-debug-37
 test: test-37 test-36
 
 # Benchmarks
-$(ab_post): /tmp/bjoern-post.tmp
+$(ab_post):
 	@echo 'asdfghjkl=asdfghjkl&qwerty=qwertyuiop&image=$(IMAGE_B64)' > "$@"
 	@echo $(IMAGE_B64_LEN)
 
 $(flask_bench_36):
-	@$(PYTHON36) bench/flask_bjoern.bench.py --log-level inf & jobs -p >/var/run/flask_bjoern.bench.pid
+	@$(PYTHON36) bjoern/bench/flask_bench.py --log-level inf & jobs -p >/var/run/flask_bjoern.bench.pid
 	@sleep 2
 
 flask-ab-36: $(flask_bench_36) $(ab_post)
@@ -147,12 +151,27 @@ flask-ab-36: $(flask_bench_36) $(ab_post)
 	$(AB) -T 'application/x-www-form-urlencoded' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_bench_36)
 	@killall -9 $(PYTHON36)
 
+$(flask_gworker_bench_multi_36):
+	@$(GUNICORN36) bjoern.bench.flask_bench:app -w 4 --backlog 2048 --timeout 1800 --worker-class bjoern.gworker.BjoernWorker &
+	@sleep 2
+
+flask-ab-gworker-multi-36: $(flask_gworker_bench_36) $(ab_post)
+	@echo -e "\n====== Flask-Gunicorn-BjoernWorker-multiworkers (Python3.6) ======\n" | tee -a $(flask_gworker_bench_multi_36)
+	@echo -e "\n====== GET ======\n" | tee -a $(flask_gworker_bench_multi_36)
+	@$(AB) $(TEST_URL) | tee $(flask_gworker_bench_36)
+	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gworker_bench_multi_36)
+	@$(AB) -k $(TEST_URL) | tee -a $(flask_gworker_bench_multi_36)
+	@echo -e "\n====== POST ======\n" | tee -a $(flask_gworker_bench_multi_36)
+	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gworker_bench_multi_36)
+	$(AB) -T 'application/x-www-form-urlencoded' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_gworker_bench_multi_36)
+	@killall -9 gunicorn
+
 $(flask_gworker_bench_36):
-	@$(GUNICORN36) bjoern.bench.flask_bench:app --reuse-port --backlog 2048 --timeout 1800 --worker-class bjoern.gworker.BjoernWorker & jobs -p >/var/run/flask_bench_gworker.pid
+	@$(GUNICORN36) bjoern.bench.flask_bench:app --log-leve info --backlog 2048 --timeout 1800 --worker-class bjoern.gworker.BjoernWorker &
 	@sleep 2
 
 flask-ab-gworker-36: $(flask_gworker_bench_36) $(ab_post)
-	@echo -e "\n====== Falcon(Python3.6) ======\n" | tee -a $(flask_gworker_bench_36)
+	@echo -e "\n====== Flask-Gunicorn-BjoernWorker(Python3.6) ======\n" | tee -a $(flask_gworker_bench_36)
 	@echo -e "\n====== GET ======\n" | tee -a $(flask_gworker_bench_36)
 	@$(AB) $(TEST_URL) | tee $(flask_gworker_bench_36)
 	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gworker_bench_36)
@@ -160,14 +179,14 @@ flask-ab-gworker-36: $(flask_gworker_bench_36) $(ab_post)
 	@echo -e "\n====== POST ======\n" | tee -a $(flask_gworker_bench_36)
 	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gworker_bench_36)
 	$(AB) -T 'application/x-www-form-urlencoded' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_gworker_bench_36)
-
+	@killall -9 gunicorn
 
 $(flask_gunicorn_bench_36):
-	@$(GUNICORN36) bjoern.bench.flask_bench:app --reuse-port --bind localhost:8080 --log-level info --backlog 2048 --timeout 1800 &
+	@$(GUNICORN36) bjoern.bench.flask_bench:app --bind localhost:8080 --log-level info --backlog 2048 --timeout 1800 &
 	@sleep 2
 
 flask-ab-gunicorn-36: $(flask_gunicorn_bench_36) $(ab_post)
-	@echo -e "\n====== Falcon(Python3.6) ======\n" | tee -a $(flask_gunicorn_bench_36)
+	@echo -e "\n====== Flask-Gunicorn(Python3.6) ======\n" | tee -a $(flask_gunicorn_bench_36)
 	@echo -e "\n====== GET ======\n" | tee -a $(flask_gunicorn_bench_36)
 	@$(AB) $(TEST_URL) | tee $(flask_gunicorn_bench_36)
 	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gunicorn_bench_36)
@@ -175,10 +194,10 @@ flask-ab-gunicorn-36: $(flask_gunicorn_bench_36) $(ab_post)
 	@echo -e "\n====== POST ======\n" | tee -a $(flask_gunicorn_bench_36)
 	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gunicorn_bench_36)
 	$(AB) -T 'application/x-www-form-urlencoded' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_gunicorn_bench_36)
-	@killall -9 $(PYTHON36)
+	@killall -9 gunicorn
 
 $(bottle_bench_36):
-	@$(PYTHON36) bench/bottle_bjoern.bench.py &
+	@$(PYTHON36) bjoern/bench/bottle_bench.py &
 	@sleep 2
 
 bottle-ab-36: $(bottle_bench_36) $(ab_post)
@@ -193,7 +212,7 @@ bottle-ab-36: $(bottle_bench_36) $(ab_post)
 	@killall -9 $(PYTHON36)
 
 $(falcon_bench_36):
-	@$(PYTHON36) bench/falcon_bjoern.bench.py &
+	@$(PYTHON36) bjoern/bench/falcon_bench.py &
 	@sleep 2
 
 falcon-ab-36: $(falcon_bench_36) $(ab_post)
@@ -208,13 +227,13 @@ falcon-ab-36: $(falcon_bench_36) $(ab_post)
 	@killall -9 $(PYTHON36)
 
 _clean_bench_36:
-	@rm -rf bench/*36.txt
+	@rm -rf bjoern/bench/*36.txt
 
-bjoern-bench-36: _clean_bench_36 setup-36 install-36-bench flask-ab-36 bottle-ab-36 falcon-ab-36 flask-ab-gunicorn-36 flask-ab-gworker-36
-
+bjoern-bench-36: _clean_bench_36 install-36-bench flask-ab-gworker-36
+# flask-ab-gunicorn-36 install-36-bench flask-ab-36 bottle-ab-36 falcon-ab-36
 
 $(flask_bench_37):
-	@$(PYTHON37) bench/flask_bjoern.bench.py & jobs -p >/var/run/flask_bjoern.bench.pid
+	@$(PYTHON37) bjoern/bench/flask_bench.py & jobs -p >/var/run/flask_bjoern.bench.pid
 	@sleep 2
 
 flask-ab-37: $(flask_bench_37) $(ab_post)
@@ -241,7 +260,7 @@ flask-ab-gworker-37: $(flask_gworker_bench_37) $(ab_post)
 	@echo -e "\n====== POST ======\n" | tee -a $(flask_gworker_bench_37)
 	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gworker_bench_37)
 	$(AB) -T 'application/x-www-form-urlencoded' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_gworker_bench_37)
-	@killall -9 $(PYTHON37)
+	@killall -9 gunicorn
 
 $(flask_gunicorn_bench_37):
 	@$(GUNICORN37) bjoern.bench.flask_bench:app --backlog 2048 --timeout 1800 &
@@ -256,10 +275,10 @@ flask-ab-gunicorn-37: $(flask_gunicorn_bench_37) $(ab_post)
 	@echo -e "\n====== POST ======\n" | tee -a $(flask_gunicorn_bench_37)
 	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gunicorn_bench_37)
 	$(AB) -T 'application/x-www-form-urlencoded' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_gunicorn_bench_37)
-	@killall -9 $(PYTHON37)
+	@killall -9 gunicorn
 
 $(bottle_bench_37):
-	@$(PYTHON37) bench/bottle_bjoern.bench.py & jobs -p >/var/run/bottle_bjoern.bench.pid
+	@$(PYTHON37) bjoern/bench/bottle_bench.py & jobs -p >/var/run/bottle_bjoern.bench.pid
 	@sleep 2
 
 bottle-ab-37: $(bottle_bench_37) $(ab_post)
@@ -274,7 +293,7 @@ bottle-ab-37: $(bottle_bench_37) $(ab_post)
 	@killall -9 $(PYTHON37)
 
 $(falcon_bench_37):
-	@$(PYTHON37) bench/falcon_bjoern.bench.py & jobs -p >/var/run/falcon_bjoern.bench.pid
+	@$(PYTHON37) bjoern/bench/falcon_bench.py & jobs -p >/var/run/falcon_bjoern.bench.pid
 	@sleep 2
 
 falcon-ab-37: $(falcon_bench_37) $(ab_post)
@@ -289,7 +308,7 @@ falcon-ab-37: $(falcon_bench_37) $(ab_post)
 	@killall -9 $(PYTHON37)
 
 _clean_bench_37:
-	@rm -rf bench/*37.txt
+	@rm -rf bjoern/bench/*37.txt
 
 bjoern-bench-37: _clean_bench_37 setup-37 install-37-bench flask-ab-gunicorn-37 flask-ab-gworker-37 flask-ab-37 bottle-ab-37 falcon-ab-37
 

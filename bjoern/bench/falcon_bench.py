@@ -36,4 +36,5 @@ resource = AppResource()
 app.add_route("/a/b/c", resource)
 
 
-bjoern.run(app, "0.0.0.0", 8080, reuse_port=True)
+if __name__ == "__main__":
+    bjoern.run(app, "0.0.0.0", 8080, log_level=30)

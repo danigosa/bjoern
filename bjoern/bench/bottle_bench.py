@@ -26,4 +26,5 @@ def bench_post():
     return json.dumps({"k": k, "k2": k2, "asdfghjkl": asdfghjkl, "image": image})
 
 
-bjoern.run(app, "0.0.0.0", 8080, reuse_port=True)
+if __name__ == "__main__":
+    bjoern.run(app, "0.0.0.0", 8080, log_level=30)
