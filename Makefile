@@ -9,6 +9,7 @@ PYTHON36	:= /.py36-venv/bin/python
 GUNICORN36	:= /.py36-venv/bin/gunicorn
 GUNICORN37	:= /.py37-venv/bin/gunicorn
 PYTHON37	:= /.py37-venv/bin/python
+PYPY36		:= /.pypy36-venv/bin/pypy3
 DEBUG 		:= DEBUG=True
 
 PYTHON36_INCLUDE	:= $(shell python3-config --includes | sed s/-I/-isystem\ /g)
@@ -63,6 +64,8 @@ flask_gworker_bench_thread_36 	:= bjoern/bench/flask_gworker_thread_py36.txt
 flask_gworker_bench_multi_36 	:= bjoern/bench/flask_gworker_multi_py36.txt
 bottle_bench_36 				:= bjoern/bench/bottle_py36.txt
 falcon_bench_36 				:= bjoern/bench/falcon_py36.txt
+flask_valgrind_36			 	:= bjoern/bench/flask_valgrind_py36.mem
+flask_callgrind_36			 	:= bjoern/bench/flask_callgrind_py36.mem
 flask_bench_37 					:= bjoern/bench/flask_py37.txt
 bottle_bench_37 				:= bjoern/bench/bottle_py37.txt
 falcon_bench_37 				:= bjoern/bench/falcon_py37.txt
@@ -70,14 +73,18 @@ flask_gunicorn_bench_37 		:= bjoern/bench/flask_gunicorn_py37.txt
 flask_gworker_bench_37 			:= bjoern/bench/flask_gworker_py37.txt
 flask_gworker_bench_thread_37 	:= bjoern/bench/flask_gworker_thread_py37.txt
 flask_gworker_bench_multi_37 	:= bjoern/bench/flask_gworker_multi_py37.txt
-ab_post 						:= /tmp/bjoern-post.tmp
+flask_valgrind_37			 	:= bjoern/bench/flask_valgrind_py37.mem
+flask_callgrind_37			 	:= bjoern/bench/flask_callgrind_py37.mem
+ab_post 						:= /tmp/bjoern.post
 
 # Targets
 setup-36: clean prepare-build reqs-36
 setup-37: clean prepare-build reqs-37
+setup-pypy36: clean prepare-build reqs-pypy36
 
 all-36: setup-36 $(objects) _bjoernmodule_36 test-36
 all-37: setup-36 $(objects) _bjoernmodule_37 test-37
+all-pypy36: setup-pypy36 $(objects) _bjoernmodule_37 test-37
 
 print-env:
 	@echo CFLAGS=$(CFLAGS)
@@ -109,6 +116,9 @@ reqs-36:
 reqs-37:
 	@bash install-requirements $(PYTHON37)
 
+reqs-pypy36:
+	@bash install-requirements $(PYPY36)
+
 fmt:
 	@$(PYTHON36) -m isort --settings-path=/.isort.cfg **/*.py
 	@$(PYTHON36) -m black .
@@ -128,6 +138,9 @@ test-36: fmt clean reqs-36 install-debug-36
 
 test-37: fmt clean reqs-37 install-debug-37
 	@$(PYTHON37) -m pytest
+
+test-pypy36: fmt clean reqs-pypy36 install-debug-pypy36
+	@$(PYPY36) -m pytest
 
 test: test-37 test-36
 
@@ -261,12 +274,42 @@ flask-ab-37: $(flask_bench_37) $(ab_post)
 	$(AB) -T 'application/x-www-form-urlencoded' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_bench_37)
 	@killall -9 $(PYTHON37)
 
+$(flask_gworker_bench_multi_37):
+	@$(GUNICORN37) bjoern.bench.flask_bench:app --bind localhost:8080 --log-level info -w 4 --backlog 2048 --timeout 1800 --worker-class bjoern.gworker.BjoernWorker &
+	@sleep 2
+
+flask-ab-gworker-multi-37: $(flask_gworker_bench_multi_37) $(ab_post)
+	@echo -e "\n====== Flask-Gunicorn-BjoernWorker-multiworkers (Python3.7) ======\n" | tee -a $(flask_gworker_bench_multi_37)
+	@echo -e "\n====== GET ======\n" | tee -a $(flask_gworker_bench_multi_37)
+	@$(AB) $(TEST_URL) | tee -a $(flask_gworker_bench_multi_37)
+	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gworker_bench_multi_37)
+	@$(AB) -k $(TEST_URL) | tee -a $(flask_gworker_bench_multi_37)
+	@echo -e "\n====== POST ======\n" | tee -a $(flask_gworker_bench_multi_37)
+	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gworker_bench_multi_37)
+	$(AB) -T 'application/x-www-form-urlencoded' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_gworker_bench_multi_37)
+	@killall -9 gunicorn
+
+$(flask_gworker_bench_thread_37):
+	@$(GUNICORN37) bjoern.bench.flask_bench:app --bind localhost:8080 --log-level info -w 2 --threads 4 --backlog 2048 --timeout 1800 --worker-class bjoern.gworker.BjoernWorker &
+	@sleep 2
+
+flask-ab-gworker-thread-37: $(flask_gworker_bench_thread_37) $(ab_post)
+	@echo -e "\n====== Flask-Gunicorn-BjoernWorker-threads (Python3.7) ======\n" | tee -a $(flask_gworker_bench_thread_37)
+	@echo -e "\n====== GET ======\n" | tee -a $(flask_gworker_bench_thread_37)
+	@$(AB) $(TEST_URL) | tee -a $(flask_gworker_bench_thread_37)
+	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gworker_bench_thread_37)
+	@$(AB) -k $(TEST_URL) | tee -a $(flask_gworker_bench_thread_37)
+	@echo -e "\n====== POST ======\n" | tee -a $(flask_gworker_bench_thread_37)
+	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gworker_bench_thread_37)
+	$(AB) -T 'application/x-www-form-urlencoded' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_gworker_bench_thread_37)
+	@killall -9 gunicorn
+
 $(flask_gworker_bench_37):
 	@$(GUNICORN37) bjoern.bench.flask_bench:app --backlog 2048 --timeout 1800 --worker-class bjoern.gworker.BjoernWorker &
 	@sleep 2
 
 flask-ab-gworker-37: $(flask_gworker_bench_37) $(ab_post)
-	@echo -e "\n====== Falcon(Python3.7) ======\n" | tee -a $(flask_gworker_bench_37)
+	@echo -e "\n====== Flask-Gunicorn-BjoernWorker(Python3.7) ======\n" | tee -a $(flask_gworker_bench_37)
 	@echo -e "\n====== GET ======\n" | tee -a $(flask_gworker_bench_37)
 	@$(AB) $(TEST_URL) | tee -a $(flask_gworker_bench_37)
 	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gworker_bench_37)
@@ -281,7 +324,7 @@ $(flask_gunicorn_bench_37):
 	@sleep 2
 
 flask-ab-gunicorn-37: $(flask_gunicorn_bench_37) $(ab_post)
-	@echo -e "\n====== Falcon(Python3.7) ======\n" | tee -a $(flask_gunicorn_bench_37)
+	@echo -e "\n====== Flask-Gunicorn(Python3.7) ======\n" | tee -a $(flask_gunicorn_bench_37)
 	@echo -e "\n====== GET ======\n" | tee -a $(flask_gunicorn_bench_37)
 	@$(AB) $(TEST_URL) | tee -a $(flask_gunicorn_bench_37)
 	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gunicorn_bench_37)
@@ -324,16 +367,16 @@ falcon-ab-37: $(falcon_bench_37) $(ab_post)
 _clean_bench_37:
 	@rm -rf bjoern/bench/*37.txt
 
-bjoern-bench-37: _clean_bench_37 setup-37 install-37-bench flask-ab-gunicorn-37 flask-ab-gworker-37 flask-ab-37 bottle-ab-37 falcon-ab-37
+bjoern-bench-37: _clean_bench_37 setup-37 install-37-bench flask-ab-gunicorn-37 flask-ab-37 bottle-ab-37 falcon-ab-37 flask-ab-gworker-37 flask-ab-gworker-multi-37 flask-ab-gworker-thread-37
 
 bjoern-bench: prepare-build bjoern-bench-37 bjoern-bench-36
 
 # Memory checks
-valgrind-36:
-	valgrind --leak-check=full --show-reachable=yes $(PYTHON36) bjoern/tests/empty.py
+flask-valgrind-36: install-debug-36
+	valgrind --leak-check=full --show-reachable=yes $(PYTHON36) bjoern/tests/test_flask.py > $(flask_valgrind_36) 2>&1
 
-callgrind-36:
-	valgrind --tool=callgrind $(PYTHON36) bjoern/tests/wsgitest-round-robin.py
+flask-callgrind-36: install-debug-36
+	valgrind --tool=callgrind $(PYTHON36) bjoern/tests/test_flask.py > $(flask_callgrind_36) 2>&1
 
 memwatch-36:
 	watch -n 0.5 \
@@ -341,11 +384,11 @@ memwatch-36:
 	   echo; echo; \
 	   tail -n +25 /proc/$$(pgrep -n $(PYTHON36))smaps'
 
-valgrind-37:
-	valgrind --leak-check=full --show-reachable=yes $(PYTHON37) bjoern/tests/empty.py
+flask-valgrind-37: install-debug-37
+	valgrind --leak-check=full --show-reachable=yes $(PYTHON37) bjoern/tests/test_flask.py > $(flask_valgrind_37) 2>&1
 
-callgrind-37:
-	valgrind --tool=callgrind $(PYTHON37) bjoern/tests/wsgitest-round-robin.py
+flask-callgrind-37: install-debug-37
+	valgrind --tool=callgrind $(PYTHON37) bjoern/tests/test_flask.py  > $(flask_callgrind_37) 2>&1
 
 memwatch-37:
 	watch -n 0.5 \
@@ -362,6 +405,9 @@ extension-37:
 
 install-debug-36:
 	@DEBUG=True PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) $(PYTHON36) -m pip install --editable .
+
+install-debug-pypy36:
+	@DEBUG=True PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) $(PYPY36) -m pip install --editable .
 
 uninstall-36: clean
 	@DEBUG=False PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) $(PYTHON36) -m pip uninstall -y bjoern

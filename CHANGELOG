@@ -9,7 +9,24 @@ CHANGELOG
     - Improvements on sock configuration, like TCP NODELAY and KEEPALIVE
     - Fix several issues calling the gworker.BjoernWorker with gunicorn
     - Added benchmarks for gunicorn worker
-    - Added but not used yet Pypy in the Dockerfile
+    - Initial support for Pypy, not working:
+        2019-05-30 06:40:31,113 - bjoern.console - INFO - Booting Bjoern with params:
+        - host: 0.0.0.0
+        - port: 8080
+        - LogConsoleLevel: 20
+        - LogFileLevel: 20
+        - LogToFile: -
+        - reuse_port: False
+        - listen_backlog: 64
+        - pid: 10189
+        - uid: 0
+        - gid: 0
+        - keepalive: 3600
+        - fd: None
+        - executable: /.pypy36-venv/bin/pypy3
+
+        [2019-05-30 06:40:31 UTC] [10189] [INFO] [src/_bjoernmodule.c:64] ConsoleLogging level set to: 20
+        Segmentation fault
 
 4.0.6 (May 2019)
     - Fix bad import when building from source externally with setup.py

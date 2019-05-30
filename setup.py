@@ -1,5 +1,8 @@
 import os
 import glob
+import platform
+
+import sys
 from setuptools import setup, Extension
 import bjoern
 
@@ -9,6 +12,11 @@ SOURCE_FILES = [
     os.path.join("vendors", "http-parser", "http_parser.c"),
     os.path.join("vendors", "http-parser", "contrib", "url_parser.c"),
 ] + sorted(glob.glob(os.path.join("src", "*.c")))
+
+if "Linux" != platform.system() or "CPython" != platform.python_implementation() or not sys.version_info >= (3, 6):
+    print("Sorry, not support for other platforms than CPython3.6+ Linux.")
+    sys.exit(1)
+
 
 _DEBUG = bool(os.environ.get("DEBUG", False))
 

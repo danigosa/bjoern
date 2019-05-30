@@ -124,6 +124,7 @@ def run(
         f"- gid: {gid} \n"
         f"- keepalive: {keepalive} \n"
         f"- fd: {fileno} \n"
+        f"- executable: {sys.executable} \n"
     )
 
     console_log.info(info)

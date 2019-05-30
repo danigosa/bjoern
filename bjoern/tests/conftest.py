@@ -1,5 +1,4 @@
 import json as _json
-import logging
 import time
 from multiprocessing import Process
 
@@ -7,6 +6,8 @@ import requests
 
 import bjoern
 import pytest
+
+from bjoern import DEFAULT_KEEPALIVE
 
 
 class TestClient:
@@ -42,9 +43,9 @@ def client():
     return TestClient()
 
 
-def _run_app(app, reuse_port=False):
+def _run_app(app, reuse_port=False, keepalive=DEFAULT_KEEPALIVE):
     def _start_server(_app_):
-        bjoern.run(_app_, "localhost", 8080, reuse_port=reuse_port)
+        bjoern.run(_app_, "localhost", 8080, reuse_port=reuse_port, keepalive=keepalive)
 
     p = Process(target=_start_server, args=(app,))
     p.start()
