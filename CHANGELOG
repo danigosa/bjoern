@@ -1,6 +1,9 @@
 CHANGELOG
 =========
 
+4.0.8 (May 2019)
+    - Undo EPOLL as preference for the main loop, let the lib choose with EVFLAG_AUTO
+
 4.0.7 (May 2019)
     - Added 505 HTTP Version Not Supported on HTTP2
     - Improvements in C logging

@@ -7,3 +7,4 @@ MANIFEST
 bjoern.egg-info/
 .idea
 *.so
+tmp/

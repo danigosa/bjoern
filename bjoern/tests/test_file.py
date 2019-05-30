@@ -14,7 +14,7 @@ with open("/dev/urandom", "rb") as source:
 
 for name, f_s in FILES.items():
     file, size = f_s
-    new_name = "/tmp/bjoern.%s.tmp" % name
+    new_name = "/opt/bjoern.%s.tmp" % name
     with open(new_name, "wb") as f:
         f.write(file.read(size))
     FILES[name] = new_name

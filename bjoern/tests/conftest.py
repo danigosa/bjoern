@@ -7,8 +7,6 @@ import requests
 import bjoern
 import pytest
 
-from bjoern import DEFAULT_KEEPALIVE
-
 
 class TestClient:
     base_url: str = "http://127.0.0.1:8080"
@@ -43,9 +41,9 @@ def client():
     return TestClient()
 
 
-def _run_app(app, reuse_port=False, keepalive=DEFAULT_KEEPALIVE):
+def _run_app(app, reuse_port=False):
     def _start_server(_app_):
-        bjoern.run(_app_, "localhost", 8080, reuse_port=reuse_port, keepalive=keepalive)
+        bjoern.run(_app_, "localhost", 8080, reuse_port=reuse_port)
 
     p = Process(target=_start_server, args=(app,))
     p.start()

@@ -157,7 +157,7 @@ def test_keep_alive_behaviour_app(keep_alive_behaviour_app):
     for app in keep_alive_behaviour_app:
         p = None
         try:
-            p = _run_app(app, reuse_port=True, keepalive=0)
+            p = _run_app(app, reuse_port=True)
 
             send_request(app, _tinker_request(app))
             response = get_response(app)

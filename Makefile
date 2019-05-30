@@ -128,6 +128,7 @@ prepare-build: fmt
 
 clean:
 	@rm -rf $(BUILD_DIR)/*
+	@rm -rf _bjoern.*.so
 	@rm -rf *.egg-info
 	@rm -rf dist/*
 	@rm -f /tmp/*.tmp
@@ -161,7 +162,7 @@ flask-ab-36: $(flask_bench_36) $(ab_post)
 	@$(AB) -k $(TEST_URL) | tee -a $(flask_bench_36)
 	@echo -e "\n====== POST ======\n" | tee -a $(flask_bench_36)
 	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_bench_36)
-	$(AB) -T 'application/x-www-form-urlencoded' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_bench_36)
+	$(AB) -T 'application/x-www-form-urlencoded' -T 'Expect: 100-continue' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_bench_36)
 	@killall -9 $(PYTHON36)
 
 $(flask_gworker_bench_multi_36):
@@ -176,7 +177,7 @@ flask-ab-gworker-multi-36: $(flask_gworker_bench_multi_36) $(ab_post)
 	@$(AB) -k $(TEST_URL) | tee -a $(flask_gworker_bench_multi_36)
 	@echo -e "\n====== POST ======\n" | tee -a $(flask_gworker_bench_multi_36)
 	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gworker_bench_multi_36)
-	$(AB) -T 'application/x-www-form-urlencoded' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_gworker_bench_multi_36)
+	$(AB) -T 'application/x-www-form-urlencoded' -T 'Expect: 100-continue' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_gworker_bench_multi_36)
 	@killall -9 gunicorn
 
 $(flask_gworker_bench_thread_36):
@@ -191,7 +192,7 @@ flask-ab-gworker-thread-36: $(flask_gworker_bench_thread_36) $(ab_post)
 	@$(AB) -k $(TEST_URL) | tee -a $(flask_gworker_bench_thread_36)
 	@echo -e "\n====== POST ======\n" | tee -a $(flask_gworker_bench_thread_36)
 	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gworker_bench_thread_36)
-	$(AB) -T 'application/x-www-form-urlencoded' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_gworker_bench_thread_36)
+	$(AB) -T 'application/x-www-form-urlencoded' -T 'Expect: 100-continue' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_gworker_bench_thread_36)
 	@killall -9 gunicorn
 
 $(flask_gworker_bench_36):
@@ -206,7 +207,7 @@ flask-ab-gworker-36: $(flask_gworker_bench_36) $(ab_post)
 	@$(AB) -k $(TEST_URL) | tee -a $(flask_gworker_bench_36)
 	@echo -e "\n====== POST ======\n" | tee -a $(flask_gworker_bench_36)
 	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gworker_bench_36)
-	$(AB) -T 'application/x-www-form-urlencoded' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_gworker_bench_36)
+	$(AB) -T 'application/x-www-form-urlencoded' -T 'Expect: 100-continue' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_gworker_bench_36)
 	@killall -9 gunicorn
 
 $(flask_gunicorn_bench_36):
@@ -221,7 +222,7 @@ flask-ab-gunicorn-36: $(flask_gunicorn_bench_36) $(ab_post)
 	@$(AB) -k $(TEST_URL) | tee -a $(flask_gunicorn_bench_36)
 	@echo -e "\n====== POST ======\n" | tee -a $(flask_gunicorn_bench_36)
 	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gunicorn_bench_36)
-	$(AB) -T 'application/x-www-form-urlencoded' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_gunicorn_bench_36)
+	$(AB) -T 'application/x-www-form-urlencoded' -T 'Expect: 100-continue' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_gunicorn_bench_36)
 	@killall -9 gunicorn
 
 $(bottle_bench_36):
@@ -236,7 +237,7 @@ bottle-ab-36: $(bottle_bench_36) $(ab_post)
 	@$(AB) -k $(TEST_URL) | tee -a $(bottle_bench_36)
 	@echo -e "\n====== POST ======\n" | tee -a $(bottle_bench_36)
 	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(bottle_bench_36)
-	$(AB) -T 'application/x-www-form-urlencoded' -k -p $(ab_post) $(TEST_URL) | tee -a $(bottle_bench_36)
+	$(AB) -T 'application/x-www-form-urlencoded' -T 'Expect: 100-continue' -k -p $(ab_post) $(TEST_URL) | tee -a $(bottle_bench_36)
 	@killall -9 $(PYTHON36)
 
 $(falcon_bench_36):
@@ -251,13 +252,14 @@ falcon-ab-36: $(falcon_bench_36) $(ab_post)
 	@$(AB) -k $(TEST_URL) | tee -a $(falcon_bench_36)
 	@echo -e "\n====== POST ======\n" | tee -a $(falcon_bench_36)
 	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(falcon_bench_36)
-	$(AB) -T 'application/x-www-form-urlencoded' -k -p $(ab_post) $(TEST_URL) | tee -a $(falcon_bench_36)
+	$(AB) -T 'application/x-www-form-urlencoded' -T 'Expect: 100-continue' -k -p $(ab_post) $(TEST_URL) | tee -a $(falcon_bench_36)
 	@killall -9 $(PYTHON36)
 
 _clean_bench_36:
 	@rm -rf bjoern/bench/*36.txt
 
 bjoern-bench-36: _clean_bench_36 setup-36 install-36-bench flask-ab-36 bottle-ab-36 falcon-ab-36 flask-ab-gunicorn-36 flask-ab-gworker-36 flask-ab-gworker-multi-36 flask-ab-gworker-thread-36
+
 
 $(flask_bench_37):
 	@$(PYTHON37) bjoern/bench/flask_bench.py & jobs -p >/var/run/flask_bjoern.bench.pid
@@ -271,7 +273,7 @@ flask-ab-37: $(flask_bench_37) $(ab_post)
 	@$(AB) -k $(TEST_URL) | tee -a $(flask_bench_37)
 	@echo -e "\n====== POST ======\n" | tee -a $(flask_bench_37)
 	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_bench_37)
-	$(AB) -T 'application/x-www-form-urlencoded' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_bench_37)
+	$(AB) -T 'application/x-www-form-urlencoded' -T 'Expect: 100-continue' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_bench_37)
 	@killall -9 $(PYTHON37)
 
 $(flask_gworker_bench_multi_37):
@@ -286,7 +288,7 @@ flask-ab-gworker-multi-37: $(flask_gworker_bench_multi_37) $(ab_post)
 	@$(AB) -k $(TEST_URL) | tee -a $(flask_gworker_bench_multi_37)
 	@echo -e "\n====== POST ======\n" | tee -a $(flask_gworker_bench_multi_37)
 	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gworker_bench_multi_37)
-	$(AB) -T 'application/x-www-form-urlencoded' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_gworker_bench_multi_37)
+	$(AB) -T 'application/x-www-form-urlencoded' -T 'Expect: 100-continue' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_gworker_bench_multi_37)
 	@killall -9 gunicorn
 
 $(flask_gworker_bench_thread_37):
@@ -301,7 +303,7 @@ flask-ab-gworker-thread-37: $(flask_gworker_bench_thread_37) $(ab_post)
 	@$(AB) -k $(TEST_URL) | tee -a $(flask_gworker_bench_thread_37)
 	@echo -e "\n====== POST ======\n" | tee -a $(flask_gworker_bench_thread_37)
 	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gworker_bench_thread_37)
-	$(AB) -T 'application/x-www-form-urlencoded' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_gworker_bench_thread_37)
+	$(AB) -T 'application/x-www-form-urlencoded' -T 'Expect: 100-continue' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_gworker_bench_thread_37)
 	@killall -9 gunicorn
 
 $(flask_gworker_bench_37):
@@ -316,7 +318,7 @@ flask-ab-gworker-37: $(flask_gworker_bench_37) $(ab_post)
 	@$(AB) -k $(TEST_URL) | tee -a $(flask_gworker_bench_37)
 	@echo -e "\n====== POST ======\n" | tee -a $(flask_gworker_bench_37)
 	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gworker_bench_37)
-	$(AB) -T 'application/x-www-form-urlencoded' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_gworker_bench_37)
+	$(AB) -T 'application/x-www-form-urlencoded' -T 'Expect: 100-continue' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_gworker_bench_37)
 	@killall -9 gunicorn
 
 $(flask_gunicorn_bench_37):
@@ -331,7 +333,7 @@ flask-ab-gunicorn-37: $(flask_gunicorn_bench_37) $(ab_post)
 	@$(AB) -k $(TEST_URL) | tee -a $(flask_gunicorn_bench_37)
 	@echo -e "\n====== POST ======\n" | tee -a $(flask_gunicorn_bench_37)
 	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gunicorn_bench_37)
-	$(AB) -T 'application/x-www-form-urlencoded' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_gunicorn_bench_37)
+	$(AB) -T 'application/x-www-form-urlencoded' -T 'Expect: 100-continue' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_gunicorn_bench_37)
 	@killall -9 gunicorn
 
 $(bottle_bench_37):
@@ -346,7 +348,7 @@ bottle-ab-37: $(bottle_bench_37) $(ab_post)
 	@$(AB) -k $(TEST_URL) | tee -a $(bottle_bench_37)
 	@echo -e "\n====== POST ======\n" | tee -a $(bottle_bench_37)
 	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(bottle_bench_37)
-	$(AB) -T 'application/x-www-form-urlencoded' -k -p $(ab_post) $(TEST_URL) | tee -a $(bottle_bench_37)
+	$(AB) -T 'application/x-www-form-urlencoded' -T 'Expect: 100-continue' -k -p $(ab_post) $(TEST_URL) | tee -a $(bottle_bench_37)
 	@killall -9 $(PYTHON37)
 
 $(falcon_bench_37):
@@ -361,7 +363,7 @@ falcon-ab-37: $(falcon_bench_37) $(ab_post)
 	@$(AB) -k $(TEST_URL) | tee -a $(falcon_bench_37)
 	@echo -e "\n====== POST ======\n" | tee -a $(falcon_bench_37)
 	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(falcon_bench_37)
-	$(AB) -T 'application/x-www-form-urlencoded' -k -p $(ab_post) $(TEST_URL) | tee -a $(falcon_bench_37)
+	$(AB) -T 'application/x-www-form-urlencoded' -T 'Expect: 100-continue' -k -p $(ab_post) $(TEST_URL) | tee -a $(falcon_bench_37)
 	@killall -9 $(PYTHON37)
 
 _clean_bench_37:

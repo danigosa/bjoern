@@ -2,7 +2,7 @@ import logging
 import os
 import subprocess
 
-__version__ = "4.0.7"
+__version__ = "4.0.8"
 MAX_LISTEN_BACKLOG = int(
     subprocess.run(["cat", "/proc/sys/net/core/somaxconn"], stdout=subprocess.PIPE)
     .stdout.decode()
@@ -12,7 +12,8 @@ DEFAULT_LISTEN_BACKLOG = MAX_LISTEN_BACKLOG // 2
 
 DEFAULT_LOG_FILE = os.environ.get("BJOERN_LOG_FILE", "-")
 
-DEFAULT_KEEPALIVE = int(os.environ.get("BJOERN_KEEPALIVE", "3600"))
+DEFAULT_TCP_KEEPALIVE = bool(int(os.environ.get("BJOERN_SOCKET_TCP_KEEPALIVE", "1")))
+DEFAULT_TCP_NODELAY = bool(int(os.environ.get("BJOERN_SOCKET_TCP_NODELAY", "1")))
 
 DEFAULT_LOG_LEVEL = int(os.environ.get("BJOERN_LOG_LEVEL", logging.INFO))
 DEFAULT_LOG_CONSOLE_LEVEL = int(
@@ -30,7 +31,8 @@ def run(
     log_file=DEFAULT_LOG_FILE,
     reuse_port=False,
     listen_backlog=DEFAULT_LISTEN_BACKLOG,
-    keepalive=DEFAULT_KEEPALIVE,
+    tcp_keepalive=DEFAULT_TCP_KEEPALIVE,
+    tcp_nodelay=DEFAULT_TCP_NODELAY,
     fileno=None,
 ):
     from .server import run
@@ -44,7 +46,8 @@ def run(
         log_file=log_file,
         reuse_port=reuse_port,
         listen_backlog=listen_backlog,
-        keepalive=keepalive,
+        tcp_keepalive=tcp_keepalive,
+        tcp_nodelay=tcp_nodelay,
         fileno=fileno,
     )
 

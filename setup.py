@@ -34,7 +34,8 @@ if _DEBUG:
         "-Wall",
         "-Wextra",
         "-Wno-unused-parameter",
-        "-Wno-missing-field-initializers" "-D DEBUG",
+        "-Wno-missing-field-initializers",
+        "-D DEBUG",
     ]
 else:
     extra_compile_args = [
@@ -56,11 +57,7 @@ bjoern_extension = Extension(
     "_bjoern",
     sources=SOURCE_FILES,
     libraries=["ev"],
-    include_dirs=[
-        "vendors/http-parser",
-        "/usr/include/libev",
-        "/usr/local/include/libev",
-    ],
+    include_dirs=["vendors/http-parser", "/usr/include/libev"],
     define_macros=[
         ("WANT_SENDFILE", "1"),
         ("WANT_SIGINT_HANDLING", "1"),

@@ -1,5 +1,6 @@
 #include <arpa/inet.h>
 #include <fcntl.h>
+#include <unistd.h>
 #include <ev.h>
 
 #if defined(__FreeBSD__) || defined(__DragonFly__)
@@ -18,6 +19,7 @@
 #include "wsgi.h"
 #include "server.h"
 #include "log.h"
+
 
 #include "py3.h"
 
@@ -78,7 +80,7 @@ static PyObject *http_error_message(unsigned short int minor, int code) {
 };
 
 void server_run(ServerInfo *server_info) {
-    struct ev_loop *mainloop = ev_loop_new(ev_recommended_backends () | EVBACKEND_EPOLL);
+    struct ev_loop *mainloop = ev_loop_new(ev_recommended_backends() | EVBACKEND_EPOLL);
 
     ThreadInfo thread_info;
     thread_info.server_info = server_info;
@@ -211,7 +213,8 @@ ev_io_on_read(struct ev_loop *mainloop, ev_io *watcher, const int events) {
         /* OK, either expect more data or done reading */
         Request_parse(request, read_buf, (size_t) read_bytes);
         log_debug("Parsed request: [%s, HTTP1.%d %d]",
-                  http_method_str(request->parser.parser.method), request->parser.parser.http_minor, request->state.error_code);
+                  http_method_str(request->parser.parser.method), request->parser.parser.http_minor,
+                  request->state.error_code);
         if (request->state.error_code) {
             /* HTTP parse error */
             read_state = done;
@@ -465,7 +468,6 @@ handle_nonzero_errno(Request *request) {
         return true;
     } else {
         /* Serious transmission failure. Hang up. */
-        fprintf(stderr, "Client %d hit errno %d\n", request->client_fd, errno);
         log_error("Client %d hit errno %d\n", request->client_fd, errno);
         Py_XDECREF(request->current_chunk);
         Py_XCLEAR(request->iterator);

@@ -1,28 +1,29 @@
 import json
 
 import bjoern
-from bottle import Bottle, request, response
+import bottle
 
-app = Bottle(__name__)
+bottle.BaseRequest.MEMFILE_MAX = 1024 * 1024
+app = bottle.Bottle(__name__)
 
 
 @app.get("/a/b/c")
 def bench_get():
-    k = request.params.get("k")
-    k2 = request.params.get("k2")
+    k = bottle.request.params.get("k")
+    k2 = bottle.request.params.get("k2")
 
-    response.content_type = "application/json"
+    bottle.response.content_type = "application/json"
     return json.dumps({"k": k, "k2": k2})
 
 
 @app.post("/a/b/c")
 def bench_post():
-    k = request.params.get("k")
-    k2 = request.params.get("k2")
-    asdfghjkl = request.params["asdfghjkl"]
-    image = request.form.get("image")
+    k = bottle.request.params.get("k")
+    k2 = bottle.request.params.get("k2")
+    asdfghjkl = bottle.request.forms["asdfghjkl"]
+    image = bottle.request.forms["image"]
 
-    response.content_type = "application/json"
+    bottle.response.content_type = "application/json"
     return json.dumps({"k": k, "k2": k2, "asdfghjkl": asdfghjkl, "image": image})
 
 

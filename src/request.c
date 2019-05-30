@@ -38,6 +38,7 @@ void Request_reset(Request *request) {
     request->parser.last_call_was_header_value = true;
     request->parser.invalid_header = false;
     request->parser.field = NULL;
+    request->is_final = 0;
 }
 
 void Request_free(Request *request) {

@@ -126,7 +126,6 @@ run(PyObject *self, PyObject *args) {
             /* Standard (ipaddress, port) case */
             info.host = PyTuple_GET_ITEM(sockname, 0);
             info.port = PyTuple_GET_ITEM(sockname, 1);
-            log_debug("Socket IP host:post");
         }
     }
     PyObject *objectsRepresentation = PyObject_Repr(info.host);

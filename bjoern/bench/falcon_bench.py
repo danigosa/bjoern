@@ -20,7 +20,7 @@ class AppResource:
         qwerty = request.get_param("qwerty")
         image = request.get_param("image")
 
-        response.status_code = 200
+        response.status = falcon.HTTP_200
         response.content_type = "application/json"
         response.body = json.dumps(
             {"k": k, "k2": k2, "asdfghjkl": asdfghjkl, "qwerty": qwerty, "image": image}

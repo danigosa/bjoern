@@ -1,0 +1,146 @@
+
+====== Flask-Gunicorn-BjoernWorker-threads (Python3.7) ======
+
+
+====== GET ======
+
+This is ApacheBench, Version 2.3 <$Revision: 1807734 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking 127.0.0.1 (be patient)
+
+
+Server Software:        
+Server Hostname:        127.0.0.1
+Server Port:            8080
+
+Document Path:          /a/b/c?k=v&k2=v2
+Document Length:        20 bytes
+
+Concurrency Level:      100
+Time taken for tests:   1.540 seconds
+Complete requests:      10000
+Failed requests:        0
+Total transferred:      1100000 bytes
+HTML transferred:       200000 bytes
+Requests per second:    6493.20 [#/sec] (mean)
+Time per request:       15.401 [ms] (mean)
+Time per request:       0.154 [ms] (mean, across all concurrent requests)
+Transfer rate:          697.51 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.6      0       6
+Processing:     5   15   1.1     15      19
+Waiting:        4   15   1.2     15      19
+Total:         11   15   0.9     15      19
+
+Percentage of the requests served within a certain time (ms)
+  50%     15
+  66%     16
+  75%     16
+  80%     16
+  90%     16
+  95%     17
+  98%     17
+  99%     18
+ 100%     19 (longest request)
+
+~~~~~ Keep Alive ~~~~~
+
+This is ApacheBench, Version 2.3 <$Revision: 1807734 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking 127.0.0.1 (be patient)
+
+
+Server Software:        
+Server Hostname:        127.0.0.1
+Server Port:            8080
+
+Document Path:          /a/b/c?k=v&k2=v2
+Document Length:        20 bytes
+
+Concurrency Level:      100
+Time taken for tests:   1.387 seconds
+Complete requests:      10000
+Failed requests:        0
+Keep-Alive requests:    10000
+Total transferred:      1150000 bytes
+HTML transferred:       200000 bytes
+Requests per second:    7212.06 [#/sec] (mean)
+Time per request:       13.866 [ms] (mean)
+Time per request:       0.139 [ms] (mean, across all concurrent requests)
+Transfer rate:          809.95 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   1.4      0      16
+Processing:     3   14   5.6     13     149
+Waiting:        3   14   5.6     13     149
+Total:          3   14   6.6     13     163
+
+Percentage of the requests served within a certain time (ms)
+  50%     13
+  66%     14
+  75%     14
+  80%     14
+  90%     14
+  95%     15
+  98%     16
+  99%     21
+ 100%    163 (longest request)
+
+====== POST ======
+
+
+~~~~~ Keep Alive ~~~~~
+
+This is ApacheBench, Version 2.3 <$Revision: 1807734 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking 127.0.0.1 (be patient)
+
+
+Server Software:        
+Server Hostname:        127.0.0.1
+Server Port:            8080
+
+Document Path:          /a/b/c?k=v&k2=v2
+Document Length:        64 bytes
+
+Concurrency Level:      100
+Time taken for tests:   2.696 seconds
+Complete requests:      10000
+Failed requests:        0
+Keep-Alive requests:    10000
+Total transferred:      1590000 bytes
+Total body sent:        1484320000
+HTML transferred:       640000 bytes
+Requests per second:    3709.07 [#/sec] (mean)
+Time per request:       26.961 [ms] (mean)
+Time per request:       0.270 [ms] (mean, across all concurrent requests)
+Transfer rate:          575.92 [Kbytes/sec] received
+                        537640.81 kb/s sent
+                        538216.73 kb/s total
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.8      0       9
+Processing:     7   27   5.2     27     141
+Waiting:        6   27   5.2     27     141
+Total:          7   27   5.7     27     151
+
+Percentage of the requests served within a certain time (ms)
+  50%     27
+  66%     27
+  75%     28
+  80%     28
+  90%     28
+  95%     29
+  98%     30
+  99%     34
+ 100%    151 (longest request)
