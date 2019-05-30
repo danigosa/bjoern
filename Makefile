@@ -264,7 +264,7 @@ $(flask_bench_37):
 	@sleep 2
 
 flask-ab-37: $(flask_bench_37) $(ab_post)
-	@echo -e "\n====== Falcon(Python3.7) ======\n" | tee -a $(flask_bench_37)
+	@echo -e "\n====== Flask(Python3.7) ======\n" | tee -a $(flask_bench_37)
 	@echo -e "\n====== GET ======\n" | tee -a $(flask_bench_37)
 	@$(AB) $(TEST_URL) | tee -a $(flask_bench_37)
 	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_bench_37)
@@ -369,7 +369,7 @@ _clean_bench_37:
 
 bjoern-bench-37: _clean_bench_37 setup-37 install-37-bench flask-ab-gunicorn-37 flask-ab-37 bottle-ab-37 falcon-ab-37 flask-ab-gworker-37 flask-ab-gworker-multi-37 flask-ab-gworker-thread-37
 
-bjoern-bench: prepare-build bjoern-bench-37 bjoern-bench-36
+bjoern-bench: bjoern-bench-37 bjoern-bench-36
 
 # Memory checks
 flask-valgrind-36: install-debug-36

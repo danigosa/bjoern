@@ -13,7 +13,11 @@ SOURCE_FILES = [
     os.path.join("vendors", "http-parser", "contrib", "url_parser.c"),
 ] + sorted(glob.glob(os.path.join("src", "*.c")))
 
-if "Linux" != platform.system() or "CPython" != platform.python_implementation() or not sys.version_info >= (3, 6):
+if (
+    "Linux" != platform.system()
+    or "CPython" != platform.python_implementation()
+    or not sys.version_info >= (3, 6)
+):
     print("Sorry, not support for other platforms than CPython3.6+ Linux.")
     sys.exit(1)
 
@@ -52,7 +56,11 @@ bjoern_extension = Extension(
     "_bjoern",
     sources=SOURCE_FILES,
     libraries=["ev"],
-    include_dirs=["vendors/http-parser", "/usr/include/libev"],
+    include_dirs=[
+        "vendors/http-parser",
+        "/usr/include/libev",
+        "/usr/local/include/libev",
+    ],
     define_macros=[
         ("WANT_SENDFILE", "1"),
         ("WANT_SIGINT_HANDLING", "1"),
