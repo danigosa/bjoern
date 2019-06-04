@@ -23,7 +23,7 @@ wsgi_call_application(Request* request)
 
   /* application(environ, start_response) call */
   PyObject* retval = PyObject_CallFunctionObjArgs(
-    request->server_info->wsgi_app,
+    request->thread_info->server_info->wsgi_app,
     request_headers,
     start_response,
     NULL /* sentinel */
@@ -33,7 +33,7 @@ wsgi_call_application(Request* request)
   Py_DECREF(start_response);
 
   if(retval == NULL) {
-      log_warn("wsgi: Problem calling request->server_info->wsgi_app");
+      log_warn("wsgi: Problem calling request->thread_info->server_info->wsgi_app");
       return false;
   }
 

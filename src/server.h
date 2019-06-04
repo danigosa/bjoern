@@ -22,7 +22,6 @@ typedef struct {
     ev_io accept_watcher;
     size_t payload_size;
     size_t header_fields;
-    size_t header_field_size;
 } ThreadInfo;
 
 void server_run(ServerInfo *);

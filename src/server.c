@@ -81,7 +81,6 @@ void server_run(ServerInfo *server_info) {
     thread_info.server_info = server_info;
     thread_info.payload_size = 0;
     thread_info.header_fields = 0;
-    thread_info.header_field_size = 0;
     ev_set_userdata(mainloop, &thread_info);
 
     ev_io_init(&thread_info.accept_watcher, ev_io_on_request, server_info->sockfd, EV_READ);
@@ -163,7 +162,7 @@ ev_io_on_request(struct ev_loop *mainloop, ev_io *watcher, const int events) {
     GIL_LOCK(0);
 
     Request *request = Request_new(
-            ((ThreadInfo *) ev_userdata(mainloop))->server_info,
+            ((ThreadInfo *) ev_userdata(mainloop)),
             client_fd,
             inet_ntoa(sockaddr.sin_addr)
     );

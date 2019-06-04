@@ -5,6 +5,7 @@ import sys
 from gunicorn.workers.base import Worker
 
 import bjoern
+from bjoern import DEFAULT_MAX_FIELD_LEN, DEFAULT_MAX_HEADER_FIELDS
 
 
 class BjoernWorker(Worker):
@@ -33,12 +34,17 @@ class BjoernWorker(Worker):
             self.wsgi,
             host,
             port,
-            reuse_port=True,
+            reuse_port=self.cfg.reuse_port,
             listen_backlog=self.cfg.worker_connections,
             log_console_level=self.log.error_log.level,
             log_file_level=self.log.error_log.level,
             log_file=self.log.logfile,
             fileno=sckt.sock.fileno(),
+            max_header_fields=self.cfg.limit_request_fields
+            or DEFAULT_MAX_HEADER_FIELDS,
+            max_header_field_len=self.cfg.limit_request_field_size
+            or DEFAULT_MAX_FIELD_LEN,
+            tcp_keepalive=self.cfg.keepalive,
         )
 
     def handle_quit(self, sig, frame):

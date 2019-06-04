@@ -33,6 +33,7 @@ def test_reuse_port(reuse_port_app, client):
     responder_count = defaultdict(int)
 
     for i in range(N_REQUESTS):
+        print(f"Request: {i}")
         response = client.get("/")
         assert response.status_code == 200
         responder = response.content.split()[-1]

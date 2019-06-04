@@ -6,10 +6,13 @@ default: test
 SOURCE_DIR	:= src
 BUILD_DIR	:= build
 PYTHON36	:= /.py36-venv/bin/python3
+PIP36		:= /.py36-venv/bin/pip3
 GUNICORN36	:= /.py36-venv/bin/gunicorn
 GUNICORN37	:= /.py37-venv/bin/gunicorn
 PYTHON37	:= /.py37-venv/bin/python3
+PIP37		:= /.py37-venv/bin/pip3
 PYPY36		:= /.pypy36-venv/bin/pypy3
+PIPY36		:= /.pypy36-venv/bin/pip3
 DEBUG 		:= DEBUG=True
 
 PYTHON36_INCLUDE	:= $(shell python3-config --includes | sed s/-I/-isystem\ /g)
@@ -84,7 +87,6 @@ setup-pypy36: clean prepare-build reqs-pypy36
 
 all-36: setup-36 $(objects) _bjoernmodule_36 test-36
 all-37: setup-36 $(objects) _bjoernmodule_37 test-37
-all-pypy36: setup-pypy36 $(objects) _bjoernmodule_37 test-37
 
 print-env:
 	@echo CFLAGS=$(CFLAGS)
@@ -111,13 +113,13 @@ $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.c
 %.o: $(BUILD_DIR)/%.o
 
 reqs-36:
-	@bash install-requirements $(PYTHON36)
+	@bash install-requirements $(PIP36)
 
 reqs-37:
-	@bash install-requirements $(PYTHON37)
+	@bash install-requirements $(PIP37)
 
 reqs-pypy36:
-	@bash install-requirements $(PYPY36)
+	@bash install-requirements $(PIPY36)
 
 fmt:
 	@$(PYTHON36) -m isort --settings-path=/.isort.cfg **/*.py
@@ -178,21 +180,6 @@ flask-ab-gworker-multi-36: $(flask_gworker_bench_multi_36) $(ab_post)
 	@echo -e "\n====== POST ======\n" | tee -a $(flask_gworker_bench_multi_36)
 	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gworker_bench_multi_36)
 	$(AB) -T 'application/x-www-form-urlencoded' -T 'Expect: 100-continue' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_gworker_bench_multi_36)
-	@killall -9 gunicorn
-
-$(flask_gworker_bench_thread_36):
-	@$(GUNICORN36) bjoern.bench.flask_bench:app --bind localhost:8080 --log-level info -w 2 --threads 4 --backlog 2048 --timeout 1800 --worker-class bjoern.gworker.BjoernWorker &
-	@sleep 2
-
-flask-ab-gworker-thread-36: $(flask_gworker_bench_thread_36) $(ab_post)
-	@echo -e "\n====== Flask-Gunicorn-BjoernWorker-threads (Python3.6) ======\n" | tee -a $(flask_gworker_bench_thread_36)
-	@echo -e "\n====== GET ======\n" | tee -a $(flask_gworker_bench_thread_36)
-	@$(AB) $(TEST_URL) | tee -a $(flask_gworker_bench_thread_36)
-	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gworker_bench_thread_36)
-	@$(AB) -k $(TEST_URL) | tee -a $(flask_gworker_bench_thread_36)
-	@echo -e "\n====== POST ======\n" | tee -a $(flask_gworker_bench_thread_36)
-	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gworker_bench_thread_36)
-	$(AB) -T 'application/x-www-form-urlencoded' -T 'Expect: 100-continue' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_gworker_bench_thread_36)
 	@killall -9 gunicorn
 
 $(flask_gworker_bench_36):
@@ -258,7 +245,7 @@ falcon-ab-36: $(falcon_bench_36) $(ab_post)
 _clean_bench_36:
 	@rm -rf bjoern/bench/*36.txt
 
-bjoern-bench-36: _clean_bench_36 setup-36 install-36-bench flask-ab-36 bottle-ab-36 falcon-ab-36 flask-ab-gunicorn-36 flask-ab-gworker-36 flask-ab-gworker-multi-36 flask-ab-gworker-thread-36
+bjoern-bench-36: _clean_bench_36 setup-36 install-36-bench flask-ab-36 bottle-ab-36 falcon-ab-36 flask-ab-gunicorn-36 flask-ab-gworker-36 flask-ab-gworker-multi-36
 
 
 $(flask_bench_37):
