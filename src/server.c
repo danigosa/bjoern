@@ -38,11 +38,6 @@ enum _rw_state {
 typedef enum _rw_state read_state;
 typedef enum _rw_state write_state;
 
-typedef struct {
-    ServerInfo *server_info;
-    ev_io accept_watcher;
-} ThreadInfo;
-
 typedef void ev_io_callback(struct ev_loop *, ev_io *, const int);
 
 #if WANT_SIGINT_HANDLING
@@ -84,6 +79,9 @@ void server_run(ServerInfo *server_info) {
 
     ThreadInfo thread_info;
     thread_info.server_info = server_info;
+    thread_info.payload_size = 0;
+    thread_info.header_fields = 0;
+    thread_info.header_field_size = 0;
     ev_set_userdata(mainloop, &thread_info);
 
     ev_io_init(&thread_info.accept_watcher, ev_io_on_request, server_info->sockfd, EV_READ);

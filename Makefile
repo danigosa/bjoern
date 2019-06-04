@@ -5,10 +5,10 @@ default: test
 
 SOURCE_DIR	:= src
 BUILD_DIR	:= build
-PYTHON36	:= /.py36-venv/bin/python
+PYTHON36	:= /.py36-venv/bin/python3
 GUNICORN36	:= /.py36-venv/bin/gunicorn
 GUNICORN37	:= /.py37-venv/bin/gunicorn
-PYTHON37	:= /.py37-venv/bin/python
+PYTHON37	:= /.py37-venv/bin/python3
 PYPY36		:= /.pypy36-venv/bin/pypy3
 DEBUG 		:= DEBUG=True
 

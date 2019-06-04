@@ -5,12 +5,14 @@ import socket
 import sys
 
 import _bjoern
-
 from bjoern import (
     DEFAULT_LISTEN_BACKLOG,
     DEFAULT_LOG_CONSOLE_LEVEL,
     DEFAULT_LOG_FILE,
     DEFAULT_LOG_FILE_LEVEL,
+    DEFAULT_MAX_BODY_LEN,
+    DEFAULT_MAX_FIELD_LEN,
+    DEFAULT_MAX_HEADER_FIELDS,
     DEFAULT_TCP_KEEPALIVE,
     DEFAULT_TCP_NODELAY,
     MAX_LISTEN_BACKLOG,
@@ -78,8 +80,26 @@ def bind_and_listen(
     return sock
 
 
-def server_run(sock, wsgi_app, log_console_level, log_file_level, file_log):
-    _bjoern.server_run(sock, wsgi_app, log_console_level, log_file_level, file_log)
+def server_run(
+    sock,
+    wsgi_app,
+    max_body_len,
+    max_header_fields,
+    max_header_field_len,
+    log_console_level,
+    log_file_level,
+    file_log,
+):
+    _bjoern.server_run(
+        sock,
+        wsgi_app,
+        max_body_len,
+        max_header_fields,
+        max_header_field_len,
+        log_console_level,
+        log_file_level,
+        file_log,
+    )
 
 
 def setup_console_logging(log_level_):
@@ -158,6 +178,9 @@ def run(
     tcp_keepalive=DEFAULT_TCP_KEEPALIVE,
     fileno=None,
     tcp_nodelay=DEFAULT_TCP_NODELAY,
+    max_body_len=DEFAULT_MAX_BODY_LEN,
+    max_header_fields=DEFAULT_MAX_HEADER_FIELDS,
+    max_header_field_len=DEFAULT_MAX_FIELD_LEN,
 ):
 
     global _default_instance
@@ -188,6 +211,9 @@ def run(
         f"- gid: {gid} \n"
         f"- tcp_keepalive: {tcp_keepalive} \n"
         f"- tcp_nodelay: {tcp_nodelay} \n"
+        f"- max_body_len: {max_body_len} \n"
+        f"- max_header_fields: {max_header_fields} \n"
+        f"- max_header_field_len: {max_header_field_len} \n"
         f"- fd: {fileno} \n"
         f"- executable: {sys.executable} \n"
     )
@@ -211,10 +237,16 @@ def run(
     sock, wsgi_app = _default_instance
     try:
         trace_on_abort()
-        print(
-            f"Server run: {sock, wsgi_app, log_console_level, log_file_level, file_log}"
+        server_run(
+            sock,
+            wsgi_app,
+            max_body_len,
+            max_header_fields,
+            max_header_field_len,
+            log_console_level,
+            log_file_level,
+            file_log,
         )
-        server_run(sock, wsgi_app, log_console_level, log_file_level, file_log)
     except Exception as e:
         print(f"Something wrong in the worker: {e}")
     finally:

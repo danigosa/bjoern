@@ -125,26 +125,45 @@ static int
 on_url(http_parser *parser, const char *path, size_t len) {
     if (*http_method_str(parser->method) != HTTP_CONNECT && http_parser_parse_url(path, len, 0, &URL_PARSER)) {
         log_error("Failed to parse URL: (%zu) %s", len, path);
+        REQUEST->state.error_code = HTTP_STATUS_BAD_REQUEST;
         return 1;
     }
-    if (len > 512) {
+    /*
+     * Although officially there is no limit, many security configuration recommendations state that maxQueryStrings
+     * on a server should be set to a maximum character limit of 1024 while the entire url including the query string
+     * should be set to a max of 2048 characters
+     * */
+    if (len > 2048) {
         log_error("URL is to long: %zu", len);
+        REQUEST->state.error_code = HTTP_STATUS_URI_TOO_LONG;
         return 1;
     }
-    char path_part[512];
 
-    if (URL_PARSER.field_set & (1 << UF_PATH)) {
-        memcpy(path_part, path + URL_PARSER.field_data[UF_PATH].off, URL_PARSER.field_data[UF_PATH].len);
-        path_part[URL_PARSER.field_data[UF_PATH].len] = '\0';
-        _set_or_append_header(REQUEST->headers, _PATH_INFO, path_part, URL_PARSER.field_data[UF_PATH].len);
-    }
-
-    char query_part[512];
-
+    int query_part_len = 0;
     if (URL_PARSER.field_set & (1 << UF_QUERY)) {
+        if (URL_PARSER.field_data[UF_QUERY].len > 1024) {
+            log_error("URL query is to long: %zu", len);
+            REQUEST->state.error_code = HTTP_STATUS_URI_TOO_LONG;
+            return 1;
+        }
+        char query_part[1024];
         memcpy(query_part, path + URL_PARSER.field_data[UF_QUERY].off, URL_PARSER.field_data[UF_QUERY].len);
         query_part[URL_PARSER.field_data[UF_QUERY].len] = '\0';
         _set_or_append_header(REQUEST->headers, _QUERY_STRING, query_part, URL_PARSER.field_data[UF_QUERY].len);
+        query_part_len = URL_PARSER.field_data[UF_QUERY].len;
+    }
+
+    int path_len = 2048 - query_part_len;
+    if (URL_PARSER.field_set & (1 << UF_PATH)) {
+        if (URL_PARSER.field_data[UF_PATH].len > path_len) {
+            log_error("URL path is to long: %zu", len);
+            REQUEST->state.error_code = HTTP_STATUS_URI_TOO_LONG;
+            return 1;
+        }
+        char path_part[path_len];
+        memcpy(path_part, path + URL_PARSER.field_data[UF_PATH].off, URL_PARSER.field_data[UF_PATH].len);
+        path_part[URL_PARSER.field_data[UF_PATH].len] = '\0';
+        _set_or_append_header(REQUEST->headers, _PATH_INFO, path_part, URL_PARSER.field_data[UF_PATH].len);
     }
 
     return 0;
@@ -161,17 +180,36 @@ on_header_field(http_parser *parser, const char *field, size_t len) {
         PARSER->invalid_header = false;
     }
 
-    /* Ignore invalid header */
+    /* Ignore invalid header or headers field names longer than 64*/
     if (PARSER->invalid_header) {
-        return 0;
+        REQUEST->state.error_code = HTTP_STATUS_BAD_REQUEST;
+        return 1;
     }
+
+    /* Check if too many fields */
+    ThreadInfo *thread_info = parser->data;
+    if (thread_info->payload_size + 1 > PyLong_AsLong(thread_info->server_info->max_header_fields)) {
+        REQUEST->state.error_code = HTTP_STATUS_PAYLOAD_TOO_LARGE;
+        log_error("Too Long Body Length(%zu:%zu):\n", thread_info->payload_size, len);
+        return 1;
+    } else {
+        thread_info->header_fields++;
+    }
+
+    /* Header field size limit */
+    if (len > PyLong_AsLong(thread_info->server_info->max_header_field_len)) {
+        REQUEST->state.error_code = HTTP_STATUS_REQUEST_HEADER_FIELDS_TOO_LARGE;
+        return 1;
+    }
+
     char field_processed[len];
     for (size_t i = 0; i < len; i++) {
         char c = field[i];
         if (c == '_') {
             // CVE-2015-0219
             PARSER->invalid_header = true;
-            return 0;
+            REQUEST->state.error_code = HTTP_STATUS_BAD_REQUEST;
+            return 1;
         } else if (c == '-') {
             field_processed[i] = '_';
         } else if (c >= 'a' && c <= 'z') {
@@ -193,6 +231,16 @@ on_header_field(http_parser *parser, const char *field, size_t len) {
 
 static int
 on_header_value(http_parser *parser, const char *value, size_t len) {
+    /*
+     * HTTP does not define any limit. However most web servers do limit size of headers they accept.
+     * For example in Apache default limit is 8KB, in IIS it's 16K.
+     * Server will return 413 Entity Too Large error if headers size exceeds that limit.
+     * */
+    ThreadInfo *thread_info = parser->data;
+    if (len > PyLong_AsLong(thread_info->server_info->max_header_field_len)) {
+        REQUEST->state.error_code = HTTP_STATUS_PAYLOAD_TOO_LARGE;
+        return 1;
+    }
     PARSER->last_call_was_header_value = true;
     if (!PARSER->invalid_header) {
         /* Set header, or append data to header if this is not the first call */
@@ -206,6 +254,15 @@ on_body(http_parser *parser, const char *data, const size_t len) {
     if (REQUEST->is_final) {
         log_debug("Body is Final(%zu)", len);
         return 0;
+    }
+
+    ThreadInfo *thread_info = parser->data;
+    if (thread_info->payload_size + len > PyLong_AsLong(thread_info->server_info->max_body_len)) {
+        REQUEST->state.error_code = HTTP_STATUS_PAYLOAD_TOO_LARGE;
+        log_error("Too Long Body Length(%zu:%zu):\n%s", thread_info->payload_size, len, data);
+        return 1;
+    } else {
+        thread_info->payload_size += len;
     }
 
     log_debug("Body(%zu)", len);

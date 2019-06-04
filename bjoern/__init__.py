@@ -2,7 +2,7 @@ import logging
 import os
 import subprocess
 
-__version__ = "4.0.8"
+__version__ = "4.0.9.pre"
 MAX_LISTEN_BACKLOG = int(
     subprocess.run(["cat", "/proc/sys/net/core/somaxconn"], stdout=subprocess.PIPE)
     .stdout.decode()
@@ -12,8 +12,15 @@ DEFAULT_LISTEN_BACKLOG = MAX_LISTEN_BACKLOG // 2
 
 DEFAULT_LOG_FILE = os.environ.get("BJOERN_LOG_FILE", "-")
 
-DEFAULT_TCP_KEEPALIVE = bool(int(os.environ.get("BJOERN_SOCKET_TCP_KEEPALIVE", "1")))
-DEFAULT_TCP_NODELAY = bool(int(os.environ.get("BJOERN_SOCKET_TCP_NODELAY", "1")))
+DEFAULT_TCP_KEEPALIVE = bool(int(os.environ.get("BJOERN_SOCKET_TCP_KEEPALIVE", 1)))
+DEFAULT_TCP_NODELAY = bool(int(os.environ.get("BJOERN_SOCKET_TCP_NODELAY", 1)))
+
+DEFAULT_MAX_BODY_LEN = int(os.environ.get("BJOERN_SOCKET_MAX_BODY_LEN", 10490000000))
+
+DEFAULT_MAX_FIELD_LEN = int(
+    os.environ.get("BJOERN_SOCKET_MAX_FIELD_LEN", 8091)
+)  # 10Mebibytes
+DEFAULT_MAX_HEADER_FIELDS = int(os.environ.get("BJOERN_SOCKET_HEADER_FIELDS", 128))
 
 DEFAULT_LOG_LEVEL = int(os.environ.get("BJOERN_LOG_LEVEL", logging.INFO))
 DEFAULT_LOG_CONSOLE_LEVEL = int(
@@ -34,6 +41,9 @@ def run(
     tcp_keepalive=DEFAULT_TCP_KEEPALIVE,
     tcp_nodelay=DEFAULT_TCP_NODELAY,
     fileno=None,
+    max_body_len=DEFAULT_MAX_BODY_LEN,
+    max_header_fields=DEFAULT_MAX_HEADER_FIELDS,
+    max_header_field_len=DEFAULT_MAX_FIELD_LEN,
 ):
     from .server import run
 
@@ -49,6 +59,9 @@ def run(
         tcp_keepalive=tcp_keepalive,
         tcp_nodelay=tcp_nodelay,
         fileno=fileno,
+        max_body_len=max_body_len,
+        max_header_fields=max_header_fields,
+        max_header_field_len=max_header_field_len,
     )
 
 

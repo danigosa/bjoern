@@ -27,7 +27,14 @@ run(PyObject *self, PyObject *args) {
     PyObject *log_file_level;
     PyObject *log_file;
 
-    if (!PyArg_ParseTuple(args, "OOOOO:server_run", &socket, &info.wsgi_app, &log_console_level, &log_file_level,
+    if (!PyArg_ParseTuple(args, "OOOOOOOO:server_run",
+                          &socket,
+                          &info.wsgi_app,
+                          &info.max_body_len,
+                          &info.max_header_fields,
+                          &info.max_header_field_len,
+                          &log_console_level,
+                          &log_file_level,
                           &log_file)) {
         return NULL;
     }
