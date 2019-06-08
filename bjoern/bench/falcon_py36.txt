@@ -1,5 +1,5 @@
 
-====== Bottle(Python3.6) ======
+====== Falcon(Python3.6) ======
 
 
 ====== GET ======
@@ -19,33 +19,33 @@ Document Path:          /a/b/c?k=v&k2=v2
 Document Length:        22 bytes
 
 Concurrency Level:      100
-Time taken for tests:   1.753 seconds
+Time taken for tests:   2.180 seconds
 Complete requests:      10000
 Failed requests:        0
 Total transferred:      1120000 bytes
 HTML transferred:       220000 bytes
-Requests per second:    5704.73 [#/sec] (mean)
-Time per request:       17.529 [ms] (mean)
-Time per request:       0.175 [ms] (mean, across all concurrent requests)
-Transfer rate:          623.95 [Kbytes/sec] received
+Requests per second:    4587.46 [#/sec] (mean)
+Time per request:       21.799 [ms] (mean)
+Time per request:       0.218 [ms] (mean, across all concurrent requests)
+Transfer rate:          501.75 [Kbytes/sec] received
 
 Connection Times (ms)
               min  mean[+/-sd] median   max
-Connect:        0    1  34.5      0    1080
-Processing:     5   14  75.2     10    1742
-Waiting:        4   14  75.2     10    1742
-Total:         10   16  83.6     10    1747
+Connect:        0    1  27.7      0    1048
+Processing:     1    9  60.5      7    2171
+Waiting:        1    9  60.5      7    2171
+Total:          4   10  68.5      7    2172
 
 Percentage of the requests served within a certain time (ms)
-  50%     10
-  66%     11
-  75%     11
-  80%     11
-  90%     11
-  95%     11
-  98%     13
-  99%     17
- 100%   1747 (longest request)
+  50%      7
+  66%      7
+  75%      7
+  80%      8
+  90%      8
+  95%      8
+  98%      9
+  99%      9
+ 100%   2172 (longest request)
 
 ~~~~~ Keep Alive ~~~~~
 
@@ -64,34 +64,34 @@ Document Path:          /a/b/c?k=v&k2=v2
 Document Length:        22 bytes
 
 Concurrency Level:      100
-Time taken for tests:   1.085 seconds
+Time taken for tests:   0.547 seconds
 Complete requests:      10000
 Failed requests:        0
 Keep-Alive requests:    10000
 Total transferred:      1170000 bytes
 HTML transferred:       220000 bytes
-Requests per second:    9212.90 [#/sec] (mean)
-Time per request:       10.854 [ms] (mean)
-Time per request:       0.109 [ms] (mean, across all concurrent requests)
-Transfer rate:          1052.65 [Kbytes/sec] received
+Requests per second:    18281.90 [#/sec] (mean)
+Time per request:       5.470 [ms] (mean)
+Time per request:       0.055 [ms] (mean, across all concurrent requests)
+Transfer rate:          2088.85 [Kbytes/sec] received
 
 Connection Times (ms)
               min  mean[+/-sd] median   max
-Connect:        0    0   0.5      0       6
-Processing:     2   11  25.1     10    1075
-Waiting:        1   11  25.1     10    1075
-Total:          2   11  25.3     10    1080
+Connect:        0    0   1.0      0      12
+Processing:     1    5   0.9      5      11
+Waiting:        1    5   0.9      5      11
+Total:          2    5   1.4      5      19
 
 Percentage of the requests served within a certain time (ms)
-  50%     10
-  66%     10
-  75%     10
-  80%     10
-  90%     11
-  95%     11
-  98%     11
-  99%     11
- 100%   1080 (longest request)
+  50%      5
+  66%      5
+  75%      5
+  80%      6
+  90%      7
+  95%      7
+  98%      9
+  99%     13
+ 100%     19 (longest request)
 
 ====== POST ======
 
@@ -110,37 +110,37 @@ Server Hostname:        127.0.0.1
 Server Port:            8080
 
 Document Path:          /a/b/c?k=v&k2=v2
-Document Length:        124012 bytes
+Document Length:        72 bytes
 
 Concurrency Level:      100
-Time taken for tests:   82.780 seconds
+Time taken for tests:   1.872 seconds
 Complete requests:      10000
 Failed requests:        0
 Keep-Alive requests:    10000
-Total transferred:      1241110000 bytes
+Total transferred:      1670000 bytes
 Total body sent:        1484320000
-HTML transferred:       1240120000 bytes
-Requests per second:    120.80 [#/sec] (mean)
-Time per request:       827.796 [ms] (mean)
-Time per request:       8.278 [ms] (mean, across all concurrent requests)
-Transfer rate:          14641.55 [Kbytes/sec] received
-                        17510.73 kb/s sent
-                        32152.29 kb/s total
+HTML transferred:       720000 bytes
+Requests per second:    5342.16 [#/sec] (mean)
+Time per request:       18.719 [ms] (mean)
+Time per request:       0.187 [ms] (mean, across all concurrent requests)
+Transfer rate:          871.23 [Kbytes/sec] received
+                        774362.37 kb/s sent
+                        775233.60 kb/s total
 
 Connection Times (ms)
               min  mean[+/-sd] median   max
-Connect:        0    0   0.7      0       7
-Processing:    13  824 346.1    816    8415
-Waiting:       13  823 346.1    814    8414
-Total:         19  824 346.5    816    8423
+Connect:        0    0   0.8      0      10
+Processing:     9   19   7.0     18     185
+Waiting:        9   19   7.0     18     185
+Total:         10   19   7.4     18     194
 
 Percentage of the requests served within a certain time (ms)
-  50%    816
-  66%    840
-  75%    842
-  80%    843
-  90%    858
-  95%    871
-  98%   1032
-  99%   1066
- 100%   8423 (longest request)
+  50%     18
+  66%     18
+  75%     18
+  80%     18
+  90%     23
+  95%     25
+  98%     27
+  99%     29
+ 100%    194 (longest request)
