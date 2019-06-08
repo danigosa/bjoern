@@ -278,21 +278,6 @@ flask-ab-gworker-multi-37: $(flask_gworker_bench_multi_37) $(ab_post)
 	$(AB) -T 'application/x-www-form-urlencoded' -T 'Expect: 100-continue' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_gworker_bench_multi_37)
 	@killall -9 gunicorn
 
-$(flask_gworker_bench_thread_37):
-	@$(GUNICORN37) bjoern.bench.flask_bench:app --bind localhost:8080 --log-level info -w 2 --threads 4 --backlog 2048 --timeout 1800 --worker-class bjoern.gworker.BjoernWorker &
-	@sleep 2
-
-flask-ab-gworker-thread-37: $(flask_gworker_bench_thread_37) $(ab_post)
-	@echo -e "\n====== Flask-Gunicorn-BjoernWorker-threads (Python3.7) ======\n" | tee -a $(flask_gworker_bench_thread_37)
-	@echo -e "\n====== GET ======\n" | tee -a $(flask_gworker_bench_thread_37)
-	@$(AB) $(TEST_URL) | tee -a $(flask_gworker_bench_thread_37)
-	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gworker_bench_thread_37)
-	@$(AB) -k $(TEST_URL) | tee -a $(flask_gworker_bench_thread_37)
-	@echo -e "\n====== POST ======\n" | tee -a $(flask_gworker_bench_thread_37)
-	@echo -e "\n~~~~~ Keep Alive ~~~~~\n" | tee -a $(flask_gworker_bench_thread_37)
-	$(AB) -T 'application/x-www-form-urlencoded' -T 'Expect: 100-continue' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_gworker_bench_thread_37)
-	@killall -9 gunicorn
-
 $(flask_gworker_bench_37):
 	@$(GUNICORN37) bjoern.bench.flask_bench:app --backlog 2048 --timeout 1800 --worker-class bjoern.gworker.BjoernWorker &
 	@sleep 2
@@ -356,7 +341,7 @@ falcon-ab-37: $(falcon_bench_37) $(ab_post)
 _clean_bench_37:
 	@rm -rf bjoern/bench/*37.txt
 
-bjoern-bench-37: _clean_bench_37 setup-37 install-37-bench flask-ab-gunicorn-37 flask-ab-37 bottle-ab-37 falcon-ab-37 flask-ab-gworker-37 flask-ab-gworker-multi-37 flask-ab-gworker-thread-37
+bjoern-bench-37: _clean_bench_37 setup-37 install-37-bench flask-ab-gunicorn-37 flask-ab-37 bottle-ab-37 falcon-ab-37 flask-ab-gworker-37 flask-ab-gworker-multi-37
 
 bjoern-bench: bjoern-bench-37 bjoern-bench-36
 

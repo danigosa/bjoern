@@ -1,6 +1,16 @@
 CHANGELOG
 =========
 
+4.0.10 (June 2019)
+    - Backport 3.0.1 commits where applicable
+    - Fix keep-alive headers counter
+
+4.0.9 (May 2019)
+    - Added tcp_nodelay, max_body_len, max_header_fields, max_header_field_len, max_uri_len, max_query_len to make
+    DoS attacks less feasible
+    - Refactor python code
+    - Better HTTP compliant error codes
+
 4.0.8 (May 2019)
     - Undo EPOLL as preference for the main loop, let the lib choose with EVFLAG_AUTO
 
