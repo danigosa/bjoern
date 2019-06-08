@@ -8,6 +8,7 @@
 #define _PEP3333_Bytes_AS_DATA(bytes) PyBytes_AS_STRING(bytes)
 #define _PEP3333_Bytes_FromString(bytes) PyBytes_FromString(bytes)
 #define _PEP3333_Bytes_FromStringAndSize(data, len) PyBytes_FromStringAndSize(data, len)
+#define _PEP3333_StringFromFormat(...) PyString_FromFormat(bytes)
 #define _PEP3333_Bytes_GET_SIZE(bytes) PyBytes_GET_SIZE(bytes)
 #define _PEP3333_Bytes_Check(bytes) PyBytes_Check(bytes)
 #define _PEP3333_Bytes_Resize(bytes, len) _PyBytes_Resize(bytes, len)
