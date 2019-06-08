@@ -44,15 +44,15 @@ RUN \
   rm -rf /var/lib/apt/lists/*
 
 RUN pip3 install \
-    black==19.3b0 \
-    isort[requirements]==4.3.20
+    black \
+    isort[requirements]
 
 RUN python3 -m venv --system-site-packages /.py36-venv && \
     /.py36-venv/bin/python -m pip install --upgrade \
-        pip==19.1.1 \
-        setuptools==41.0.1\
-        wheel==0.33.4 \
-        Cython==0.29.7
+        pip \
+        setuptools\
+        wheel \
+        Cython
 
 # Python3.7
 RUN \
@@ -66,10 +66,10 @@ RUN \
 
 RUN python3.7 -m venv --system-site-packages /.py37-venv && \
     /.py37-venv/bin/python -m pip install --upgrade \
-        pip==19.1.1 \
-        setuptools==41.0.1\
-        wheel==0.33.4 \
-        Cython==0.29.7
+        pip \
+        setuptools\
+        wheel \
+        Cython
 
 RUN ldconfig
 
@@ -82,13 +82,12 @@ RUN \
   ln -sf /opt/pypy3.6-$PYPY_VERSION-linux_x86_64-portable/bin/pypy3 /usr/bin/pypy3 && \
   ln -sf /opt/pypy3.6-$PYPY_VERSION-linux_x86_64-portable/bin/pypy3 /usr/bin/pypy && \
   pypy3 -m ensurepip && \
-  pypy3 -m pip install --upgrade virtualenv==16.5.0 && \
+  pypy3 -m pip install --upgrade virtualenv && \
   rm -f /opt/pypy.tar.bz2 && \
-  apt-get -qy purge curl curl ca-certificates && \
   rm -rf /var/lib/apt/lists/*
 RUN pypy3 -m virtualenv -p /usr/bin/pypy3 --system-site-packages /.pypy36-venv && \
         /.pypy36-venv/bin/pypy -m pip install --upgrade \
-            pip==19.1.1 \
-            setuptools==41.0.1\
-            wheel==0.33.4 \
-            Cython==0.29.7
+            pip \
+            setuptools\
+            wheel \
+            Cython

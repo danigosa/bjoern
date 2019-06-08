@@ -1,6 +1,7 @@
 #ifndef __common_h__
 #define __common_h__
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <stdlib.h>
 #include <stddef.h>

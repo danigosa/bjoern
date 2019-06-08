@@ -35,15 +35,16 @@ def test_env_app(env_app, client):
     response = client.get("/")
     assert response.status_code == 200
     assert response.reason == "yo"
-    print(response.json())
-    assert response.json() == {
+    j_response = response.json()
+    user_agent = j_response.pop("HTTP_USER_AGENT")
+    assert "python-requests" in user_agent
+    assert j_response == {
         "wsgi.input": "b''",
         "wsgi.errors": True,
         "wsgi.file_wrapper": True,
         "wsgi.version": [1, 0],
         "PATH_INFO": "/",
         "HTTP_HOST": "127.0.0.1:8080",
-        "HTTP_USER_AGENT": "python-requests/2.22.0",
         "HTTP_ACCEPT_ENCODING": "gzip, deflate",
         "HTTP_ACCEPT": "*/*",
         "HTTP_CONNECTION": "keep-alive",
