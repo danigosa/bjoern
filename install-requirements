@@ -11,6 +11,7 @@ pip="$1"
     bottle              \
     certifi             \
     chardet             \
+    cffi                \
     Click               \
     docutils            \
     Flask               \

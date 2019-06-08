@@ -16,9 +16,11 @@ PIPY36		:= /.pypy36-venv/bin/pip3
 DEBUG 		:= DEBUG=True
 
 PYTHON36_INCLUDE	:= $(shell python3-config --includes | sed s/-I/-isystem\ /g)
-PYTHON36_LDFLAGS_36	:= $(shell python3-config --ldflags)
+PYTHON36_LDFLAGS	:= $(shell python3-config --ldflags)
 PYTHON37_INCLUDE	:= $(shell python3.7-config --includes | sed s/-I/-isystem\ /g)
-PYTHON37_LDFLAGS_36	:= $(shell python3.7-config --ldflags)
+PYTHON37_LDFLAGS	:= $(shell python3.7-config --ldflags)
+PYPY36_INCLUDE		:= $(shell /.pypy36-venv/bin/python-config --includes | sed s/-I/-isystem\ /g)
+PYPY36_LDFLAGS	:= $(shell /.pypy36-venv/bin/python-config --ldflags)
 
 LOG_C_DIR	:= vendors/log.c
 
@@ -51,9 +53,11 @@ endif
 CC 				:= gcc
 CPPFLAGS_36		+= $(PYTHON36_INCLUDE) -I . -I $(SOURCE_DIR) -I $(HTTP_PARSER_DIR)
 CPPFLAGS_37		+= $(PYTHON37_INCLUDE) -I . -I $(SOURCE_DIR) -I $(HTTP_PARSER_DIR)
+CPPFLAGS_PYPY	+= $(PYPY36_INCLUDE) -I . -I $(SOURCE_DIR) -I $(HTTP_PARSER_DIR)
 CFLAGS			+= $(FEATURES) -std=c99 -fno-strict-aliasing -fcommon -fPIC -Wall -D DEBUG
-LDFLAGS_36		+= $(PYTHON36_LDFLAGS_36) -pthread -shared -fcommon
-LDFLAGS_37		+= $(PYTHON37_LDFLAGS_36) -pthread -shared -fcommon
+LDFLAGS_36		+= $(PYTHON36_LDFLAGS) -pthread -shared -fcommon
+LDFLAGS_37		+= $(PYTHON37_LDFLAGS) -pthread -shared -fcommon
+LDFLAGS_PYPY	+= $(PYPY36_LDFLAGS) -pthread -shared -fcommon
 
 AB			:= ab -c 100 -n 10000
 TEST_URL	:= "http://127.0.0.1:8080/a/b/c?k=v&k2=v2"
@@ -83,10 +87,11 @@ ab_post 						:= /tmp/bjoern.post
 # Targets
 setup-36: clean prepare-build reqs-36
 setup-37: clean prepare-build reqs-37
-setup-pypy36: clean prepare-build reqs-pypy36
+setup-pypy: clean prepare-build reqs-pypy
 
 all-36: setup-36 $(objects) _bjoernmodule_36 test-36
 all-37: setup-36 $(objects) _bjoernmodule_37 test-37
+all-pypy: setup-pypy $(objects) _bjoernmodule_pypy test-pypy
 
 print-env:
 	@echo CFLAGS=$(CFLAGS)
@@ -103,7 +108,13 @@ _bjoernmodule_37:
 	@$(CC) $(CPPFLAGS_37) $(CFLAGS) $(LDFLAGS_37) $(objects) -o $(BUILD_DIR)/_bjoern.so -lev
 	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) $(PYTHON37) -c 'import bjoern;print(f"Bjoern version: {bjoern.__version__}");'
 
+_bjoernmodule_pypy:
+	@$(CC) $(CPPFLAGS_PYPY) $(CFLAGS) $(LDFLAGS_PYPY) $(objects) -o $(BUILD_DIR)/_bjoern.so -lev
+	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) $(PYPY36) -c 'import bjoern;print(f"Bjoern version: {bjoern.__version__}");'
+
 again-36: clean all-36
+again-37: clean all-37
+again-pypy: clean all-pypy
 
 $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.c
 	@echo ' -> ' $(CC) $(CPPFLAGS_36) $(CFLAGS) -c $< -o $@
@@ -118,7 +129,7 @@ reqs-36:
 reqs-37:
 	@bash install-requirements $(PIP37)
 
-reqs-pypy36:
+reqs-pypy:
 	@bash install-requirements $(PIPY36)
 
 fmt:
@@ -142,7 +153,7 @@ test-36: fmt clean reqs-36 install-debug-36
 test-37: fmt clean reqs-37 install-debug-37
 	@$(PYTHON37) -m pytest
 
-test-pypy36: fmt clean reqs-pypy36 install-debug-pypy36
+test-pypy: fmt clean reqs-pypy install-debug-pypy
 	@$(PYPY36) -m pytest
 
 test: test-37 test-36
@@ -382,7 +393,7 @@ extension-37:
 install-debug-36:
 	@DEBUG=True PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) $(PYTHON36) -m pip install --editable .
 
-install-debug-pypy36:
+install-debug-pypy:
 	@DEBUG=True PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) $(PYPY36) -m pip install --editable .
 
 uninstall-36: clean

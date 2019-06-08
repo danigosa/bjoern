@@ -5,7 +5,6 @@ import socket
 import sys
 
 import _bjoern
-
 from bjoern import (
     DEFAULT_LISTEN_BACKLOG,
     DEFAULT_LOG_CONSOLE_LEVEL,
