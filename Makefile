@@ -370,6 +370,8 @@ memwatch-37:
 	   echo; echo; \
 	   tail -n +25 /proc/$$(pgrep -n $(PYTHON37))smaps'
 
+valgrind: flask-valgrind-36 flask-callgrind-36 flask-valgrind-37 flask-callgrind-37
+
 # Pypi
 extension-36:
 	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) $(PYTHON36) setup.py build_ext
