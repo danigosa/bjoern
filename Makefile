@@ -19,8 +19,6 @@ PYTHON36_INCLUDE	:= $(shell python3-config --includes | sed s/-I/-isystem\ /g)
 PYTHON36_LDFLAGS	:= $(shell python3-config --ldflags)
 PYTHON37_INCLUDE	:= $(shell python3.7-config --includes | sed s/-I/-isystem\ /g)
 PYTHON37_LDFLAGS	:= $(shell python3.7-config --ldflags)
-PYPY36_INCLUDE		:= $(shell /.pypy36-venv/bin/python-config --includes | sed s/-I/-isystem\ /g)
-PYPY36_LDFLAGS	:= $(shell /.pypy36-venv/bin/python-config --ldflags)
 
 LOG_C_DIR	:= vendors/log.c
 
@@ -34,7 +32,9 @@ HTTP_PARSER_URL_OBJ := $(HTTP_PARSER_URL_DIR)/url_parser
 objects		:= 	$(HTTP_PARSER_OBJ) $(HTTP_PARSER_URL_OBJ) \
 		  		$(patsubst $(SOURCE_DIR)/%.c, $(BUILD_DIR)/%.o, \
 		             $(wildcard $(SOURCE_DIR)/*.c))
+
 FEATURES := -D LOG_USE_COLOR
+
 ifneq ($(WANT_SENDFILE), no)
 FEATURES	+= -D WANT_SENDFILE
 endif
@@ -50,14 +50,16 @@ endif
 ifndef SIGNAL_CHECK_INTERVAL
 FEATURES	+= -D SIGNAL_CHECK_INTERVAL=0.1
 endif
+
+PYPY36_INSTALL  := /opt/pypy3.6-7.1.1-beta-linux_x86_64-portable
 CC 				:= gcc
 CPPFLAGS_36		+= $(PYTHON36_INCLUDE) -I . -I $(SOURCE_DIR) -I $(HTTP_PARSER_DIR)
 CPPFLAGS_37		+= $(PYTHON37_INCLUDE) -I . -I $(SOURCE_DIR) -I $(HTTP_PARSER_DIR)
-CPPFLAGS_PYPY	+= $(PYPY36_INCLUDE) -I . -I $(SOURCE_DIR) -I $(HTTP_PARSER_DIR)
+CPPFLAGS_PYPY	+= -isystem $(PYPY36_INSTALL)/include -I . -I $(SOURCE_DIR) -I $(HTTP_PARSER_DIR)
 CFLAGS			+= $(FEATURES) -std=c99 -fno-strict-aliasing -fcommon -fPIC -Wall -D DEBUG
-LDFLAGS_36		+= $(PYTHON36_LDFLAGS) -pthread -shared -fcommon
-LDFLAGS_37		+= $(PYTHON37_LDFLAGS) -pthread -shared -fcommon
-LDFLAGS_PYPY	+= $(PYPY36_LDFLAGS) -pthread -shared -fcommon
+LDFLAGS_36		+= $(PYTHON36_LDFLAGS) -shared -fcommon
+LDFLAGS_37		+= $(PYTHON37_LDFLAGS) -shared -fcommon
+LDFLAGS_PYPY	+= -L$(PYPY36_INSTALL)/lib -L/usr/lib -L$(PYPY36_INSTALL)/lib_pypy -lpython3.6m -lpthread -ldl  -lutil -lm  -Xlinker -export-dynamic -Wl,-O1 -Wl,-Bsymbolic-functions -shared -fcommon
 
 AB			:= ab -c 100 -n 10000
 TEST_URL	:= "http://127.0.0.1:8080/a/b/c?k=v&k2=v2"
@@ -91,30 +93,34 @@ setup-pypy: clean prepare-build reqs-pypy
 
 all-36: setup-36 $(objects) _bjoernmodule_36 test-36
 all-37: setup-36 $(objects) _bjoernmodule_37 test-37
-all-pypy: setup-pypy $(objects) _bjoernmodule_pypy test-pypy
+all-pypy: setup-pypy $(objects) _bjoernmodule_pypy #test-pypy
 
 print-env:
 	@echo CFLAGS=$(CFLAGS)
 	@echo CPPFLAGS_36=$(CPPFLAGS_36)
 	@echo LDFLAGS_36=$(LDFLAGS_36)
+	@echo CPPFLAGS_37=$(CPPFLAGS_37)
+	@echo LDFLAGS_37=$(LDFLAGS_37)
+	@echo CPPFLAGS_PYPY=$(CPPFLAGS_PYPY)
+	@echo LDFLAGS_PYPY=$(LDFLAGS_PYPY)
 	@echo args=$(HTTP_PARSER_SRC) $(wildcard $(SOURCE_DIR)/*.c)
 	@echo FEATURES=$(FEATURES)
 
 _bjoernmodule_36:
-	@$(CC) $(CPPFLAGS_36) $(CFLAGS) $(LDFLAGS_36) $(objects) -o $(BUILD_DIR)/_bjoern.so -lev
-	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) $(PYTHON36) -c 'import bjoern;print(f"Bjoern version: {bjoern.__version__}");'
+	$(CC) $(CPPFLAGS_36) $(CFLAGS) $(LDFLAGS_36) $(objects) -o $(BUILD_DIR)/_bjoern.so -lev
+	PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) $(PYTHON36) -c 'import bjoern;print(f"Bjoern version: {bjoern.__version__}");'
 
 _bjoernmodule_37:
-	@$(CC) $(CPPFLAGS_37) $(CFLAGS) $(LDFLAGS_37) $(objects) -o $(BUILD_DIR)/_bjoern.so -lev
-	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) $(PYTHON37) -c 'import bjoern;print(f"Bjoern version: {bjoern.__version__}");'
+	$(CC) $(CPPFLAGS_37) $(CFLAGS) $(LDFLAGS_37) $(objects) -o $(BUILD_DIR)/_bjoern.so -lev
+	PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) $(PYTHON37) -c 'import bjoern;print(f"Bjoern version: {bjoern.__version__}");'
 
 _bjoernmodule_pypy:
-	@$(CC) $(CPPFLAGS_PYPY) $(CFLAGS) $(LDFLAGS_PYPY) $(objects) -o $(BUILD_DIR)/_bjoern.so -lev
-	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) $(PYPY36) -c 'import bjoern;print(f"Bjoern version: {bjoern.__version__}");'
+	$(CC) $(CPPFLAGS_PYPY) $(CFLAGS) $(LDFLAGS_PYPY) $(objects) -o $(BUILD_DIR)/_bjoern.so -lev
+	PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) $(PYPY36) -c 'import bjoern;print(f"Bjoern version: {bjoern.__version__}");'
 
-again-36: clean all-36
-again-37: clean all-37
-again-pypy: clean all-pypy
+again-36: all-36
+again-37: all-37
+again-pypy: all-pypy
 
 $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.c
 	@echo ' -> ' $(CC) $(CPPFLAGS_36) $(CFLAGS) -c $< -o $@
@@ -257,6 +263,7 @@ _clean_bench_36:
 	@rm -rf bjoern/bench/*36.txt
 
 bjoern-bench-36: _clean_bench_36 setup-36 install-36-bench flask-ab-36 bottle-ab-36 falcon-ab-36 flask-ab-gunicorn-36 flask-ab-gworker-36 flask-ab-gworker-multi-36
+bjoern-legacy-bench-36: _clean_bench_36 setup-36 install-legacy-bench-36 flask-ab-36 bottle-ab-36 falcon-ab-36
 
 
 $(flask_bench_37):
@@ -353,6 +360,7 @@ _clean_bench_37:
 	@rm -rf bjoern/bench/*37.txt
 
 bjoern-bench-37: _clean_bench_37 setup-37 install-37-bench flask-ab-gunicorn-37 flask-ab-37 bottle-ab-37 falcon-ab-37 flask-ab-gworker-37 flask-ab-gworker-multi-37
+bjoern-legacy-bench-37: _clean_bench_37 setup-37 install-legacy-bench-37 flask-ab-37 bottle-ab-37 falcon-ab-37
 
 bjoern-bench: bjoern-bench-37 bjoern-bench-36
 
@@ -383,6 +391,20 @@ memwatch-37:
 
 valgrind: flask-valgrind-36 flask-callgrind-36 flask-valgrind-37 flask-callgrind-37
 
+flask-valgrind-legacy-36: install-legacy-bench-36
+	valgrind --leak-check=full --show-reachable=yes $(PYTHON36) bjoern/tests/test_flask.py > $(flask_valgrind_36) 2>&1
+
+flask-callgrind-legacy-36: install-legacy-bench-36
+	valgrind --tool=callgrind $(PYTHON36) bjoern/tests/test_flask.py > $(flask_callgrind_36) 2>&1
+
+flask-valgrind-legacy-37: install-legacy-bench-37
+	valgrind --leak-check=full --show-reachable=yes $(PYTHON37) bjoern/tests/test_flask.py > $(flask_valgrind_37) 2>&1
+
+flask-callgrind-legacy-37: install-legacy-bench-37
+	valgrind --tool=callgrind $(PYTHON37) bjoern/tests/test_flask.py > $(flask_callgrind_37) 2>&1
+
+valgrind-legacy: flask-valgrind-legacy-36 flask-callgrind-legacy-36 flask-valgrind-legacy-37 flask-callgrind-legacy-37
+
 # Pypi
 extension-36:
 	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) $(PYTHON36) setup.py build_ext
@@ -404,6 +426,12 @@ install-36:
 
 install-36-bench: uninstall-36 extension-36
 	@PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) $(PYTHON36) setup.py install
+
+install-legacy-bench-36: uninstall-36
+	@$(PIP36) install --upgrade --index-url=https://pypi.org/simple bjoern
+
+install-legacy-bench-37: uninstall-37
+	@$(PIP37) install --upgrade --index-url=https://pypi.org/simple bjoern
 
 upload-36:
 	$(PYTHON36) setup.py sdist

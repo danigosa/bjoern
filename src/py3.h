@@ -1,3 +1,5 @@
+#include <Python.h>
+
 #ifndef _PY3_H
 #define _PY3_H
 
@@ -6,6 +8,7 @@
 #define PyFile_DecUseCount(file) NOP
 
 #define _FromLong(n) PyLong_FromLong(n)
+#define _AsLong(n) PyLong_AsLong(n)
 #define _Size_t_FromLong(n) PyLong_AsSize_t(n)
 
 #define _PEP3333_Bytes_AS_DATA(bytes) PyBytes_AS_STRING(bytes)
@@ -16,6 +19,8 @@
 #define _PEP3333_Bytes_Resize(bytes, len) _PyBytes_Resize(bytes, len)
 #define _PEP3333_BytesLatin1_FromUnicode(u) PyUnicode_AsLatin1String(u)
 
+
+#define _UnicodeAsData(s) PyUnicode_AS_DATA(s)
 #define _PEP3333_StringFromFormat(...) PyUnicode_FromFormat(__VA_ARGS__)
 #define _PEP3333_String_FromUTF8String(data) PyUnicode_FromString(data)
 #define _PEP3333_String_FromLatin1StringAndSize(data, len) PyUnicode_DecodeLatin1(data, len, "replace")

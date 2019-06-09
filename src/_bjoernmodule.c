@@ -5,6 +5,7 @@
 #include "filewrapper.h"
 #include "log.h"
 #include "py3.h"
+#include "_bjoernmodule.h"
 
 
 char *slice_str(const char *str, size_t size, size_t start, size_t end) {
@@ -41,7 +42,7 @@ run(PyObject *self, PyObject *args) {
 
     // Set console logging
     info.log_console_level = log_console_level;
-    long l_console_level = PyLong_AsLong(info.log_console_level);
+    long l_console_level = _AsLong(info.log_console_level);
     int console_level = 0;
     switch (l_console_level) {
         case 0:
@@ -75,8 +76,8 @@ run(PyObject *self, PyObject *args) {
         // Check if stdout/stderr
         info.log_file_level = log_file_level;
         info.log_file = log_file;
-        long l_file_level = PyLong_AsLong(info.log_file_level);
-        const char *log_file_str = PyUnicode_AS_DATA(info.log_file);
+        long l_file_level = _AsLong(info.log_file_level);
+        const char *log_file_str = _UnicodeAsData(info.log_file);
         if (!strcmp(log_file_str, "-")) {
             // Check level
             FILE *_fd = fopen(log_file_str, "w");
@@ -141,7 +142,7 @@ run(PyObject *self, PyObject *args) {
     char *fmt_host = slice_str(host, strlen(host), 1, strlen(host) - 2);
     log_info("Bjoern single-threaded started and listening on %.12s:%ld",
              fmt_host,
-             PyLong_AsLong(info.port));
+             _AsLong(info.port));
     Py_DECREF(objectsRepresentation);
     Py_DECREF(str);
     free(fmt_host);
@@ -153,6 +154,12 @@ run(PyObject *self, PyObject *args) {
 
     Py_RETURN_NONE;
 }
+
+PyObject *
+cffi_run(int *fdsocket, PyObject *args) {
+    return run(fdsocket, args);
+}
+
 
 static PyMethodDef Bjoern_FunctionTable[] = {
         {"server_run", (PyCFunction) run, METH_VARARGS, NULL},

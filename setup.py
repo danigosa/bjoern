@@ -13,12 +13,8 @@ SOURCE_FILES = [
     os.path.join("vendors", "http-parser", "contrib", "url_parser.c"),
 ] + sorted(glob.glob(os.path.join("src", "*.c")))
 
-if (
-    "Linux" != platform.system()
-    or "CPython" != platform.python_implementation()
-    or not sys.version_info >= (3, 6)
-):
-    print("Sorry, not support for other platforms than CPython3.6+ Linux.")
+if "Linux" != platform.system() or not sys.version_info >= (3, 6):
+    print("Sorry, not support for other platforms than Linux.")
     sys.exit(1)
 
 
@@ -84,6 +80,7 @@ setup(
         "Topic :: Internet :: WWW/HTTP :: WSGI :: Server",
     ],
     py_modules=[
+        "_bjoern_cffi",
         "bjoern",
         "bjoern.server",
         "bjoern.bench",

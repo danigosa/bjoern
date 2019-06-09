@@ -1,6 +1,15 @@
 CHANGELOG
 =========
 
+4.0.11 (June 2019)
+    - Backport 3.0.1 commits where applicable
+    - Fix keep-alive headers counter
+    - No progress with Pypy
+    [2019-06-09 08:02:29 UTC] [11534] [INFO] [src/_bjoernmodule.c:71] ConsoleLogging level set to: 20
+
+    Program received signal SIGSEGV, Segmentation fault.
+    0x00007ffff0ce81a4 in run () from /bjoern/_bjoern.pypy3-71-x86_64-linux-gnu.so
+
 4.0.10 (June 2019)
     - Backport 3.0.1 commits where applicable
     - Fix keep-alive headers counter

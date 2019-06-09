@@ -1,0 +1,146 @@
+
+====== Flask(Python3.7) ======
+
+
+====== GET ======
+
+This is ApacheBench, Version 2.3 <$Revision: 1807734 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking 127.0.0.1 (be patient)
+
+
+Server Software:        
+Server Hostname:        127.0.0.1
+Server Port:            8080
+
+Document Path:          /a/b/c?k=v&k2=v2
+Document Length:        20 bytes
+
+Concurrency Level:      100
+Time taken for tests:   3.070 seconds
+Complete requests:      10000
+Failed requests:        0
+Total transferred:      1100000 bytes
+HTML transferred:       200000 bytes
+Requests per second:    3257.47 [#/sec] (mean)
+Time per request:       30.699 [ms] (mean)
+Time per request:       0.307 [ms] (mean, across all concurrent requests)
+Transfer rate:          349.92 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.7      0       9
+Processing:     5   30   1.9     30      36
+Waiting:        5   30   2.0     30      36
+Total:         14   30   1.5     30      36
+
+Percentage of the requests served within a certain time (ms)
+  50%     30
+  66%     31
+  75%     31
+  80%     31
+  90%     32
+  95%     33
+  98%     34
+  99%     34
+ 100%     36 (longest request)
+
+~~~~~ Keep Alive ~~~~~
+
+This is ApacheBench, Version 2.3 <$Revision: 1807734 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking 127.0.0.1 (be patient)
+
+
+Server Software:        
+Server Hostname:        127.0.0.1
+Server Port:            8080
+
+Document Path:          /a/b/c?k=v&k2=v2
+Document Length:        20 bytes
+
+Concurrency Level:      100
+Time taken for tests:   2.152 seconds
+Complete requests:      10000
+Failed requests:        0
+Keep-Alive requests:    10000
+Total transferred:      1150000 bytes
+HTML transferred:       200000 bytes
+Requests per second:    4645.99 [#/sec] (mean)
+Time per request:       21.524 [ms] (mean)
+Time per request:       0.215 [ms] (mean, across all concurrent requests)
+Transfer rate:          521.77 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.6      0       8
+Processing:     4   21   2.3     21      34
+Waiting:        4   21   2.3     21      34
+Total:          9   21   2.5     21      40
+
+Percentage of the requests served within a certain time (ms)
+  50%     21
+  66%     21
+  75%     22
+  80%     22
+  90%     23
+  95%     28
+  98%     28
+  99%     31
+ 100%     40 (longest request)
+
+====== POST ======
+
+
+~~~~~ Keep Alive ~~~~~
+
+This is ApacheBench, Version 2.3 <$Revision: 1807734 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking 127.0.0.1 (be patient)
+
+
+Server Software:        
+Server Hostname:        127.0.0.1
+Server Port:            8080
+
+Document Path:          /a/b/c?k=v&k2=v2
+Document Length:        64 bytes
+
+Concurrency Level:      100
+Time taken for tests:   3.842 seconds
+Complete requests:      10000
+Failed requests:        0
+Keep-Alive requests:    10000
+Total transferred:      1590000 bytes
+Total body sent:        1484320000
+HTML transferred:       640000 bytes
+Requests per second:    2602.98 [#/sec] (mean)
+Time per request:       38.418 [ms] (mean)
+Time per request:       0.384 [ms] (mean, across all concurrent requests)
+Transfer rate:          404.17 [Kbytes/sec] received
+                        377309.85 kb/s sent
+                        377714.02 kb/s total
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   2.3      0      30
+Processing:    20   38   2.6     37      48
+Waiting:       20   38   2.6     37      48
+Total:         28   38   3.2     37      69
+
+Percentage of the requests served within a certain time (ms)
+  50%     37
+  66%     38
+  75%     38
+  80%     39
+  90%     42
+  95%     45
+  98%     47
+  99%     48
+ 100%     69 (longest request)

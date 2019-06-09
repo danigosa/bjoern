@@ -4,7 +4,8 @@ import signal
 import socket
 import sys
 
-import _bjoern
+# CFFI
+from _bjoern_cffi import ffi, lib
 from bjoern import (
     DEFAULT_LISTEN_BACKLOG,
     DEFAULT_LOG_CONSOLE_LEVEL,
@@ -90,15 +91,17 @@ def server_run(
     log_file_level,
     file_log,
 ):
-    _bjoern.server_run(
+    lib.server_run_cffi(
         sock,
-        wsgi_app,
-        max_body_len,
-        max_header_fields,
-        max_header_field_len,
-        log_console_level,
-        log_file_level,
-        file_log,
+        (
+            wsgi_app,
+            max_body_len,
+            max_header_fields,
+            max_header_field_len,
+            log_console_level,
+            log_file_level,
+            file_log,
+        ),
     )
 
 

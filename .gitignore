@@ -9,3 +9,5 @@ bjoern.egg-info/
 *.so
 tmp/
 callgrind.out.*
+*.c
+*.o

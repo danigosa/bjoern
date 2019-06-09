@@ -1,0 +1,15 @@
+==7694== Callgrind, a call-graph generating cache profiler
+==7694== Copyright (C) 2002-2017, and GNU GPL'd, by Josef Weidendorfer et al.
+==7694== Using Valgrind-3.13.0 and LibVEX; rerun with -h for copyright info
+==7694== Command: /.py36-venv/bin/python3 bjoern/tests/test_flask.py
+==7694== 
+==7694== For interactive control, run 'callgrind_control -h'.
+Traceback (most recent call last):
+  File "bjoern/tests/test_flask.py", line 7, in <module>
+    from bjoern.tests.conftest import _run_app
+ModuleNotFoundError: No module named 'bjoern.tests'; 'bjoern' is not a package
+==7694== 
+==7694== Events    : Ir
+==7694== Collected : 706757726
+==7694== 
+==7694== I   refs:      706,757,726
