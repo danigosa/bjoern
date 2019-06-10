@@ -8,27 +8,17 @@
 #include "_bjoernmodule.h"
 
 
-char *slice_str(const char *str, size_t size, size_t start, size_t end) {
-    char *buffer = malloc(sizeof(char[size]));
-    size_t j = 0;
-    for (size_t i = start; i <= end; ++i) {
-        buffer[j++] = str[i];
-    }
-    buffer[j] = 0;
-    return buffer;
-}
-
 PyObject *
-cffi_run(int *socketfd,
-         char *host,
-         int port,
+cffi_run(long socketfd,
+         wchar_t *host,
+         long port,
          PyObject *wsgi_app,
-         int max_body_len,
-         int max_header_fields,
-         int max_header_field_len,
-         int log_console_level,
-         int log_file_level,
-         char *file_log) {
+         long max_body_len,
+         long max_header_fields,
+         long max_header_field_len,
+         long log_console_level,
+         long log_file_level,
+         wchar_t *file_log) {
 
     // Global information
     ServerInfo server_info;
@@ -70,9 +60,9 @@ cffi_run(int *socketfd,
     if (file_log > 0) {
         // Check if stdout/stderr
         server_info.log_file_level = log_file_level;
-        if (!strcmp(file_log, "-")) {
+        if (!wcscmp(file_log, (wchar_t *)"-")) {
             // Check level
-            FILE *_fd = fopen(file_log, "w");
+            FILE *_fd = fopen((char *)file_log, "w");
             log_set_fp(_fd);
             switch (log_file_level) {
                 case 0:
@@ -123,7 +113,7 @@ cffi_run(int *socketfd,
 }
 
 static PyMethodDef Bjoern_FunctionTable[] = {
-        {NULL,         NULL,              0,            NULL}
+        {NULL, NULL, 0, NULL}
 };
 
 static struct PyModuleDef module = {

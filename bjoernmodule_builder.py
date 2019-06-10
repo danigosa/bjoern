@@ -5,16 +5,16 @@ ffibuilder = FFI()
 
 ffibuilder.cdef(
     """
-void * server_run_cffi(int *socketfd,
-                   char *host,
-                   int port,
+void * server_run_cffi(long socketfd,
+                   wchar_t *host,
+                   long port,
                    void *wsgi_app,
-                   int max_body_len,
-                   int max_header_fields,
-                   int max_header_field_len,
-                   int log_console_level,
-                   int log_file_level,
-                   char *file_log);
+                   long max_body_len,
+                   long max_header_fields,
+                   long max_header_field_len,
+                   long log_console_level,
+                   long log_file_level,
+                   wchar_t *file_log);
 """
 )
 
@@ -31,27 +31,26 @@ libs = [
     "/bjoern/vendors/http-parser/url_parser",
 ]
 includes = ["/bjoern/src"]
-print(libs)
 ffibuilder.set_source(
     "_bjoern_cffi",
     """
     #include <Python.h>
     #include <_bjoernmodule.h>
     
-    PyObject * server_run_cffi(int *socketfd,
-                   char *host,
-                   int port,
+    PyObject * server_run_cffi(long socketfd,
+                   wchar_t *host,
+                   long port,
                    void *wsgi_app,
-                   int max_body_len,
-                   int max_header_fields,
-                   int max_header_field_len,
-                   int log_console_level,
-                   int log_file_level,
-                   char *file_log) {
-      return cffi_run(socketfd,
+                   long max_body_len,
+                   long max_header_fields,
+                   long max_header_field_len,
+                   long log_console_level,
+                   long log_file_level,
+                   wchar_t *file_log) {
+    return cffi_run(socketfd,
                       host, 
                       port, 
-                      wsgi_app, 
+                      (PyObject *)wsgi_app, 
                       max_body_len, 
                       max_header_fields, 
                       max_header_field_len,

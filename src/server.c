@@ -83,7 +83,7 @@ void server_run(ServerInfo *server_info) {
     thread_info.header_fields = 0;
     ev_set_userdata(mainloop, &thread_info);
 
-    ev_io_init(&thread_info.accept_watcher, ev_io_on_request, *server_info->sockfd, EV_READ);
+    ev_io_init(&thread_info.accept_watcher, ev_io_on_request, server_info->sockfd, EV_READ);
     ev_io_start(mainloop, &thread_info.accept_watcher);
 
 #if WANT_SIGINT_HANDLING

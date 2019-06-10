@@ -93,11 +93,14 @@ def server_run(
     log_file_level,
     file_log,
 ):
+    if file_log is None:
+        file_log = "-"
+    cffi_wsgi = ffi.new_handle(wsgi_app)
     lib.server_run_cffi(
         sockfd,
         host,
         port,
-        wsgi_app,
+        cffi_wsgi,
         max_body_len,
         max_header_fields,
         max_header_field_len,
