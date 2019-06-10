@@ -82,7 +82,9 @@ def bind_and_listen(
 
 
 def server_run(
-    sock,
+    sockfd,
+    host,
+    port,
     wsgi_app,
     max_body_len,
     max_header_fields,
@@ -92,7 +94,9 @@ def server_run(
     file_log,
 ):
     lib.server_run_cffi(
-        sock,
+        sockfd,
+        host,
+        port,
         wsgi_app,
         max_body_len,
         max_header_fields,
@@ -239,7 +243,9 @@ def run(
     try:
         trace_on_abort()
         server_run(
-            sock,
+            _default_instance[0].fileno(),
+            _default_instance[0].getsockname()[0],
+            _default_instance[0].getsockname()[1],
             wsgi_app,
             max_body_len,
             max_header_fields,

@@ -1,7 +1,5 @@
 #include <Python.h>
 #include <stdio.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include "server.h"
 #include "wsgi.h"
 #include "filewrapper.h"
@@ -20,11 +18,10 @@ char *slice_str(const char *str, size_t size, size_t start, size_t end) {
     return buffer;
 }
 
-// Global information
-static ServerInfo *server_info = malloc(sizeof(ServerInfo));
-
 PyObject *
-cffi_run(int *socket,
+cffi_run(int *socketfd,
+         char *host,
+         int port,
          PyObject *wsgi_app,
          int max_body_len,
          int max_header_fields,
@@ -33,12 +30,14 @@ cffi_run(int *socket,
          int log_file_level,
          char *file_log) {
 
+    // Global information
+    ServerInfo server_info;
+
     // Init global info
-    server_info->sockfd = socket;
-    server_info->max_body_len = max_body_len;
-    server_info->max_header_fields = max_header_fields;
-    server_info->max_header_field_len = max_header_field_len;
-    server_info->wsgi_app = wsgi_app;
+    server_info.max_body_len = max_body_len;
+    server_info.max_header_fields = max_header_fields;
+    server_info.max_header_field_len = max_header_field_len;
+    server_info.wsgi_app = wsgi_app;
 
     // Set console logging
     switch (log_console_level) {
@@ -64,16 +63,16 @@ cffi_run(int *socket,
             log_set_console_level(LOG_INFO);
             break;
     }
-    server_info->log_console_level = log_console_level;
+    server_info.log_console_level = log_console_level;
     log_info("ConsoleLogging level set to: %d", log_console_level);
 
     // Set file logging
     if (file_log > 0) {
         // Check if stdout/stderr
-        server_info->log_file_level = log_file_level;
-        if (!strcmp(log_file_str, "-")) {
+        server_info.log_file_level = log_file_level;
+        if (!strcmp(file_log, "-")) {
             // Check level
-            FILE *_fd = fopen(log_file_str, "w");
+            FILE *_fd = fopen(file_log, "w");
             log_set_fp(_fd);
             switch (log_file_level) {
                 case 0:
@@ -98,8 +97,8 @@ cffi_run(int *socket,
                     log_set_file_level(LOG_INFO);
                     break;
             }
-            server_info->log_file_level = log_file_level;
-            log_info("FileLogging level on %s set to: %d", log_file_str, log_file_level);
+            server_info.log_file_level = log_file_level;
+            log_info("FileLogging level on %s set to: %d", file_log, log_file_level);
         } else {
             log_info("FileLogging not set as it is stdout");
         }
@@ -107,23 +106,14 @@ cffi_run(int *socket,
         log_info("No FileLogging set");
     }
 
-    // Get socket
-    if (socket < 0) {
+    // Set socket
+    if (socketfd < 0) {
         log_debug("Socket: Not a file descriptor");
         return NULL;
     }
-    server_info->sockfd = socket;
-    unsigned int port;
-    char host[16];
-    struct sockaddr_in server_addr;
-    bzero(&server_addr, sizeof(server_addr));
-    int len = sizeof(server_addr);
-    getsockname(sockfd, (struct sockaddr *) &server_addr, &len);
-    inet_aton(my, &server_addr.sin_addr, host, sizeof(host));
-    port = ntohs(server_addr.sin_port);
-    strcpy(&server_info->host, host);
-    server_info->port = port;
-    log_info("Bjoern listening on: %s:%ud", server_info->host, server_info->port);
+    server_info.sockfd = socketfd;
+    server_info.host = host;
+    server_info.port = port;
 
     // Action starts
     _initialize_request_module(&server_info);
@@ -138,7 +128,7 @@ static struct PyModuleDef module = {
         NULL,
         -1, /* size of per-interpreter state of the module,
          or -1 if the module keeps state in global variables. */
-        Bjoern_FunctionTable,
+        NULL,
         NULL, NULL, NULL, NULL
 };
 

@@ -1,4 +1,6 @@
-PyObject *cffi_run(int *socket,
+PyObject *cffi_run(int *socketfd,
+                   char *host,
+                   int port,
                    PyObject *wsgi_app,
                    int max_body_len,
                    int max_header_fields,

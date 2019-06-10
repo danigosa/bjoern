@@ -5,7 +5,7 @@
 #include <ev.h>
 
 typedef struct {
-    int sockfd;
+    int *sockfd;
     int max_body_len;
     int max_header_fields;
     int max_header_field_len;
@@ -13,8 +13,8 @@ typedef struct {
     int log_console_level;
     int log_file_level;
     int log_file;
-    char * host;
-    PyObject * wsgi_app;
+    char *host;
+    PyObject *wsgi_app;
 } ServerInfo;
 
 typedef struct {
