@@ -97,6 +97,8 @@ cffi_run(long socketfd,
     }
 
     // Set socket
+    log_debug("Socket");
+    log_debug("Socket: %d", socketfd);
     if (socketfd < 0) {
         log_debug("Socket: Not a file descriptor");
         return NULL;
@@ -104,10 +106,14 @@ cffi_run(long socketfd,
     server_info.sockfd = socketfd;
     server_info.host = host;
     server_info.port = port;
+    log_debug("Socket: %s:%l", host, port);
 
     // Action starts
     _initialize_request_module(&server_info);
+    log_debug("Request module initialized");
+
     server_run(&server_info);
+    log_info("Bjoern listening at: %s:%l", host, port);
 
     Py_RETURN_NONE;
 }

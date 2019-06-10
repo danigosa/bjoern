@@ -12,7 +12,7 @@ typedef struct {
     long port;
     long log_console_level;
     long log_file_level;
-    long log_file;
+    wchar_t *log_file;
     wchar_t *host;
     PyObject *wsgi_app;
 } ServerInfo;
