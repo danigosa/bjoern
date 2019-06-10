@@ -5,7 +5,16 @@ ffibuilder = FFI()
 
 ffibuilder.cdef(
     """
-void * server_run_cffi(int *fdsocket, void *args);
+void * server_run_cffi(int *socketfd,
+                   char *host,
+                   int port,
+                   void *wsgi_app,
+                   int max_body_len,
+                   int max_header_fields,
+                   int max_header_field_len,
+                   int log_console_level,
+                   int log_file_level,
+                   char *file_log);
 """
 )
 
@@ -29,8 +38,26 @@ ffibuilder.set_source(
     #include <Python.h>
     #include <_bjoernmodule.h>
     
-    PyObject * server_run_cffi(int *fdsocket, PyObject *args) {
-      return cffi_run(fdsocket, args);
+    PyObject * server_run_cffi(int *socketfd,
+                   char *host,
+                   int port,
+                   void *wsgi_app,
+                   int max_body_len,
+                   int max_header_fields,
+                   int max_header_field_len,
+                   int log_console_level,
+                   int log_file_level,
+                   char *file_log) {
+      return cffi_run(socketfd,
+                      host, 
+                      port, 
+                      wsgi_app, 
+                      max_body_len, 
+                      max_header_fields, 
+                      max_header_field_len,
+                      log_console_level,
+                      log_file_level,
+                      file_log);
     }
     """,
     libraries=["c", "python3.6m", "ev"],

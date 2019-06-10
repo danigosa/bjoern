@@ -122,13 +122,17 @@ cffi_run(int *socketfd,
     Py_RETURN_NONE;
 }
 
+static PyMethodDef Bjoern_FunctionTable[] = {
+        {NULL,         NULL,              0,            NULL}
+};
+
 static struct PyModuleDef module = {
         PyModuleDef_HEAD_INIT,
         "bjoern",
         NULL,
         -1, /* size of per-interpreter state of the module,
          or -1 if the module keeps state in global variables. */
-        NULL,
+        Bjoern_FunctionTable,
         NULL, NULL, NULL, NULL
 };
 
