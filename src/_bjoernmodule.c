@@ -1,5 +1,7 @@
 #include <Python.h>
 #include <stdio.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include "server.h"
 #include "wsgi.h"
 #include "filewrapper.h"
@@ -18,97 +20,86 @@ char *slice_str(const char *str, size_t size, size_t start, size_t end) {
     return buffer;
 }
 
-static PyObject *
-run(PyObject *self, PyObject *args) {
-    ServerInfo info;
+// Global information
+static ServerInfo *server_info = malloc(sizeof(ServerInfo));
 
-    PyObject *socket;
+PyObject *
+cffi_run(int *socket,
+         PyObject *wsgi_app,
+         int max_body_len,
+         int max_header_fields,
+         int max_header_field_len,
+         int log_console_level,
+         int log_file_level,
+         char *file_log) {
 
-    PyObject *log_console_level;
-    PyObject *log_file_level;
-    PyObject *log_file;
-
-    if (!PyArg_ParseTuple(args, "OOOOOOOO:server_run",
-                          &socket,
-                          &info.wsgi_app,
-                          &info.max_body_len,
-                          &info.max_header_fields,
-                          &info.max_header_field_len,
-                          &log_console_level,
-                          &log_file_level,
-                          &log_file)) {
-        return NULL;
-    }
+    // Init global info
+    server_info->sockfd = socket;
+    server_info->max_body_len = max_body_len;
+    server_info->max_header_fields = max_header_fields;
+    server_info->max_header_field_len = max_header_field_len;
+    server_info->wsgi_app = wsgi_app;
 
     // Set console logging
-    info.log_console_level = log_console_level;
-    long l_console_level = _AsLong(info.log_console_level);
-    int console_level = 0;
-    switch (l_console_level) {
+    switch (log_console_level) {
         case 0:
-            console_level = LOG_TRACE;
+            log_set_console_level(LOG_TRACE);
             break;
         case 10:
-            console_level = LOG_DEBUG;
+            log_set_console_level(LOG_DEBUG);
             break;
         case 20:
-            console_level = LOG_INFO;
+            log_set_console_level(LOG_INFO);
             break;
         case 30:
-            console_level = LOG_WARN;
+            log_set_console_level(LOG_WARN);
             break;
         case 40:
-            console_level = LOG_ERROR;
+            log_set_console_level(LOG_ERROR);
             break;
         case 50:
-            console_level = LOG_FATAL;
+            log_set_console_level(LOG_FATAL);
             break;
         default:
-            console_level = LOG_INFO;
             log_set_console_level(LOG_INFO);
             break;
     }
-    log_set_console_level(console_level);
-    log_info("ConsoleLogging level set to: %d", console_level * 10);
+    server_info->log_console_level = log_console_level;
+    log_info("ConsoleLogging level set to: %d", log_console_level);
 
     // Set file logging
-    if (info.log_file != NULL) {
+    if (file_log > 0) {
         // Check if stdout/stderr
-        info.log_file_level = log_file_level;
-        info.log_file = log_file;
-        long l_file_level = _AsLong(info.log_file_level);
-        const char *log_file_str = _UnicodeAsData(info.log_file);
+        server_info->log_file_level = log_file_level;
         if (!strcmp(log_file_str, "-")) {
             // Check level
             FILE *_fd = fopen(log_file_str, "w");
             log_set_fp(_fd);
-            int file_level = 0;
-            switch (l_file_level) {
+            switch (log_file_level) {
                 case 0:
-                    file_level = LOG_TRACE;
+                    log_set_file_level(LOG_TRACE);
                     break;
                 case 10:
-                    file_level = LOG_DEBUG;
+                    log_set_file_level(LOG_DEBUG);
                     break;
                 case 20:
-                    file_level = LOG_INFO;
+                    log_set_file_level(LOG_INFO);
                     break;
                 case 30:
-                    file_level = LOG_WARN;
+                    log_set_file_level(LOG_WARN);
                     break;
                 case 40:
-                    file_level = LOG_ERROR;
+                    log_set_file_level(LOG_ERROR);
                     break;
                 case 50:
-                    file_level = LOG_FATAL;
+                    log_set_file_level(LOG_FATAL);
                     break;
                 default:
-                    file_level = LOG_INFO;
                     log_set_file_level(LOG_INFO);
                     break;
             }
-            log_set_file_level(file_level);
-            log_info("FileLogging level on %s set to: %d", log_file_str, file_level * 10);
+            server_info->log_file_level = log_file_level;
+            log_info("FileLogging level on %s set to: %d", log_file_str, log_file_level);
         } else {
             log_info("FileLogging not set as it is stdout");
         }
@@ -116,55 +107,30 @@ run(PyObject *self, PyObject *args) {
         log_info("No FileLogging set");
     }
 
-    // Check socket
-    info.sockfd = PyObject_AsFileDescriptor(socket);
-    if (info.sockfd < 0) {
+    // Get socket
+    if (socket < 0) {
         log_debug("Socket: Not a file descriptor");
         return NULL;
     }
-
-    info.host = NULL;
-    if (PyObject_HasAttrString(socket, "getsockname")) {
-        PyObject *sockname = PyObject_CallMethod(socket, "getsockname", NULL);
-        if (sockname == NULL) {
-            log_debug("Socket: Bad socketname");
-            return NULL;
-        }
-        if (PyTuple_CheckExact(sockname) && PyTuple_GET_SIZE(sockname) == 2) {
-            /* Standard (ipaddress, port) case */
-            info.host = PyTuple_GET_ITEM(sockname, 0);
-            info.port = PyTuple_GET_ITEM(sockname, 1);
-        }
-    }
-    PyObject *objectsRepresentation = PyObject_Repr(info.host);
-    PyObject *str = PyUnicode_AsEncodedString(objectsRepresentation, "utf-8", "~E~");
-    char *host = PyBytes_AS_STRING(str);
-    char *fmt_host = slice_str(host, strlen(host), 1, strlen(host) - 2);
-    log_info("Bjoern single-threaded started and listening on %.12s:%ld",
-             fmt_host,
-             _AsLong(info.port));
-    Py_DECREF(objectsRepresentation);
-    Py_DECREF(str);
-    free(fmt_host);
+    server_info->sockfd = socket;
+    unsigned int port;
+    char host[16];
+    struct sockaddr_in server_addr;
+    bzero(&server_addr, sizeof(server_addr));
+    int len = sizeof(server_addr);
+    getsockname(sockfd, (struct sockaddr *) &server_addr, &len);
+    inet_aton(my, &server_addr.sin_addr, host, sizeof(host));
+    port = ntohs(server_addr.sin_port);
+    strcpy(&server_info->host, host);
+    server_info->port = port;
+    log_info("Bjoern listening on: %s:%ud", server_info->host, server_info->port);
 
     // Action starts
-    _initialize_request_module(&info);
-    server_run(&info);
-
+    _initialize_request_module(&server_info);
+    server_run(&server_info);
 
     Py_RETURN_NONE;
 }
-
-PyObject *
-cffi_run(int *fdsocket, PyObject *args) {
-    return run(fdsocket, args);
-}
-
-
-static PyMethodDef Bjoern_FunctionTable[] = {
-        {"server_run", (PyCFunction) run, METH_VARARGS, NULL},
-        {NULL,         NULL,              0,            NULL}
-};
 
 static struct PyModuleDef module = {
         PyModuleDef_HEAD_INIT,

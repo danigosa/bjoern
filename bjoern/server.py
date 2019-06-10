@@ -93,15 +93,13 @@ def server_run(
 ):
     lib.server_run_cffi(
         sock,
-        (
-            wsgi_app,
-            max_body_len,
-            max_header_fields,
-            max_header_field_len,
-            log_console_level,
-            log_file_level,
-            file_log,
-        ),
+        wsgi_app,
+        max_body_len,
+        max_header_fields,
+        max_header_field_len,
+        log_console_level,
+        log_file_level,
+        file_log,
     )
 
 
