@@ -46,11 +46,11 @@ ffibuilder.set_source(
                    long max_header_field_len,
                    long log_console_level,
                    long log_file_level,
-                   wchar_t *file_log) {
-    return cffi_run(socketfd,
+                   wchar_t *file_log) {           
+        return cffi_run(socketfd,
                       host, 
                       port, 
-                      (PyObject *)wsgi_app, 
+                      (PyObject*)wsgi_app, 
                       max_body_len, 
                       max_header_fields, 
                       max_header_field_len,

@@ -98,7 +98,7 @@ def server_run(
     cffi_wsgi = ffi.new_handle(wsgi_app)
     cffi_host = ffi.new("char[]", host.encode())
     cffi_file_log = ffi.new("char[]", file_log.encode())
-    lib.server_run_cffi(
+    lib.cffi_run(
         sockfd,
         cffi_host,
         port,

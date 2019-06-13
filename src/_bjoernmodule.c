@@ -10,7 +10,7 @@
 
 PyObject *
 cffi_run(long socketfd,
-         wchar_t *host,
+         wchar_t **host,
          long port,
          PyObject *wsgi_app,
          long max_body_len,
@@ -18,7 +18,7 @@ cffi_run(long socketfd,
          long max_header_field_len,
          long log_console_level,
          long log_file_level,
-         wchar_t *file_log) {
+         wchar_t **file_log) {
 
     // Global information
     ServerInfo server_info;
@@ -60,7 +60,7 @@ cffi_run(long socketfd,
     if (file_log > 0) {
         // Check if stdout/stderr
         server_info.log_file_level = log_file_level;
-        if (!wcscmp(file_log, (wchar_t *) "-")) {
+        if (!wcscmp(*file_log, (wchar_t *) "-")) {
             // Check level
             FILE *_fd = fopen((char *) file_log, "w");
             log_set_fp(_fd);
@@ -104,14 +104,12 @@ cffi_run(long socketfd,
                 NULL;
     }
     server_info.sockfd = socketfd;
-    wcscpy(server_info.host, host);
+    wcscpy(server_info.host, *host);
     server_info.port = port;
     log_info("Socket bound: %d:%s:%ld", server_info.sockfd, server_info.host, server_info.port);
 
     // Action starts
-    GIL_LOCK(0);
     _initialize_request_module(&server_info);
-    GIL_UNLOCK(0);
     log_info("Request module initialized");
 
     server_run(&server_info);
