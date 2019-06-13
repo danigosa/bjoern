@@ -59,7 +59,7 @@ ffibuilder.set_source(
                       file_log);
     }
     """,
-    libraries=["c", "python3.6m", "ev"],
+    libraries=["c", "ev"],
     extra_objects=libs,
     include_dirs=includes,
 )  # library name, for the linker

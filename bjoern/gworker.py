@@ -2,9 +2,10 @@ import os
 import socket
 import sys
 
+from gunicorn.workers.base import Worker
+
 import bjoern
 from bjoern import DEFAULT_MAX_FIELD_LEN, DEFAULT_MAX_HEADER_FIELDS
-from gunicorn.workers.base import Worker
 
 
 class BjoernWorker(Worker):

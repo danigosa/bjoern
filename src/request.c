@@ -434,6 +434,7 @@ void _initialize_request_module(ServerInfo *server_info) {
         /* dct['SERVER_NAME'] = '...'
          * dct['SERVER_PORT'] = '...'
          * Both are required by WSGI specs. */
+        log_info("Request module initialized up to WSGI specs");
         if (server_info->host) {
             PyDict_SetItemString(wsgi_base_dict, "SERVER_NAME", _PEP3333_StringFromFormat("%s", server_info->host));
 
@@ -441,7 +442,7 @@ void _initialize_request_module(ServerInfo *server_info) {
                 PyDict_SetItemString(wsgi_base_dict, "SERVER_PORT", _PEP3333_StringFromFormat(""));
             } else {
                 PyDict_SetItemString(wsgi_base_dict, "SERVER_PORT",
-                                     _PEP3333_StringFromFormat("%i", server_info->port));
+                                     _PEP3333_StringFromFormat("%l", server_info->port));
             }
         } else {
             /* SERVER_NAME is required, but not usefull with UNIX type sockets */

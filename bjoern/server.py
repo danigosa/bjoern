@@ -96,9 +96,11 @@ def server_run(
     if file_log is None:
         file_log = "-"
     cffi_wsgi = ffi.new_handle(wsgi_app)
+    cffi_host = ffi.new("char[]", host.encode())
+    cffi_file_log = ffi.new("char[]", file_log.encode())
     lib.server_run_cffi(
         sockfd,
-        host,
+        cffi_host,
         port,
         cffi_wsgi,
         max_body_len,
@@ -106,7 +108,7 @@ def server_run(
         max_header_field_len,
         log_console_level,
         log_file_level,
-        file_log,
+        cffi_file_log,
     )
 
 
@@ -177,7 +179,7 @@ def listen(
 def run(
     wsgi_app,
     host,
-    port=None,
+    port=8080,
     log_console_level=DEFAULT_LOG_CONSOLE_LEVEL,
     log_file_level=DEFAULT_LOG_FILE_LEVEL,
     log_file=DEFAULT_LOG_FILE,

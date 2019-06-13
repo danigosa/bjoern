@@ -91,7 +91,7 @@ setup-36: clean prepare-build reqs-36
 setup-37: clean prepare-build reqs-37
 setup-pypy: clean prepare-build reqs-pypy
 
-all-36: setup-36 $(objects) _bjoernmodule_36 test-36
+all-36: setup-36 $(objects) _bjoernmodule_36 #test-36
 all-37: setup-36 $(objects) _bjoernmodule_37 test-37
 all-pypy: setup-pypy $(objects) _bjoernmodule_pypy #test-pypy
 

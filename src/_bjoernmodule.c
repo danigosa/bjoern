@@ -60,9 +60,9 @@ cffi_run(long socketfd,
     if (file_log > 0) {
         // Check if stdout/stderr
         server_info.log_file_level = log_file_level;
-        if (!wcscmp(file_log, (wchar_t *)"-")) {
+        if (!wcscmp(file_log, (wchar_t *) "-")) {
             // Check level
-            FILE *_fd = fopen((char *)file_log, "w");
+            FILE *_fd = fopen((char *) file_log, "w");
             log_set_fp(_fd);
             switch (log_file_level) {
                 case 0:
@@ -90,6 +90,7 @@ cffi_run(long socketfd,
             server_info.log_file_level = log_file_level;
             log_info("FileLogging level on %s set to: %d", file_log, log_file_level);
         } else {
+            log_set_fp((FILE *) 0);
             log_info("FileLogging not set as it is stdout");
         }
     } else {
@@ -97,23 +98,24 @@ cffi_run(long socketfd,
     }
 
     // Set socket
-    log_debug("Socket");
-    log_debug("Socket: %d", socketfd);
     if (socketfd < 0) {
         log_debug("Socket: Not a file descriptor");
-        return NULL;
+        return
+                NULL;
     }
     server_info.sockfd = socketfd;
-    server_info.host = host;
+    wcscpy(server_info.host, host);
     server_info.port = port;
-    log_debug("Socket: %s:%l", host, port);
+    log_info("Socket bound: %d:%s:%ld", server_info.sockfd, server_info.host, server_info.port);
 
     // Action starts
+    GIL_LOCK(0);
     _initialize_request_module(&server_info);
-    log_debug("Request module initialized");
+    GIL_UNLOCK(0);
+    log_info("Request module initialized");
 
     server_run(&server_info);
-    log_info("Bjoern listening at: %s:%l", host, port);
+    log_info("Bjoern listening at: %s:%ld", server_info.host, server_info.port);
 
     Py_RETURN_NONE;
 }
