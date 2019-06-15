@@ -46,7 +46,8 @@ ffibuilder.set_source(
                    long max_header_field_len,
                    long log_console_level,
                    long log_file_level,
-                   wchar_t *file_log) {           
+                   wchar_t *file_log) {  
+       
         return cffi_run(socketfd,
                       host, 
                       port, 
@@ -57,7 +58,9 @@ ffibuilder.set_source(
                       log_console_level,
                       log_file_level,
                       file_log);
+        return 0;
     }
+    
     """,
     libraries=["c", "ev"],
     extra_objects=libs,

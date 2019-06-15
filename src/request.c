@@ -359,7 +359,9 @@ static http_parser_settings
 };
 
 void _initialize_request_module(ServerInfo *server_info) {
+    log_info("_initialize_request_module: 0");
     IO_module = PyImport_ImportModule("io");
+    log_info("_initialize_request_module: 1");
     if (IO_module == NULL) {
         /* PyImport_ImportModule should have exception set already */
         return;

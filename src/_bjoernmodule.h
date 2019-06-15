@@ -1,5 +1,5 @@
 PyObject *cffi_run(long socketfd,
-                   wchar_t **host,
+                   wchar_t *host,
                    long port,
                    PyObject *wsgi_app,
                    long max_body_len,
@@ -7,4 +7,4 @@ PyObject *cffi_run(long socketfd,
                    long max_header_field_len,
                    long log_console_level,
                    long log_file_level,
-                   wchar_t **file_log);
+                   wchar_t *file_log);
