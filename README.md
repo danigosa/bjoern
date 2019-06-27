@@ -8,8 +8,8 @@ Ryan Dahl's [http-parser](https://github.com/nodejs/http-parser).
 
 ## Python versions
 
-- Current version 4.x+ only supports CPython3.5+.
-- For those looking for CPython2.7 or CPython3.4, please use Bjoern 3.x.
+- Current version 4.x+ only supports CPython3.6+ and Pypy7.1.1+.
+- For those looking for CPython2.7 or CPython3.4/3.5, please use Bjoern 3.x.
 
 # Why It's Cool
 
@@ -31,7 +31,7 @@ featuring
 
 # Differences between 4.x+ and 3.x:
 
-- 4.x is Python 3.5+ only, tested on Ubuntu Bionic (CPython 3.6.8 and CPython 3.7.2) and Debian Stretch (CPython 3.5.3)
+- 4.x is Python 3.6+ only, tested on Ubuntu Bionic (CPython 3.6.8 and CPython 3.7.3)
 - Gunicorn support is only for 4.x and on
 - 4.x uses modern `http-parser` version (2.9.2+), and its url parser. 3.x uses an early version and a custom url parser.
 - 4.x has _gunicorn-like_ anti DoS features (body length, url legth, headers number and header field length limits)
@@ -160,6 +160,7 @@ Run tests:
 ```bash
 $ ./run-dev
 root@92310a2053bc:/bjoern# make all-36
+root@92310a2053bc:/bjoern# make all-pypy
 root@92310a2053bc:/bjoern# make all-37
 ```
 
@@ -168,6 +169,7 @@ root@92310a2053bc:/bjoern# make all-37
 ```bash
 $ ./run-dev
 root@92310a2053bc:/bjoern# make bjoern-bench-36
+root@92310a2053bc:/bjoern# make bjoern-bench-pypy
 root@92310a2053bc:/bjoern# make bjoern-bench-37
 ```
 

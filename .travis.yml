@@ -5,10 +5,8 @@ services:
 
 before_install:
   - docker build -t bjoern36-37 .
-  - docker build -t bjoern35 -f Dockerfile.py35 .
 
 script:
-  - docker run --rm -t -w /bjoern -v $(pwd):/bjoern bjoern35 make all-35
   - docker run --rm -t -w /bjoern -v $(pwd):/bjoern bjoern36-37 make all-36
   - docker run --rm -t -w /bjoern -v $(pwd):/bjoern bjoern36-37 make all-pypy
   - docker run --rm -t -w /bjoern -v $(pwd):/bjoern bjoern36-37 make all-37

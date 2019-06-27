@@ -1,7 +1,11 @@
 CHANGELOG
 =========
 
-4.0.0rc4 (June 2019)
+4.0.0 (June 2019)
+    - Added support & tests for pypy 7.1.1(python 3.6)
+    - Removed suppport & tests for Python 3.5
+
+4.0.0rc5 (June 2019)
     - Refactor GILs
 
 4.0.0rc4 (June 2019)

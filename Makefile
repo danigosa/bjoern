@@ -59,10 +59,10 @@ CPPFLAGS_35		+= $(PYTHON35_INCLUDE) -I . -I $(SOURCE_DIR) -I $(HTTP_PARSER_DIR)
 CPPFLAGS_36		+= $(PYTHON36_INCLUDE) -I . -I $(SOURCE_DIR) -I $(HTTP_PARSER_DIR)
 CPPFLAGS_37		+= $(PYTHON37_INCLUDE) -I . -I $(SOURCE_DIR) -I $(HTTP_PARSER_DIR)
 CPPFLAGS_PYPY	+= -isystem $(PYPY36_INSTALL)/include -I . -I $(SOURCE_DIR) -I $(HTTP_PARSER_DIR)
-CFLAGS			+= $(FEATURES) -std=c99 -fno-strict-aliasing -fcommon -fPIC -Wall -D DEBUG
+CFLAGS			+= $(FEATURES) -std=c11 -fno-strict-aliasing -fcommon -fPIC -Wall -D DEBUG
 LDFLAGS_36		+= $(PYTHON36_LDFLAGS) -shared -fcommon
 LDFLAGS_37		+= $(PYTHON37_LDFLAGS) -shared -fcommon
-LDFLAGS_PYPY	+= -L$(PYPY36_INSTALL)/lib -L/usr/lib -L$(PYPY36_INSTALL)/lib_pypy -lpython3.6m -lpthread -ldl  -lutil -lm  -Xlinker -export-dynamic -Wl,-O1 -Wl,-Bsymbolic-functions -shared -fcommon
+LDFLAGS_PYPY	+= -L$(PYPY36_INSTALL)/lib -L/usr/lib -L$(PYPY36_INSTALL)/lib_pypy -lpython3.6m -lpthread -ldl -lutil -lm  -Xlinker -export-dynamic -Wl,-O1 -Wl,-Bsymbolic-functions -shared -fcommon
 
 AB			:= ab -c 100 -n 10000
 TEST_URL	:= "http://127.0.0.1:8080/a/b/c?k=v&k2=v2"
@@ -99,7 +99,7 @@ setup-36: clean prepare-build reqs-36
 setup-37: clean prepare-build reqs-37
 setup-pypy: clean prepare-build reqs-pypy
 
-all-35: setup-35 $(objects) _bjoernmodule_35 test-35
+all-35: print-env setup-35 $(objects) _bjoernmodule_35 test-35
 all-36: setup-36 $(objects) _bjoernmodule_36 test-36
 all-37: setup-36 $(objects) _bjoernmodule_37 test-37
 all-pypy: setup-pypy $(objects) _bjoernmodule_pypy test-pypy
@@ -131,9 +131,9 @@ _bjoernmodule_pypy:
 	$(CC) $(CPPFLAGS_PYPY) $(CFLAGS) $(LDFLAGS_PYPY) $(objects) -o $(BUILD_DIR)/_bjoern.so -lev
 	PYTHONPATH=$$PYTHONPATH:$(BUILD_DIR) $(PYPY36) -c 'import bjoern;print(f"Bjoern version: {bjoern.__version__}");'
 
-again-36: all-36
-again-37: all-37
-again-pypy: all-pypy
+again-36: print-env all-36
+again-37: print-env all-37
+again-pypy: print-env all-pypy
 
 $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.c
 	@echo ' -> ' $(CC) $(CPPFLAGS_36) $(CFLAGS) -c $< -o $@
@@ -354,7 +354,7 @@ _clean_bench_pypy:
 	@rm -rf bjoern/bench/*pypy.txt
 
 bjoern-bench-36: _clean_bench_36 setup-36 install-36-bench flask-ab-36 bottle-ab-36 falcon-ab-36 flask-ab-gunicorn-36 flask-ab-gworker-36 flask-ab-gworker-multi-36
-bjoern-bench-pypy: _clean_bench_pypy setup-pypy install-pypy-bench bottle-ab-pypy #falcon-ab-pypy flask-ab-pypy flask-ab-gworker-pypy
+bjoern-bench-pypy: _clean_bench_pypy setup-pypy install-pypy-bench bottle-ab-pypy falcon-ab-pypy flask-ab-pypy flask-ab-gworker-pypy
 bjoern-legacy-bench-36: _clean_bench_36 setup-36 install-legacy-bench-36 flask-ab-36 bottle-ab-36 falcon-ab-36
 
 
