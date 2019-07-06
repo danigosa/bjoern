@@ -12,6 +12,8 @@ RUN \
   apt-get -qq update && \
   apt-get -qq install --no-install-recommends \
 	build-essential \
+	gcc-8 \
+	g++-8 \
 	gnupg2 \
 	git \
 	vim \
@@ -25,6 +27,8 @@ RUN \
 	apache2-utils \
 	gridsite-clients \
 	libev-dev && \
+  update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 700 --slave /usr/bin/g++ g++ /usr/bin/g++-7 && \
+  update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 800 --slave /usr/bin/g++ g++ /usr/bin/g++-8 && \
   wget -O /tmp/checkmake.deb \
     --content-disposition https://packagecloud.io/mrtazz/checkmake/packages/ubuntu/trusty/checkmake_0.1.0-1_amd64.deb/download.deb && \
   dpkg -i /tmp/checkmake.deb && rm -f /tmp/checkmake.deb && \
