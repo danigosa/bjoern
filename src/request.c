@@ -280,7 +280,6 @@ on_body(http_parser *parser, const char *data, const size_t len) {
     /* Write data to request buffer */
     BUFFER_PUSH(REQUEST->io_buffer, data, len);
     if (REQUEST->io_buffer == NULL) {
-        fprintf(stderr, "Could not PUSH data into buffer (%zd)", len);
         return 1; // out of capacity
     }
 

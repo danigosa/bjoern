@@ -111,7 +111,7 @@ flask-ab-gworker-pypy: $(flask_gworker_bench_pypy) $(ab_post)
 	$(AB) -T 'application/x-www-form-urlencoded' -T 'Expect: 100-continue' -k -p $(ab_post) $(TEST_URL) | tee -a $(flask_gworker_bench_pypy)
 	@killall -9 gunicorn && sleep 2
 
-$(flask_gunicorn_bench_pypy):
+$(flask_gunicorn_bench_36):
 	@$(GUNICORN36) bjoern.bench.flask_bench:app --bind localhost:8080 --log-level info --backlog 2048 --timeout 1800 &
 	@sleep 2
 

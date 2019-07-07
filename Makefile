@@ -59,7 +59,7 @@ CPPFLAGS_35		+= $(PYTHON35_INCLUDE) -I . -I $(SOURCE_DIR) -I $(HTTP_PARSER_DIR)
 CPPFLAGS_36		+= $(PYTHON36_INCLUDE) -I . -I $(SOURCE_DIR) -I $(HTTP_PARSER_DIR)
 CPPFLAGS_37		+= $(PYTHON37_INCLUDE) -I . -I $(SOURCE_DIR) -I $(HTTP_PARSER_DIR)
 CPPFLAGS_PYPY	+= -isystem $(PYPY36_INSTALL)/include -I . -I $(SOURCE_DIR) -I $(HTTP_PARSER_DIR)
-CFLAGS			+= $(FEATURES) -std=c11 -fno-strict-aliasing -fcommon -fPIC -Wall -D DEBUG
+CFLAGS			+= $(FEATURES) -std=c17 -fno-strict-aliasing -fcommon -fPIC -Wall -D DEBUG
 LDFLAGS_36		+= $(PYTHON36_LDFLAGS) -shared -fcommon
 LDFLAGS_37		+= $(PYTHON37_LDFLAGS) -shared -fcommon
 LDFLAGS_PYPY	+= -L$(PYPY36_INSTALL)/lib -L/usr/lib -L$(PYPY36_INSTALL)/lib_pypy -lpython3.6m -lpthread -ldl -lutil -lm  -Xlinker -export-dynamic -Wl,-O1 -Wl,-Bsymbolic-functions -shared -fcommon
