@@ -36,7 +36,7 @@ def bind_and_listen(
         # Socket is already bound and listening (gunicorn)
         sock = socket.socket(fileno=fileno)
 
-    if sock is None and host.startswith("unix:@"):
+    elif host.startswith("unix:@"):
         # Abstract UNIX socket: "unix:@foobar"
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         sock.bind("\0" + host[6:])
@@ -73,7 +73,8 @@ def bind_and_listen(
 
         sock.bind((host, int(port)))
 
-    sock.listen(listen_backlog)
+    if fileno is None:
+        sock.listen(listen_backlog)  # Only if no gunicorn
 
     return sock
 

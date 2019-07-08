@@ -38,7 +38,7 @@ def unix_app():
         time.sleep(1)  # Should be enough for the server to stop
 
 
-@pytest.mark.skipif(sys.version_info > (3, 6), reason="requires python3.6 or lower")
+@pytest.mark.skipif(sys.version_info == (3, 7), reason="requires python3.6")
 def test_unix_app(unix_app):
     response = session.get(
         "http+unix://{}/a/b/c?k=v&k2=v2".format(urllib.parse.quote_plus(UNIX_SOCKET))
