@@ -28,6 +28,7 @@ pip="$1"
     readme-renderer     \
     requests            \
     requests-toolbelt   \
+    requests-unixsocket \
     six                 \
     toml                \
     tqdm                \

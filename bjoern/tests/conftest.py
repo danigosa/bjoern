@@ -45,9 +45,9 @@ def client():
     return TestClient()
 
 
-def _run_app(app, reuse_port=False):
+def _run_app(app, host="localhost", port=8080, reuse_port=False):
     def _start_server(_app_):
-        bjoern.run(_app_, "localhost", 8080, reuse_port=reuse_port)
+        bjoern.run(_app_, host, port, reuse_port=reuse_port)
 
     p = Process(target=_start_server, args=(app,))
     p.start()

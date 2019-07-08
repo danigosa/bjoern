@@ -3,6 +3,7 @@ import os
 import signal
 import socket
 import sys
+import traceback
 
 import _bjoern
 from bjoern import (
@@ -37,12 +38,12 @@ def bind_and_listen(
 
     if sock is None and host.startswith("unix:@"):
         # Abstract UNIX socket: "unix:@foobar"
-        sock = socket.socket(socket.AF_UNIX)
+        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         sock.bind("\0" + host[6:])
 
     elif sock is None and host.startswith("unix:"):
         # UNIX socket: "unix:/tmp/foobar.sock"
-        sock = socket.socket(socket.AF_UNIX)
+        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         sock.bind(host[5:])
 
     else:
@@ -70,9 +71,9 @@ def bind_and_listen(
             # Set socket keepalive
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
 
-    if fileno is None:
         sock.bind((host, int(port)))
-        sock.listen(listen_backlog)
+
+    sock.listen(listen_backlog)
 
     return sock
 
@@ -80,6 +81,8 @@ def bind_and_listen(
 def server_run(
     sockfd, host, port, wsgi_app, max_body_len, max_header_fields, max_header_field_len
 ):
+    if isinstance(port, str):
+        port = 0  # UNIX file socket has no port
     _bjoern.server_run(
         sockfd,
         host,
@@ -205,21 +208,17 @@ def run(
             max_header_fields,
             max_header_field_len,
         )
-    except Exception as e:
-        print("Something wrong in the worker: {}".format(e))
     finally:
         if sock.family == socket.AF_UNIX:
             filename = sock.getsockname()
             if filename[0] != "\0":
                 os.unlink(sock.getsockname())
+        sock.shutdown(socket.SHUT_RDWR)
         sock.close()
         _default_instance = None
 
 
 def trace_on_abort():
-    import signal
-    import traceback
-
     def print_trace(sig, frame):
         trace = "".join(traceback.format_stack(frame))
         exec_info = sys.exc_info()
