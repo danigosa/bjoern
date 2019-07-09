@@ -112,31 +112,28 @@ typedef struct {
 /* MAP */
 
 // Binary Tree as C Map<str, str>
-struct {
+typedef struct {
     char *key;
     char *value;
 } KeyValuePair;
-#define MAP_KEYCMP(a, b) \
-    do { \
-        const struct KeyValuePair *a = _a; \
-        const struct KeyValuePair *b = _b; \
-        return strcmp(a->key, b->key); \
-    } while(0)
-#define MAP_SET(root, key, value) \
+
+int map_key_compare(const void *a, const void *b);
+
+#define MAP_SET(root, cpkey, cpvalue) \
     do { \
         KeyValuePair *np = malloc(sizeof(KeyValuePair)); \
         if (np == NULL) { \
             fprintf(stderr, "insufficient memory\n"); \
             exit(EXIT_FAILURE); \
         } \
-        np->key = strdup(key); \
-        np->value = strdup(value); \
-        void *kvp = tfind(np, &root, MAP_KEYCMP); \
+        np->key = strdup(cpkey); \
+        np->value = strdup(cpvalue); \
+        KeyValuePair *kvp = (KeyValuePair *) tfind(np, &root, map_key_compare); \
         if (kvp != NULL) { \
-            kvp->value = strdup(value); \
+            kvp->value = strdup(cpvalue); \
             return kvp; \
         } else { \
-            np = tsearch(np, &root, MAP_KEYCMP); \
+            np = tsearch(np, &root, map_key_compare); \
             if (np == NULL) { \
                 fprintf(stderr, "insufficient memory\n"); \
                 exit(EXIT_FAILURE); \
@@ -144,17 +141,17 @@ struct {
             return np; \
         } \
      } while(0)
-#define MAP_SET_OR_APPEND(root, key, value) \
+#define MAP_SET_OR_APPEND(root, cpkey, cpvalue) \
     do { \
         KeyValuePair *np = malloc(sizeof(KeyValuePair)); \
-        np->key = strdup(key); \
-        np->value = strdup(value); \
-        void *kvp = tfind(np, &root, MAP_KEYCMP); \
+        np->key = strdup(cpkey); \
+        np->value = strdup(cpvalue); \
+        KeyValuePair *kvp = (KeyValuePair *) tfind(np, &root, map_key_compare); \
         if (kvp != NULL) { \
-            kvp->value = concat_str(kvp->value, value); \
+            kvp->value = concat_str(kvp->value, cpvalue); \
             return kvp; \
         } else { \
-            np = tsearch(np, &root, MAP_KEYCMP); \
+            np = tsearch(np, &root, map_key_compare); \
             if (np == NULL) { \
                 fprintf(stderr, "insufficient memory\n"); \
                 exit(EXIT_FAILURE); \
@@ -170,15 +167,15 @@ struct {
     do { \
        twalk(root, action); \
     } while(0)
-#define MAP_GETITEM(root, key) \
+#define MAP_GETITEM(root, cpkey) \
     do { \
         KeyValuePair *np = malloc(sizeof(KeyValuePair)); \
         if (np == NULL) { \
             fprintf(stderr, "insufficient memory\n"); \
             exit(EXIT_FAILURE); \
         }  \
-        np->key = strdup(key); \
-        void *kvp = tfind(np, &root, MAP_KEYCMP); \
+        np->key = strdup(cpkey); \
+        KeyValuePair *kvp = (KeyValuePair *) tfind(np, &root, map_key_compare); \
         if (kvp != NULL) \
             return kvp->value; \
         return NULL \

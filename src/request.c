@@ -124,7 +124,7 @@ on_url(http_parser *parser, const char *path, size_t len) {
         char query_part[1024];
         memcpy(query_part, path + URL_PARSER.field_data[UF_QUERY].off, URL_PARSER.field_data[UF_QUERY].len);
         query_part[URL_PARSER.field_data[UF_QUERY].len] = '\0';
-        MAP_SET_OR_APPEND(REQUEST->headers, _QUERY_STRING, query_part);
+        MAP_SET_OR_APPEND(REQUEST->headers, (char *)(_QUERY_STRING), query_part);
         query_part_len = URL_PARSER.field_data[UF_QUERY].len;
     }
 
@@ -137,7 +137,7 @@ on_url(http_parser *parser, const char *path, size_t len) {
         char path_part[path_len];
         memcpy(path_part, path + URL_PARSER.field_data[UF_PATH].off, URL_PARSER.field_data[UF_PATH].len);
         path_part[URL_PARSER.field_data[UF_PATH].len] = '\0';
-        MAP_SET_OR_APPEND(REQUEST->headers, _PATH_INFO, path_part);
+        MAP_SET_OR_APPEND(REQUEST->headers, (char *)(_PATH_INFO), path_part);
     }
 
     return 0;

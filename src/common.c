@@ -54,3 +54,9 @@ char *concat_str(const char *s1, const char *s2) {
     memcpy(result + len1, s2, len2 + 1);
     return result;
 }
+
+int map_key_compare(const void *a, const void *b) {
+    const struct KeyValuePair *a = _a;
+    const struct KeyValuePair *b = _b;
+    return strcmp(a->key, b->key);
+}
