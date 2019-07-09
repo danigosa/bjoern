@@ -6,8 +6,6 @@
 #include "common.h"
 #include "server.h"
 
-void _initialize_request_module();
-
 typedef struct http_parser_url http_parser_url;
 
 typedef struct {
@@ -50,7 +48,7 @@ typedef struct {
     ThreadInfo *thread_info;
     request_state state;
 
-    PyObject *headers;
+    void *headers;
     PyObject *current_chunk;
     Py_ssize_t current_chunk_p;
     PyObject *iterable;

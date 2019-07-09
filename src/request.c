@@ -9,14 +9,15 @@
 static inline void PyDict_ReplaceKey(PyObject *dict, PyObject *k1, PyObject *k2);
 
 static http_parser_settings parser_settings;
-static PyObject *wsgi_base_dict = NULL;
 
 static PyObject *IO_module;
 
 Request *Request_new(ThreadInfo *thread_info, int client_fd, const char *client_addr) {
     Request *request = malloc(sizeof(Request));
-    if (request == NULL)
-        return NULL;  // No more memory?
+    if (request == NULL){
+        fprintf(stderr, "insufficient memory\n");
+        exit(EXIT_FAILURE);
+    }
 #ifdef DEBUG
     static unsigned long request_id = 0;
     request->id = request_id++;
@@ -25,9 +26,8 @@ Request *Request_new(ThreadInfo *thread_info, int client_fd, const char *client_
     request->client_fd = client_fd;
     request->client_addr = client_addr;
     request->is_final = 0;
+    request->headers = NULL;
     BUFFER_INIT(request->io_buffer);
-    if (request->io_buffer == NULL)
-        return NULL; // memento
     http_parser_init((http_parser *) &request->parser, HTTP_REQUEST);
     http_parser_url_init(&request->parser.url_parser);
     request->parser.parser.data = request;
@@ -44,6 +44,7 @@ void Request_reset(Request *request) {
     request->parser.last_call_was_header_value = true;
     request->parser.invalid_header = false;
     request->is_final = 0;
+    request->headers = NULL;
     request->parser.field = NULL;
     request->thread_info->header_fields = 0;
     request->thread_info->payload_size = 0;
@@ -52,6 +53,7 @@ void Request_reset(Request *request) {
 void Request_free(Request *request) {
     Request_clean(request);
     BUFFER_FREE(request->io_buffer);
+    MAP_FREE(request->headers);
     free(request);
 }
 
@@ -72,7 +74,6 @@ void Request_clean(Request *request) {
         Py_DECREF(request->iterable);
     }
     Py_XDECREF(request->iterator);
-    Py_XDECREF(request->headers);
 }
 
 /* Parse stuff */
@@ -90,35 +91,6 @@ void Request_parse(Request *request, const char *data, const size_t data_len) {
 #define PARSER  ((bj_parser*)parser)
 #define URL_PARSER  (((bj_parser*)parser)->url_parser)
 
-#define _set_header(k, v) \
-  do { \
-    PyDict_SetItem(REQUEST->headers, k, v); \
-} while(0)
-
-/* PyDict_SetItem() increases the ref-count for value */
-#define _set_header_free_value(k, v) \
-  do { \
-    PyObject* val = (v); \
-    PyDict_SetItem(REQUEST->headers, k, v); \
-    Py_DECREF(val); \
-  } while(0)
-
-static void
-_set_or_append_header(PyObject *headers, PyObject *k, const char *val, size_t len) {
-    GIL_LOCK(0);
-    PyObject *py_val = _PEP3333_String_FromLatin1StringAndSize(val, len);
-    PyObject *py_val_old = PyDict_GetItem(headers, k);
-
-    if (py_val_old) {
-        PyObject *py_val_new = _PEP3333_String_Concat(py_val_old, py_val);
-        PyDict_SetItem(headers, k, py_val_new);
-        Py_DECREF(py_val_new);
-    } else {
-        PyDict_SetItem(headers, k, py_val);
-    }
-    Py_DECREF(py_val);
-    GIL_UNLOCK(0);
-}
 
 static int
 on_message_begin(http_parser *parser) {
@@ -152,7 +124,7 @@ on_url(http_parser *parser, const char *path, size_t len) {
         char query_part[1024];
         memcpy(query_part, path + URL_PARSER.field_data[UF_QUERY].off, URL_PARSER.field_data[UF_QUERY].len);
         query_part[URL_PARSER.field_data[UF_QUERY].len] = '\0';
-        _set_or_append_header(REQUEST->headers, _QUERY_STRING, query_part, URL_PARSER.field_data[UF_QUERY].len);
+        MAP_SET_OR_APPEND(REQUEST->headers, _QUERY_STRING, query_part);
         query_part_len = URL_PARSER.field_data[UF_QUERY].len;
     }
 
@@ -165,7 +137,7 @@ on_url(http_parser *parser, const char *path, size_t len) {
         char path_part[path_len];
         memcpy(path_part, path + URL_PARSER.field_data[UF_PATH].off, URL_PARSER.field_data[UF_PATH].len);
         path_part[URL_PARSER.field_data[UF_PATH].len] = '\0';
-        _set_or_append_header(REQUEST->headers, _PATH_INFO, path_part, URL_PARSER.field_data[UF_PATH].len);
+        MAP_SET_OR_APPEND(REQUEST->headers, _PATH_INFO, path_part);
     }
 
     return 0;
@@ -247,9 +219,7 @@ on_header_value(http_parser *parser, const char *value, size_t len) {
         return 1;  // Memory likely to be exhausted
     if (!PARSER->invalid_header) {
         /* Set header, or append data to header if this is not the first call */
-        _set_or_append_header(REQUEST->headers,
-                              _PEP3333_String_FromLatin1StringAndSize(http_new, strlen(http_new)), value,
-                              len);
+        MAP_SET_OR_APPEND(REQUEST->headers, http_new, value);
     }
     free(http_new);
 
@@ -291,39 +261,23 @@ on_body(http_parser *parser, const char *data, const size_t len) {
 
 static int
 on_message_complete(http_parser *parser) {
-    /* HTTP_CONTENT_{LENGTH,TYPE} -> CONTENT_{LENGTH,TYPE} */
-    GIL_LOCK(0);
-    PyDict_ReplaceKey(REQUEST->headers, _HTTP_CONTENT_LENGTH, _CONTENT_LENGTH);
-    PyDict_ReplaceKey(REQUEST->headers, _HTTP_CONTENT_TYPE, _CONTENT_TYPE);
 
     /* SERVER_PROTOCOL (REQUEST_PROTOCOL) */
-    _set_header(_SERVER_PROTOCOL, parser->http_minor == 1 ? _HTTP_1_1 : _HTTP_1_0);
+    MAP_SET(REQUEST->headers, _SERVER_PROTOCOL, parser->http_minor == 1 ? _HTTP_1_1 : _HTTP_1_0);
 
     /* REQUEST_METHOD */
-    _set_header(_REQUEST_METHOD, _PEP3333_String_FromUTF8String(http_method_str(parser->method)));
+    MAP_SET(REQUEST->headers, _REQUEST_METHOD, http_method_str(parser->method));
 
     /* REMOTE_ADDR */
-    _set_header(_REMOTE_ADDR, _PEP3333_String_FromUTF8String(REQUEST->client_addr));
+    MAP_SET(REQUEST->headers, _REMOTE_ADDR, REQUEST->client_addr);
 
-    /* Write to IO_module */
-    PyObject *body = PyObject_CallMethodObjArgs(IO_module, _BytesIO, NULL);
-    if (REQUEST->io_buffer->size) {
-        /* Request has body */
-        PyObject *temp_data = _PEP3333_Bytes_FromStringAndSize(REQUEST->io_buffer->buffer, REQUEST->io_buffer->size);
-        PyObject *tmp = PyObject_CallMethodObjArgs(body, _write, temp_data, NULL);
-        PyObject *buf = PyObject_CallMethodObjArgs(body, _seek, _FromLong(0), NULL);
-
-        Py_DECREF(buf); /* Discard the return value */
-        if (PyErr_Occurred()) PyErr_Print();
-
-        Py_DECREF(tmp); /* Never throw away return objects from py-api */
-        Py_DECREF(temp_data);
-    }
-    _set_header_free_value(_wsgi_input, body);
-
-    /* Update WSGI headers */
-    PyDict_Update(REQUEST->headers, wsgi_base_dict);
-    GIL_UNLOCK(0);
+    /* HTTP_CONTENT_{LENGTH,TYPE} -> CONTENT_{LENGTH,TYPE} */
+    KeyValuePair *item = MAP_GETITEM(REQUEST->headers, _HTTP_CONTENT_LENGTH);
+    if (item != NULL)
+        item->key = strdup(_CONTENT_LENGTH);
+    item = MAP_GETITEM(REQUEST->headers, _HTTP_CONTENT_TYPE);
+    if (item != NULL)
+        item->key = strdup(_CONTENT_TYPE);
 
     REQUEST->state.parse_finished = true;
 
@@ -348,94 +302,3 @@ static http_parser_settings
         on_header_value, NULL, on_body, on_message_complete, NULL, NULL
 };
 
-void _initialize_request_module() {
-    IO_module = PyImport_ImportModule("io");
-    if (IO_module == NULL) {
-        /* PyImport_ImportModule should have exception set already */
-        return;
-    }
-
-    if (wsgi_base_dict == NULL) {
-        wsgi_base_dict = PyDict_New();
-
-        /* dct['wsgi.file_wrapper'] = FileWrapper */
-        PyDict_SetItemString(
-                wsgi_base_dict,
-                "wsgi.file_wrapper",
-                (PyObject * ) & FileWrapper_Type
-        );
-
-        /* dct['SCRIPT_NAME'] = '' */
-        PyDict_SetItemString(
-                wsgi_base_dict,
-                "SCRIPT_NAME",
-                _empty_string
-        );
-
-        /* dct['wsgi.version'] = (1, 0) */
-        PyDict_SetItemString(
-                wsgi_base_dict,
-                "wsgi.version",
-                PyTuple_Pack(2, _FromLong(1), _FromLong(0))
-        );
-
-        /* dct['wsgi.url_scheme'] = 'http'
-         * (This can be hard-coded as there is no TLS support in bjoern.) */
-        Py_INCREF(_http);
-        PyDict_SetItemString(
-                wsgi_base_dict,
-                "wsgi.url_scheme",
-                _http
-        );
-
-        /* dct['wsgi.errors'] = sys.stderr */
-        PyDict_SetItemString(
-                wsgi_base_dict,
-                "wsgi.errors",
-                PySys_GetObject("stderr")
-        );
-
-        /* dct['wsgi.multithread'] = False
-         * (Tell the application that it is being run
-         *  in a single-threaded environment.) */
-        PyDict_SetItemString(
-                wsgi_base_dict,
-                "wsgi.multithread",
-                Py_False
-        );
-
-        /* dct['wsgi.multiprocess'] = True
-         * (Tell the application that it is being run
-         *  in a multi-process environment.) */
-        PyDict_SetItemString(
-                wsgi_base_dict,
-                "wsgi.multiprocess",
-                Py_True
-        );
-
-        /* dct['wsgi.run_once'] = False
-         * (bjoern is no CGI gateway) */
-        PyDict_SetItemString(
-                wsgi_base_dict,
-                "wsgi.run_once",
-                Py_False
-        );
-
-        /* dct['SERVER_NAME'] = '...'
-         * dct['SERVER_PORT'] = '...'
-         * Both are required by WSGI specs. */
-        if (strlen(SERVER_INFO->host) > 0) {
-            PyDict_SetItemString(wsgi_base_dict, "SERVER_NAME", _PEP3333_String_FromUTF8String(SERVER_INFO->host));
-
-            if (SERVER_INFO->port == -1) {
-                PyDict_SetItemString(wsgi_base_dict, "SERVER_PORT", _PEP3333_StringFromFormat(""));
-            } else {
-                PyDict_SetItemString(wsgi_base_dict, "SERVER_PORT", _PEP3333_StringFromFormat("%i", SERVER_INFO->port));
-            }
-        } else {
-            /* SERVER_NAME is required, but not usefull with UNIX type sockets */
-            PyDict_SetItemString(wsgi_base_dict, "SERVER_NAME", _PEP3333_StringFromFormat(""));
-            PyDict_SetItemString(wsgi_base_dict, "SERVER_PORT", _PEP3333_StringFromFormat(""));
-        }
-    }
-}

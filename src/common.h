@@ -8,6 +8,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <string.h>
+#include <search.h>
 
 #define TYPE_ERROR_INNER(what, expected, ...) \
   PyErr_Format(PyExc_TypeError, what " must be " expected " " __VA_ARGS__)
@@ -53,13 +54,13 @@ PyObject *_REMOTE_ADDR, *_PATH_INFO, *_QUERY_STRING, *_REQUEST_METHOD, *_GET,
 #define assert(...) do{}while(0)
 #endif
 
+
+// Expandable BUFFER for io input/output
 typedef struct {
     size_t size;
     size_t capacity;
     char *buffer;
 } _Buffer;
-
-// Expandable BUFFER for io input
 #define BUFFER_CHUNK_SIZE 64*1024
 #define BUFFER_INIT(data) \
     do { \
@@ -70,7 +71,8 @@ typedef struct {
             buf->buffer = NULL; \
             data = buf; \
         } else { \
-            data = NULL; \
+            fprintf(stderr, "insufficient memory\n"); \
+            exit(EXIT_FAILURE); \
         } \
      } while(0)
 #define BUFFER_FREE(buffer) \
@@ -84,6 +86,10 @@ typedef struct {
     do { \
        if (data->buffer == NULL) { \
             data->buffer = (char *) malloc(BUFFER_CHUNK_SIZE); \
+            if (data->buffer == NULL) { \
+                fprintf(stderr, "insufficient memory\n"); \
+                exit(EXIT_FAILURE); \
+            } \
             data->capacity = BUFFER_CHUNK_SIZE; \
        } \
        data->size += value_len; \
@@ -94,7 +100,8 @@ typedef struct {
        if (data->buffer != NULL)  { \
           memcpy(data->buffer + data->size - value_len, value, value_len); \
        } else { \
-          BUFFER_FREE(data); \
+            fprintf(stderr, "insufficient memory\n"); \
+            exit(EXIT_FAILURE); \
        } \
     } while(0)
 
@@ -102,6 +109,79 @@ typedef struct {
 #define GIL_LOCK(n) PyGILState_STATE _gilstate_##n = PyGILState_Ensure()
 #define GIL_UNLOCK(n) PyGILState_Release(_gilstate_##n)
 
+/* MAP */
+
+// Binary Tree as C Map<str, str>
+struct {
+    char *key;
+    char *value;
+} KeyValuePair;
+#define MAP_KEYCMP(a, b) \
+    do { \
+        const struct KeyValuePair *a = _a; \
+        const struct KeyValuePair *b = _b; \
+        return strcmp(a->key, b->key); \
+    } while(0)
+#define MAP_SET(root, key, value) \
+    do { \
+        KeyValuePair *np = malloc(sizeof(KeyValuePair)); \
+        if (np == NULL) { \
+            fprintf(stderr, "insufficient memory\n"); \
+            exit(EXIT_FAILURE); \
+        } \
+        np->key = strdup(key); \
+        np->value = strdup(value); \
+        void *kvp = tfind(np, &root, MAP_KEYCMP); \
+        if (kvp != NULL) { \
+            kvp->value = strdup(value); \
+            return kvp; \
+        } else { \
+            np = tsearch(np, &root, MAP_KEYCMP); \
+            if (np == NULL) { \
+                fprintf(stderr, "insufficient memory\n"); \
+                exit(EXIT_FAILURE); \
+            } \
+            return np; \
+        } \
+     } while(0)
+#define MAP_SET_OR_APPEND(root, key, value) \
+    do { \
+        KeyValuePair *np = malloc(sizeof(KeyValuePair)); \
+        np->key = strdup(key); \
+        np->value = strdup(value); \
+        void *kvp = tfind(np, &root, MAP_KEYCMP); \
+        if (kvp != NULL) { \
+            kvp->value = concat_str(kvp->value, value); \
+            return kvp; \
+        } else { \
+            np = tsearch(np, &root, MAP_KEYCMP); \
+            if (np == NULL) { \
+                fprintf(stderr, "insufficient memory\n"); \
+                exit(EXIT_FAILURE); \
+            } \
+            return np; \
+        } \
+     } while(0)
+#define MAP_FREE(root) \
+    do { \
+       tdestroy(root, free); \
+    } while(0)
+#define MAP_WALK(root, action) \
+    do { \
+       twalk(root, action); \
+    } while(0)
+#define MAP_GETITEM(root, key) \
+    do { \
+        KeyValuePair *np = malloc(sizeof(KeyValuePair)); \
+        if (np == NULL) { \
+            fprintf(stderr, "insufficient memory\n"); \
+            exit(EXIT_FAILURE); \
+        }  \
+        np->key = strdup(key); \
+        void *kvp = tfind(np, &root, MAP_KEYCMP); \
+        if (kvp != NULL) \
+            return kvp->value; \
+        return NULL \
+    } while(0)
+/* End of module */
 #endif
-
-

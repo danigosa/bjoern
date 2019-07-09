@@ -4,6 +4,7 @@
 #include "py3.h"
 #include "server.h"
 
+static PyObject *wsgi_base_dict = NULL;
 static void wsgi_getheaders(Request *, PyObject **buf, Py_ssize_t *length);
 
 typedef struct {
@@ -18,8 +19,61 @@ wsgi_call_application(Request *request) {
 
     /* From now on, `headers` stores the _response_ headers
      * (passed by the WSGI app) rather than the _request_ headers */
-    PyObject *request_headers = request->headers;
-    request->headers = NULL;
+    PyObject *request_headers = PyDict_New();
+
+    /* Update WSGI headers */
+    PyObject *key, *value;
+    Py_ssize_t pos = 0;
+
+    /* Write to IO_module */
+    PyObject *body = PyObject_CallMethodObjArgs(IO_module, _BytesIO, NULL);
+    if (REQUEST->io_buffer->size) {
+        /* Request has body */
+        PyObject *temp_data = _PEP3333_Bytes_FromStringAndSize(REQUEST->io_buffer->buffer, REQUEST->io_buffer->size);
+        PyObject *tmp = PyObject_CallMethodObjArgs(body, _write, temp_data, NULL);
+        PyObject *buf = PyObject_CallMethodObjArgs(body, _seek, _FromLong(0), NULL);
+
+        Py_DECREF(buf); /* Discard the return value */
+        if (PyErr_Occurred()) PyErr_Print();
+
+        Py_DECREF(tmp); /* Never throw away return objects from py-api */
+        Py_DECREF(temp_data);
+    }
+
+    /* Update WSGI body header */
+    PyDict_Update(request_headers, wsgi_base_dict);
+
+    /* Update the rest of headers */
+    static void
+    action(const void *nodep, VISIT which, int depth)
+    {
+        int *datap;
+
+        switch (which) {
+            case preorder:
+                break;
+            case postorder:
+                KeyValuePair *kvp = *(KeyValuePair **) nodep;
+                PyObject *pykey = _PEP3333_String_FromUTF8String(kvp->key);
+                PyObject *pyvalue = _PEP3333_String_FromUTF8String(kvp->value;
+                PyDict_SetItem(request_headers, pykey, pyvalue);
+                Py_DECREF(pykey);
+                Py_DECREF(value);
+                break;
+            case endorder:
+                break;
+            case leaf:
+                KeyValuePair *kvp = *(KeyValuePair **) nodep;
+                PyObject *pykey = _PEP3333_String_FromUTF8String(kvp->key);
+                PyObject *pyvalue = _PEP3333_String_FromUTF8String(kvp->value;
+                PyDict_SetItem(request_headers, pykey, pyvalue);
+                Py_DECREF(pykey);
+                Py_DECREF(value);
+                break;
+        }
+    }
+    MAP_WALK(request->headers, action);
+    MAP_FREE(request->headers);
 
     /* application(environ, start_response) call */
     PyObject *retval = PyObject_CallFunctionObjArgs(
@@ -393,4 +447,96 @@ wrap_http_chunk_cruft_around(PyObject *chunk) {
     *new_chunk_p = '\n';
     assert(new_chunk_p == _PEP3333_Bytes_AS_DATA(new_chunk) + n + chunklen + 1);
     return new_chunk;
+}
+
+void _initialize_request_module() {
+    IO_module = PyImport_ImportModule("io");
+    if (IO_module == NULL) {
+        /* PyImport_ImportModule should have exception set already */
+        return;
+    }
+
+    if (wsgi_base_dict == NULL) {
+        wsgi_base_dict = PyDict_New();
+
+        /* dct['wsgi.file_wrapper'] = FileWrapper */
+        PyDict_SetItemString(
+                wsgi_base_dict,
+                "wsgi.file_wrapper",
+                (PyObject * ) & FileWrapper_Type
+        );
+
+        /* dct['SCRIPT_NAME'] = '' */
+        PyDict_SetItemString(
+                wsgi_base_dict,
+                "SCRIPT_NAME",
+                _empty_string
+        );
+
+        /* dct['wsgi.version'] = (1, 0) */
+        PyDict_SetItemString(
+                wsgi_base_dict,
+                "wsgi.version",
+                PyTuple_Pack(2, _FromLong(1), _FromLong(0))
+        );
+
+        /* dct['wsgi.url_scheme'] = 'http'
+         * (This can be hard-coded as there is no TLS support in bjoern.) */
+        Py_INCREF(_http);
+        PyDict_SetItemString(
+                wsgi_base_dict,
+                "wsgi.url_scheme",
+                _http
+        );
+
+        /* dct['wsgi.errors'] = sys.stderr */
+        PyDict_SetItemString(
+                wsgi_base_dict,
+                "wsgi.errors",
+                PySys_GetObject("stderr")
+        );
+
+        /* dct['wsgi.multithread'] = False
+         * (Tell the application that it is being run
+         *  in a single-threaded environment.) */
+        PyDict_SetItemString(
+                wsgi_base_dict,
+                "wsgi.multithread",
+                Py_False
+        );
+
+        /* dct['wsgi.multiprocess'] = True
+         * (Tell the application that it is being run
+         *  in a multi-process environment.) */
+        PyDict_SetItemString(
+                wsgi_base_dict,
+                "wsgi.multiprocess",
+                Py_True
+        );
+
+        /* dct['wsgi.run_once'] = False
+         * (bjoern is no CGI gateway) */
+        PyDict_SetItemString(
+                wsgi_base_dict,
+                "wsgi.run_once",
+                Py_False
+        );
+
+        /* dct['SERVER_NAME'] = '...'
+         * dct['SERVER_PORT'] = '...'
+         * Both are required by WSGI specs. */
+        if (strlen(SERVER_INFO->host) > 0) {
+            PyDict_SetItemString(wsgi_base_dict, "SERVER_NAME", _PEP3333_String_FromUTF8String(SERVER_INFO->host));
+
+            if (SERVER_INFO->port == -1) {
+                PyDict_SetItemString(wsgi_base_dict, "SERVER_PORT", _PEP3333_StringFromFormat(""));
+            } else {
+                PyDict_SetItemString(wsgi_base_dict, "SERVER_PORT", _PEP3333_StringFromFormat("%i", SERVER_INFO->port));
+            }
+        } else {
+            /* SERVER_NAME is required, but not usefull with UNIX type sockets */
+            PyDict_SetItemString(wsgi_base_dict, "SERVER_NAME", _PEP3333_StringFromFormat(""));
+            PyDict_SetItemString(wsgi_base_dict, "SERVER_PORT", _PEP3333_StringFromFormat(""));
+        }
+    }
 }
