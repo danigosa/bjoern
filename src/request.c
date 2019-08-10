@@ -10,8 +10,6 @@ static inline void PyDict_ReplaceKey(PyObject *dict, PyObject *k1, PyObject *k2)
 
 static http_parser_settings parser_settings;
 
-static PyObject *IO_module;
-
 Request *Request_new(ThreadInfo *thread_info, int client_fd, const char *client_addr) {
     Request *request = malloc(sizeof(Request));
     if (request == NULL){
@@ -124,7 +122,7 @@ on_url(http_parser *parser, const char *path, size_t len) {
         char query_part[1024];
         memcpy(query_part, path + URL_PARSER.field_data[UF_QUERY].off, URL_PARSER.field_data[UF_QUERY].len);
         query_part[URL_PARSER.field_data[UF_QUERY].len] = '\0';
-        MAP_SET_OR_APPEND(REQUEST->headers, (char *)(_QUERY_STRING), query_part);
+        MAP_SET_OR_APPEND(REQUEST->headers, (const char *)(_QUERY_STRING), query_part);
         query_part_len = URL_PARSER.field_data[UF_QUERY].len;
     }
 
@@ -263,7 +261,8 @@ static int
 on_message_complete(http_parser *parser) {
 
     /* SERVER_PROTOCOL (REQUEST_PROTOCOL) */
-    MAP_SET(REQUEST->headers, _SERVER_PROTOCOL, parser->http_minor == 1 ? _HTTP_1_1 : _HTTP_1_0);
+    const char * http_version = parser->http_minor == 1 ? "HTTP/1.1" : "HTTP/1.0";
+    MAP_SET(REQUEST->headers, _SERVER_PROTOCOL, http_version);
 
     /* REQUEST_METHOD */
     MAP_SET(REQUEST->headers, _REQUEST_METHOD, http_method_str(parser->method));
@@ -272,12 +271,13 @@ on_message_complete(http_parser *parser) {
     MAP_SET(REQUEST->headers, _REMOTE_ADDR, REQUEST->client_addr);
 
     /* HTTP_CONTENT_{LENGTH,TYPE} -> CONTENT_{LENGTH,TYPE} */
-    KeyValuePair *item = MAP_GETITEM(REQUEST->headers, _HTTP_CONTENT_LENGTH);
+    HeaderKeyValuePair *item;
+    MAP_GETITEM(REQUEST->headers, (const char *)_HTTP_CONTENT_LENGTH, item);
     if (item != NULL)
-        item->key = strdup(_CONTENT_LENGTH);
-    item = MAP_GETITEM(REQUEST->headers, _HTTP_CONTENT_TYPE);
+        item->key = strdup((const char *)_CONTENT_LENGTH);
+    MAP_GETITEM(REQUEST->headers, _HTTP_CONTENT_TYPE, item);
     if (item != NULL)
-        item->key = strdup(_CONTENT_TYPE);
+        item->key = strdup((const char *)_CONTENT_TYPE);
 
     REQUEST->state.parse_finished = true;
 

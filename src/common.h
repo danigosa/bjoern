@@ -75,6 +75,7 @@ typedef struct {
             exit(EXIT_FAILURE); \
         } \
      } while(0)
+
 #define BUFFER_FREE(buffer) \
     do { \
         if (buffer != NULL) { \
@@ -82,6 +83,7 @@ typedef struct {
             buffer = NULL; \
        } \
     } while(0)
+
 #define BUFFER_PUSH(data, value, value_len) \
     do { \
        if (data->buffer == NULL) { \
@@ -115,70 +117,73 @@ typedef struct {
 typedef struct {
     char *key;
     char *value;
-} KeyValuePair;
+} HeaderKeyValuePair;
 
 int map_key_compare(const void *a, const void *b);
 
 #define MAP_SET(root, cpkey, cpvalue) \
     do { \
-        KeyValuePair *np = malloc(sizeof(KeyValuePair)); \
+        HeaderKeyValuePair *np = malloc(sizeof(HeaderKeyValuePair)); \
         if (np == NULL) { \
             fprintf(stderr, "insufficient memory\n"); \
             exit(EXIT_FAILURE); \
         } \
-        np->key = strdup(cpkey); \
-        np->value = strdup(cpvalue); \
-        KeyValuePair *kvp = (KeyValuePair *) tfind(np, &root, map_key_compare); \
+        np->key = strdup((const char *)cpkey); \
+        np->value = strdup((const char *)cpvalue); \
+        HeaderKeyValuePair *kvp = (HeaderKeyValuePair *) tfind(np, &root, map_key_compare); \
         if (kvp != NULL) { \
-            kvp->value = strdup(cpvalue); \
-            return kvp; \
+            kvp->value = strdup((const char *)cpvalue); \
         } else { \
             np = tsearch(np, &root, map_key_compare); \
             if (np == NULL) { \
                 fprintf(stderr, "insufficient memory\n"); \
                 exit(EXIT_FAILURE); \
             } \
-            return np; \
         } \
      } while(0)
+
 #define MAP_SET_OR_APPEND(root, cpkey, cpvalue) \
     do { \
-        KeyValuePair *np = malloc(sizeof(KeyValuePair)); \
-        np->key = strdup(cpkey); \
-        np->value = strdup(cpvalue); \
-        KeyValuePair *kvp = (KeyValuePair *) tfind(np, &root, map_key_compare); \
+        HeaderKeyValuePair *np = malloc(sizeof(HeaderKeyValuePair)); \
+        np->key = strdup((const char *)cpkey); \
+        np->value = strdup((const char *)cpvalue); \
+        HeaderKeyValuePair *kvp = (HeaderKeyValuePair *) tfind(np, &root, map_key_compare); \
         if (kvp != NULL) { \
-            kvp->value = concat_str(kvp->value, cpvalue); \
-            return kvp; \
+            kvp->value = concat_str((const char *)kvp->value, (const char *)cpvalue); \
         } else { \
             np = tsearch(np, &root, map_key_compare); \
             if (np == NULL) { \
                 fprintf(stderr, "insufficient memory\n"); \
                 exit(EXIT_FAILURE); \
             } \
-            return np; \
         } \
      } while(0)
+
 #define MAP_FREE(root) \
     do { \
        tdestroy(root, free); \
     } while(0)
+
 #define MAP_WALK(root, action) \
     do { \
        twalk(root, action); \
     } while(0)
-#define MAP_GETITEM(root, cpkey) \
+
+#define MAP_GETITEM(root, cpkey, item) \
     do { \
-        KeyValuePair *np = malloc(sizeof(KeyValuePair)); \
+        HeaderKeyValuePair *np = malloc(sizeof(HeaderKeyValuePair)); \
         if (np == NULL) { \
             fprintf(stderr, "insufficient memory\n"); \
             exit(EXIT_FAILURE); \
         }  \
-        np->key = strdup(cpkey); \
-        KeyValuePair *kvp = (KeyValuePair *) tfind(np, &root, map_key_compare); \
-        if (kvp != NULL) \
-            return kvp->value; \
-        return NULL \
+        np->key = strdup((const char *)cpkey); \
+        HeaderKeyValuePair *kvp = (HeaderKeyValuePair *) tfind(np, &root, map_key_compare); \
+        if (kvp != NULL) {\
+            item = kvp; \
+        } else { \
+            item = NULL; \
+        } \
     } while(0)
+
 /* End of module */
 #endif

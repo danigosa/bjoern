@@ -56,7 +56,7 @@ char *concat_str(const char *s1, const char *s2) {
 }
 
 int map_key_compare(const void *a, const void *b) {
-    const struct KeyValuePair *a = _a;
-    const struct KeyValuePair *b = _b;
-    return strcmp(a->key, b->key);
+    HeaderKeyValuePair *avp = (HeaderKeyValuePair *)a;
+    HeaderKeyValuePair *bvp = (HeaderKeyValuePair *)b;
+    return strcmp(avp->key, bvp->key);
 }

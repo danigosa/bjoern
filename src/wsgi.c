@@ -2,8 +2,10 @@
 #include "filewrapper.h"
 #include "wsgi.h"
 #include "py3.h"
+#include "request.h"
 #include "server.h"
 
+static PyObject *IO_module;
 static PyObject *wsgi_base_dict = NULL;
 static void wsgi_getheaders(Request *, PyObject **buf, Py_ssize_t *length);
 
@@ -53,7 +55,7 @@ wsgi_call_application(Request *request) {
             case preorder:
                 break;
             case postorder:
-                KeyValuePair *kvp = *(KeyValuePair **) nodep;
+                HeaderKeyValuePair *kvp = *(HeaderKeyValuePair **) nodep;
                 PyObject *pykey = _PEP3333_String_FromUTF8String(kvp->key);
                 PyObject *pyvalue = _PEP3333_String_FromUTF8String(kvp->value;
                 PyDict_SetItem(request_headers, pykey, pyvalue);
@@ -63,7 +65,7 @@ wsgi_call_application(Request *request) {
             case endorder:
                 break;
             case leaf:
-                KeyValuePair *kvp = *(KeyValuePair **) nodep;
+                HeaderKeyValuePair *kvp = *(HeaderKeyValuePair **) nodep;
                 PyObject *pykey = _PEP3333_String_FromUTF8String(kvp->key);
                 PyObject *pyvalue = _PEP3333_String_FromUTF8String(kvp->value;
                 PyDict_SetItem(request_headers, pykey, pyvalue);
