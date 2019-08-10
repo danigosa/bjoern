@@ -230,6 +230,7 @@ upload-wheel-37: wheel-37
 # Vendors
 http-parser:
 	# http-parser 2.9.2
+	@git submodule update --init
 	@cd $(HTTP_PARSER_DIR) && git checkout 5c17dad400e45c5a442a63f250fff2638d144682
 
 $(HTTP_PARSER_OBJ): http-parser
