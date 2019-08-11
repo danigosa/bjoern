@@ -2,3 +2,5 @@
 #include <Python.h> /* for Py_ssize_t */
 
 Py_ssize_t portable_sendfile(int out_fd, int in_fd, off_t offset);
+
+#define SENDFILE_CHUNK_SIZE 16*1024

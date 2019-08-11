@@ -2,8 +2,6 @@
 
 #include "portable_sendfile.h"
 
-#define SENDFILE_CHUNK_SIZE 16*1024
-
 #if defined __APPLE__
 
   /* OS X */

@@ -4,9 +4,11 @@
 #include "py3.h"
 #include "request.h"
 #include "server.h"
+#include "common.h"
 
 static PyObject *IO_module;
 static PyObject *wsgi_base_dict = NULL;
+
 static void wsgi_getheaders(Request *, PyObject **buf, Py_ssize_t *length);
 
 typedef struct {
@@ -23,15 +25,11 @@ wsgi_call_application(Request *request) {
      * (passed by the WSGI app) rather than the _request_ headers */
     PyObject *request_headers = PyDict_New();
 
-    /* Update WSGI headers */
-    PyObject *key, *value;
-    Py_ssize_t pos = 0;
-
     /* Write to IO_module */
     PyObject *body = PyObject_CallMethodObjArgs(IO_module, _BytesIO, NULL);
-    if (REQUEST->io_buffer->size) {
+    if (request->io_buffer->size) {
         /* Request has body */
-        PyObject *temp_data = _PEP3333_Bytes_FromStringAndSize(REQUEST->io_buffer->buffer, REQUEST->io_buffer->size);
+        PyObject *temp_data = _PEP3333_Bytes_FromStringAndSize(request->io_buffer->buffer, request->io_buffer->size);
         PyObject *tmp = PyObject_CallMethodObjArgs(body, _write, temp_data, NULL);
         PyObject *buf = PyObject_CallMethodObjArgs(body, _seek, _FromLong(0), NULL);
 
@@ -46,31 +44,29 @@ wsgi_call_application(Request *request) {
     PyDict_Update(request_headers, wsgi_base_dict);
 
     /* Update the rest of headers */
-    static void
-    action(const void *nodep, VISIT which, int depth)
-    {
-        int *datap;
+    void action(const void *nodep, VISIT which, int depth) {
+        PyObject *pykey;
+        PyObject *pyvalue;
+
+#define _set_item(item) \
+            do { \
+                pykey = _PEP3333_String_FromUTF8String(((HeaderKeyValuePair *)item)->key); \
+                pyvalue = _PEP3333_String_FromUTF8String(((HeaderKeyValuePair *)item)->value); \
+                PyDict_SetItem(request_headers, pykey, pyvalue); \
+                Py_DECREF(pykey); \
+                Py_DECREF(pyvalue); \
+            } while (0)
 
         switch (which) {
             case preorder:
                 break;
             case postorder:
-                HeaderKeyValuePair *kvp = *(HeaderKeyValuePair **) nodep;
-                PyObject *pykey = _PEP3333_String_FromUTF8String(kvp->key);
-                PyObject *pyvalue = _PEP3333_String_FromUTF8String(kvp->value;
-                PyDict_SetItem(request_headers, pykey, pyvalue);
-                Py_DECREF(pykey);
-                Py_DECREF(value);
+                _set_item(nodep);
                 break;
             case endorder:
                 break;
             case leaf:
-                HeaderKeyValuePair *kvp = *(HeaderKeyValuePair **) nodep;
-                PyObject *pykey = _PEP3333_String_FromUTF8String(kvp->key);
-                PyObject *pyvalue = _PEP3333_String_FromUTF8String(kvp->value;
-                PyDict_SetItem(request_headers, pykey, pyvalue);
-                Py_DECREF(pykey);
-                Py_DECREF(value);
+                _set_item(nodep);
                 break;
         }
     }
@@ -293,14 +289,6 @@ wsgi_getheaders(Request *request, PyObject **buf, Py_ssize_t *length) {
     PyObject *bufobj = _PEP3333_Bytes_FromStringAndSize(NULL, length_upperbound);
     char *bufp = (char *) _PEP3333_Bytes_AS_DATA(bufobj);
 
-#define buf_write(src, len) \
-    do { \
-      size_t n = len; \
-      const char* s = src;  \
-      while(n--) *bufp++ = *s++; \
-    } while(0)
-#define buf_write2(src) buf_write(src, strlen(src))
-
     /* First line, e.g. "HTTP/1.1 200 Ok" */
     buf_write2("HTTP/1.1 ");
     buf_write2(request->status);
@@ -451,7 +439,7 @@ wrap_http_chunk_cruft_around(PyObject *chunk) {
     return new_chunk;
 }
 
-void _initialize_request_module() {
+void initialize_request_module() {
     IO_module = PyImport_ImportModule("io");
     if (IO_module == NULL) {
         /* PyImport_ImportModule should have exception set already */

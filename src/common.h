@@ -54,6 +54,21 @@ PyObject *_REMOTE_ADDR, *_PATH_INFO, *_QUERY_STRING, *_REQUEST_METHOD, *_GET,
 #define assert(...) do{}while(0)
 #endif
 
+#define UNHEX(c) ((c >= '0' && c <= '9') ? (c - '0') : \
+                  (c >= 'a' && c <= 'f') ? (c - 'a' + 10) : \
+                  (c >= 'A' && c <= 'F') ? (c - 'A' + 10) : NOHEX)
+
+#define NOHEX ((char) -1)
+
+#define buf_write(src, len) \
+    do { \
+      size_t n = len; \
+      const char* s = src;  \
+      while(n--) *bufp++ = *s++; \
+    } while(0)
+
+#define buf_write2(src) buf_write(src, strlen(src))
+
 
 // Expandable BUFFER for io input/output
 typedef struct {

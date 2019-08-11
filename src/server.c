@@ -26,9 +26,6 @@
 
 #include "../vendors/http-parser/http_parser.h"
 
-#define READ_BUFFER_SIZE 64*1024
-#define Py_XCLEAR(obj) do { if(obj) { Py_DECREF(obj); obj = NULL; } } while(0)
-
 enum _rw_state {
     not_yet_done = 1,
     done,

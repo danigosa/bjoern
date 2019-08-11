@@ -23,7 +23,7 @@ run(PyObject *self, PyObject *args) {
 
     // Initialize requests and run the server
     set_server_info(&info);
-    _initialize_request_module();
+    initialize_request_module();
     server_run();
 
     Py_RETURN_NONE;
@@ -45,7 +45,6 @@ static struct PyModuleDef module = {
 };
 
 #define INIT_BJOERN PyInit__bjoern
-
 
 PyMODINIT_FUNC INIT_BJOERN(void) {
     _init_common();

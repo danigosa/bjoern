@@ -69,4 +69,10 @@ void Request_clean(Request *);
 
 void Request_free(Request *);
 
+#define REQUEST ((Request*)parser->data)
+
+#define PARSER  ((bj_parser*)parser)
+
+#define URL_PARSER  (((bj_parser*)parser)->url_parser)
+
 #endif

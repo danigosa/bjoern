@@ -1,8 +1,6 @@
 #include "filewrapper.h"
 #include "py3.h"
 
-#define FW_self ((FileWrapper*)self)
-
 int FileWrapper_GetFd(PyObject *self)
 {
   return FW_self->fd;

@@ -20,4 +20,8 @@ void server_run();
 
 #define SERVER_INFO get_server_info()
 
+#define READ_BUFFER_SIZE 64*1024
+
+#define Py_XCLEAR(obj) do { if(obj) { Py_DECREF(obj); obj = NULL; } } while(0)
+
 #endif

@@ -85,11 +85,6 @@ void Request_parse(Request *request, const char *data, const size_t data_len) {
     request->state.upgrade = request->parser.parser.upgrade;
 }
 
-#define REQUEST ((Request*)parser->data)
-#define PARSER  ((bj_parser*)parser)
-#define URL_PARSER  (((bj_parser*)parser)->url_parser)
-
-
 static int
 on_message_begin(http_parser *parser) {
     assert(PARSER->field == NULL);
